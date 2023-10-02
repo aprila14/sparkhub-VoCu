@@ -64,10 +64,11 @@ static const char *connectionString = pico_az_x509connectionString;
 static const char *x509certificate = pico_az_x509certificate;
 static const char *x509privatekey = pico_az_x509privatekey;
 
-#define MESSAGE_COUNT 3
+#define MESSAGE_COUNT 20000
 static bool g_continueRunning = true;
 static size_t g_message_count_send_confirmations = 0;
 static size_t g_message_recv_count = 0;
+int j = 0;
 
 static void send_confirm_callback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void *userContextCallback)
 {
@@ -212,6 +213,18 @@ void iothub_ll_client_x509_sample(void)
         IoTHubDeviceClient_LL_SetOption(device_ll_handle, OPTION_AUTO_URL_ENCODE_DECODE, &urlEncodeOn);
 #endif
 
+
+
+
+        // MQTT remote idle
+        int timevalue = 15;
+        IoTHubDeviceClient_LL_SetOption(device_ll_handle, OPTION_KEEP_ALIVE, &timevalue);
+
+
+
+
+
+
         // Setting connection status callback to get indication of connection to iothub
         (void)IoTHubDeviceClient_LL_SetConnectionStatusCallback(device_ll_handle, connection_status_callback, NULL);
 
@@ -228,7 +241,7 @@ void iothub_ll_client_x509_sample(void)
             do
             {
 
-                if (messages_sent < MESSAGE_COUNT)
+                if (messages_sent < MESSAGE_COUNT, j > 120)
                 {
                     // Construct the iothub message
                     telemetry_temperature = 20.0f + ((float)rand() / RAND_MAX) * 15.0f;
@@ -259,6 +272,7 @@ void iothub_ll_client_x509_sample(void)
                     IoTHubMessage_Destroy(message_handle);
 
                     messages_sent++;
+                    j=0;
                 }
                 else if (g_message_count_send_confirmations >= MESSAGE_COUNT)
                 {
@@ -269,6 +283,8 @@ void iothub_ll_client_x509_sample(void)
                 IoTHubDeviceClient_LL_DoWork(device_ll_handle);
 
                 sleep_ms(500); // wait for
+                j = j+1;
+                printf("j ist gleich %i\n", j);
 
             } while (g_continueRunning);
 
