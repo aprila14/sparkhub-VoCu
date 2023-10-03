@@ -1,3 +1,5 @@
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -199,7 +201,16 @@ void iothub_ll_telemetry_sample(void)
 
         // Clean up the iothub sdk handle
         IoTHubDeviceClient_LL_Destroy(device_ll_handle);
+        g_continueRunning = true;
+        messages_sent = 0;
+        g_message_count_send_confirmations = 0;
+        messages_count = 0;
+        g_message_recv_count = 0;
+
+
     }
     // Free all the sdk subsystem
-    IoTHub_Deinit();
+    //IoTHub_Deinit();
 }
+
+

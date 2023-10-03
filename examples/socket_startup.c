@@ -23,8 +23,8 @@
 #include "Driver_WiFi.h"
 
 /* Wi-Fi configuration */
-#define SSID "ssid"
-#define PASSWORD "password"
+#define SSID "Marty Router King"
+#define PASSWORD "mk1441bl"
 #define SECURITY_TYPE ARM_WIFI_SECURITY_WPA2
 
 extern ARM_DRIVER_WIFI Driver_WiFi1;

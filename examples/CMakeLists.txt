@@ -30,7 +30,9 @@ target_link_libraries(${TARGET_NAME} PRIVATE
         mbedtls
         mbedx509
         mbedcrypto
-        TIMER_FILES		
+        TIMER_FILES
+        dht
+        hardware_adc		
         )
 
 pico_enable_stdio_usb(${TARGET_NAME} 1)
