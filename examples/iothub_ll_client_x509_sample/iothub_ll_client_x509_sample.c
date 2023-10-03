@@ -322,8 +322,6 @@ void iothub_ll_client_x509_sample(void)
                 IoTHubDeviceClient_LL_DoWork(device_ll_handle);
 
                 sleep_ms(500); // wait for
-                j = j+1;
-                printf("j ist gleich %i\n", j);
 
             } while (g_continueRunning);
 
