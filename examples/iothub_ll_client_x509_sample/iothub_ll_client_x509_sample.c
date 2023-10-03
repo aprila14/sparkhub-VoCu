@@ -71,8 +71,10 @@ static const char *x509privatekey = pico_az_x509privatekey;
 static bool g_continueRunning = true;
 static size_t g_message_count_send_confirmations = 0;
 static size_t g_message_recv_count = 0;
+
 static bool received_message_send_message = false;
 size_t messages_sent = 0;
+
 
 
 
@@ -259,7 +261,9 @@ void iothub_ll_client_x509_sample(void)
             do
             {
 
+
                 if (messages_sent < MESSAGE_COUNT && (received_message_send_message = true))
+
                 {
                    adc_select_input(0); // Use channel 0 for GPIO 26
                     analogValue = adc_read();  // Read the raw 12-bit ADC value
@@ -305,7 +309,9 @@ void iothub_ll_client_x509_sample(void)
                     IoTHubMessage_Destroy(message_handle);
 
                     messages_sent++;
+
                     received_message_send_message = false;
+
                 }
                 else if (g_message_count_send_confirmations >= MESSAGE_COUNT)
                 {
@@ -316,6 +322,8 @@ void iothub_ll_client_x509_sample(void)
                 IoTHubDeviceClient_LL_DoWork(device_ll_handle);
 
                 sleep_ms(500); // wait for
+                j = j+1;
+                printf("j ist gleich %i\n", j);
 
             } while (g_continueRunning);
 
