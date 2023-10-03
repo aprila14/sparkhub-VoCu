@@ -19,6 +19,9 @@
 
 #include "azure_samples.h"
 
+#include "dht.h"
+#include "hardware/adc.h"
+
 /* This sample uses the _LL APIs of iothub_client for example purposes.
 Simply changing the using the convenience layer (functions not having _LL)
 and removing calls to _DoWork will yield the same results. */
@@ -68,7 +71,11 @@ static const char *x509privatekey = pico_az_x509privatekey;
 static bool g_continueRunning = true;
 static size_t g_message_count_send_confirmations = 0;
 static size_t g_message_recv_count = 0;
-int j = 0;
+static bool received_message_send_message = false;
+size_t messages_sent = 0;
+
+
+
 
 static void send_confirm_callback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void *userContextCallback)
 {
@@ -134,7 +141,14 @@ static IOTHUBMESSAGE_DISPOSITION_RESULT receive_msg_callback(IOTHUB_MESSAGE_HAND
         }
         else
         {
-            (void)printf("Received String Message\r\nMessage ID: %s\r\n Correlation ID: %s\r\n Data: <<<%s>>>\r\n", messageId, correlationId, string_msg);
+            received_message_send_message = true;
+            messages_sent = 0;
+            printf("Message send: %zu\n", messages_sent);
+            printf("received_message_send_message: %d\n", received_message_send_message);
+            //(void)printf("Received Binary message\r\nMessage ID: %s\r\n Correlation ID: %s\r\n Data: <<<%.*s>>> & Size=%d\r\n", messageId, correlationId, (int)buff_len, buff_msg, (int)buff_len);
+
+
+
         }
     }
     const char *property_value = "property_value";
@@ -156,10 +170,14 @@ void iothub_ll_client_x509_sample(void)
     IOTHUB_MESSAGE_HANDLE message_handle;
     size_t messages_sent = 0;
 
-    float telemetry_temperature;
-    float telemetry_humidity;
-    const char *telemetry_scale = "Celsius";
+    float voltage;
+    float pressure;
+    uint16_t analogValue;
+    adc_init();
+    adc_select_input(0); // Use channel 0 for GPIO 26
+    //const char *telemetry_scale = "Celsius";
     char telemetry_msg_buffer[80];
+
 
     // Select the Protocol to use with the connection
 #ifdef SAMPLE_MQTT
@@ -241,15 +259,29 @@ void iothub_ll_client_x509_sample(void)
             do
             {
 
-                if (messages_sent < MESSAGE_COUNT, j > 120)
+                if (messages_sent < MESSAGE_COUNT && (received_message_send_message = true))
                 {
+                   adc_select_input(0); // Use channel 0 for GPIO 26
+                    analogValue = adc_read();  // Read the raw 12-bit ADC value
+                    printf("Analog Value: %d\n", analogValue);
+                    
+                    voltage = analogValue * (4.5f / (1 << 12));  // Convert to voltage (assuming Vref = 4.5V; from datasheet TIZLA60)
+                    pressure =  voltage * 1.33 - 0.7; //(6Bar/4.5V -0.7V)
+
+                    printf("Voltage: %.2fV\n", voltage);
+                    printf("pressure: %.2fbar\n", pressure);
+
+                    /*
                     // Construct the iothub message
                     telemetry_temperature = 20.0f + ((float)rand() / RAND_MAX) * 15.0f;
                     telemetry_humidity = 60.0f + ((float)rand() / RAND_MAX) * 20.0f;
 
                     sprintf(telemetry_msg_buffer, "{\"temperature\":%.3f,\"humidity\":%.3f,\"scale\":\"%s\"}",
                             telemetry_temperature, telemetry_humidity, telemetry_scale);
+                    */
+                    sprintf(telemetry_msg_buffer, "{\"pressure\":%.3f}", pressure);
                     message_handle = IoTHubMessage_CreateFromString(telemetry_msg_buffer);
+                    
 
                     // Set Message property
                     (void)IoTHubMessage_SetMessageId(message_handle, "MSG_ID");
@@ -260,7 +292,8 @@ void iothub_ll_client_x509_sample(void)
                     // Add custom properties to message
                     //(void)IoTHubMessage_SetProperty(message_handle, "property_key", "property_value");
                     // dont use blank, special char. need encoding
-                    (void)IoTHubMessage_SetProperty(message_handle, "display message", "Hello, WizFi360-EVB-Pico!");
+                    //(void)IoTHubMessage_SetProperty(message_handle, "display message", "Hello, WizFi360-EVB-Pico!");
+                    (void)IoTHubMessage_SetProperty(message_handle, "FirmwareID", "00008DC6D7442");
 
                     //(void)printf("Sending message %d to IoTHub\r\n", (int)(messages_sent + 1));
                     //IoTHubDeviceClient_LL_SendEventAsync(device_ll_handle, message_handle, send_confirm_callback, NULL);
@@ -272,7 +305,7 @@ void iothub_ll_client_x509_sample(void)
                     IoTHubMessage_Destroy(message_handle);
 
                     messages_sent++;
-                    j=0;
+                    received_message_send_message = false;
                 }
                 else if (g_message_count_send_confirmations >= MESSAGE_COUNT)
                 {
@@ -283,8 +316,6 @@ void iothub_ll_client_x509_sample(void)
                 IoTHubDeviceClient_LL_DoWork(device_ll_handle);
 
                 sleep_ms(500); // wait for
-                j = j+1;
-                printf("j ist gleich %i\n", j);
 
             } while (g_continueRunning);
 
