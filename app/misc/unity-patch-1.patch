@@ -1,0 +1,46 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 348266d..081cc11 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -9,7 +9,7 @@
+ #                                                                                 #
+ ###################################################################################
+ 
+-cmake_minimum_required(VERSION 3.12)
++cmake_minimum_required(VERSION 3.10)
+ 
+ # Read src/unity.h file and get project version from it
+ set(UNITY_HEADER "src/unity.h")
+diff --git a/src/unity.c b/src/unity.c
+index b880248..ea925cf 100644
+--- a/src/unity.c
++++ b/src/unity.c
+@@ -5,6 +5,7 @@
+ ============================================================================ */
+ 
+ #include "unity.h"
++#include <assert.h>
+ #include <stddef.h>
+ 
+ #ifdef AVR
+@@ -21,7 +22,7 @@ void UNITY_OUTPUT_CHAR(int);
+ /* Helpful macros for us to use here in Assert functions */
+ #define UNITY_FAIL_AND_BAIL         do { Unity.CurrentTestFailed  = 1; UNITY_OUTPUT_FLUSH(); TEST_ABORT(); } while (0)
+ #define UNITY_IGNORE_AND_BAIL       do { Unity.CurrentTestIgnored = 1; UNITY_OUTPUT_FLUSH(); TEST_ABORT(); } while (0)
+-#define RETURN_IF_FAIL_OR_IGNORE    do { if (Unity.CurrentTestFailed || Unity.CurrentTestIgnored) { TEST_ABORT(); } } while (0)
++#define RETURN_IF_FAIL_OR_IGNORE    do { if (Unity.CurrentTestFailed || Unity.CurrentTestIgnored) { assert(0); } } while (0)
+ 
+ struct UNITY_STORAGE_T Unity;
+ 
+@@ -1762,10 +1763,10 @@ void UnityPrintF(const UNITY_LINE_TYPE line, const char* format, ...)
+ /*-----------------------------------------------
+  * Control Functions
+  *-----------------------------------------------*/
+-
+ /*-----------------------------------------------*/
+ void UnityFail(const char* msg, const UNITY_LINE_TYPE line)
+ {
++    assert(0);
+     RETURN_IF_FAIL_OR_IGNORE;
+ 
+     UnityTestResultsBegin(Unity.TestFile, line);

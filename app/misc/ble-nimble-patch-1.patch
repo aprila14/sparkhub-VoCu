@@ -1,0 +1,18 @@
+diff --git a/nimble/host/include/host/ble_uuid.h b/nimble/host/include/host/ble_uuid.h
+index d3576c59..6986f81b 100644
+--- a/nimble/host/include/host/ble_uuid.h
++++ b/nimble/host/include/host/ble_uuid.h
+@@ -94,10 +94,12 @@ typedef union {
+ 
+ #define BLE_UUID128_INIT(uuid128...)    \
+     {                                   \
+-        .u.type = BLE_UUID_TYPE_128,    \
++        .u = {.type = BLE_UUID_TYPE_128},    \
+         .value = { uuid128 },           \
+     }
+ 
++#define BLE_NIMBLE_PATCH_WAS_APPLIED__V1
++
+ #define BLE_UUID16_DECLARE(uuid16) \
+     ((ble_uuid_t *) (&(ble_uuid16_t) BLE_UUID16_INIT(uuid16)))
+ 
