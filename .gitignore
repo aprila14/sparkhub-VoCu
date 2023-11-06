@@ -1,2 +1,13 @@
-build/
-.vscode/
+.idea
+venv
+local_files
+CMakeLists.txt.user
+
+# Autosave files
+*autosave*
+*.cpp.*
+*.h.*
+
+*.old
+
+

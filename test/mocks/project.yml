@@ -1,0 +1,11 @@
+:cmock:
+  :mock_prefix: mock_
+  :enforce_strict_ordering: true
+  :plugins:
+    - :ignore
+    - :callback
+    - :ignore_arg
+    - :array
+    - :return_thru_ptr
+  :strippables:
+    - :PRIVILEGED_FUNCTION
