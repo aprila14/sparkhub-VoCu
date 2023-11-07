@@ -1,5 +1,5 @@
 // Please keep these 2 lines at the beginning of each cpp module - tag and local log level
-static const char* LOG_TAG = "HandleCommand";
+static const char *LOG_TAG = "HandleCommand";
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
 #ifdef IS_ESP
@@ -17,9 +17,7 @@ static const char* LOG_TAG = "HandleCommand";
 
 #include <cstdio>
 
-
-
-static EPacketHandlingResult handleCommand_test(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+static EPacketHandlingResult handleCommand_test(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'test'...");
 
@@ -28,16 +26,15 @@ static EPacketHandlingResult handleCommand_test(BleController* pController, cons
         LOG_WARNING("Invalid 'test' command. Payload length: %d", payloadLen);
         return EPacketHandlingResult::SEND_NACK;
     }
-    const prot::test_command::TCmd* pCmd = reinterpret_cast<const prot::test_command::TCmd*>(payload);  // NOLINT - we need reinterpret cast
+    const prot::test_command::TCmd *pCmd = reinterpret_cast<const prot::test_command::TCmd *>(payload); // NOLINT - we need reinterpret cast
 
     LOG_INFO("Command 'test', message %s", pCmd->message);
-
 
     prot::test_command::TRes res = {};
     sprintf(res.message, "HELLO WORLD from ESP!");
 
     LOG_INFO("About to send response RES_TEST...");
-    bool result = pController->sendPacket(prot::EPacketType::RES_TEST, reinterpret_cast<uint8_t*>(&res), sizeof(res));  // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(prot::EPacketType::RES_TEST, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
     if (!result)
     {
         LOG_ERROR("Failed to send response for 'test' command");
@@ -47,7 +44,7 @@ static EPacketHandlingResult handleCommand_test(BleController* pController, cons
     return EPacketHandlingResult::HANDLED;
 }
 
-static EPacketHandlingResult handleCommand_wiFiConnectToAp(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+static EPacketHandlingResult handleCommand_wiFiConnectToAp(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'WiFi connect to AP'...");
 
@@ -56,13 +53,13 @@ static EPacketHandlingResult handleCommand_wiFiConnectToAp(BleController* pContr
         LOG_WARNING("Invalid 'WiFi Scan AP' command. Payload length: %d", payloadLen);
         return EPacketHandlingResult::SEND_NACK;
     }
-    const prot::wifi_connect_to_ap::TCmd* pCmd = reinterpret_cast<const prot::wifi_connect_to_ap::TCmd*>(payload);  // NOLINT - we need reinterpret cast
+    const prot::wifi_connect_to_ap::TCmd *pCmd = reinterpret_cast<const prot::wifi_connect_to_ap::TCmd *>(payload); // NOLINT - we need reinterpret cast
     prot::wifi_connect_to_ap::TRes res = {};
 
-    constexpr bool SHOULD_NOT_RECONNECT = false;  // just a constant for passing as a parameter
+    constexpr bool SHOULD_NOT_RECONNECT = false; // just a constant for passing as a parameter
 
     bool functionSucceded = app::pAppController->getWiFiController()->connectToAccessPoint(
-                *pCmd, res, SHOULD_NOT_RECONNECT);
+        *pCmd, res, SHOULD_NOT_RECONNECT);
 
     LOG_INFO("Connection result: %d (0 - no error)", res.status);
     if (!functionSucceded)
@@ -72,7 +69,7 @@ static EPacketHandlingResult handleCommand_wiFiConnectToAp(BleController* pContr
     }
 
     LOG_INFO("About to send response RES_WIFI_CONNECT_TO_AP...");
-    bool result = pController->sendPacket(prot::EPacketType::RES_WIFI_CONNECT_TO_AP, reinterpret_cast<uint8_t*>(&res), sizeof(res));  // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(prot::EPacketType::RES_WIFI_CONNECT_TO_AP, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
     if (!result)
     {
         LOG_ERROR("Failed to send response for 'WiFi Connect to AP' command");
@@ -82,7 +79,7 @@ static EPacketHandlingResult handleCommand_wiFiConnectToAp(BleController* pContr
     return EPacketHandlingResult::HANDLED;
 }
 
-static EPacketHandlingResult handleCommand_wiFiDisconnectFromAp(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+static EPacketHandlingResult handleCommand_wiFiDisconnectFromAp(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'WiFi Disconnect From AP'...");
 
@@ -92,7 +89,7 @@ static EPacketHandlingResult handleCommand_wiFiDisconnectFromAp(BleController* p
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    const prot::wifi_disconnect_from_ap::TCmd* pCmd = reinterpret_cast<const prot::wifi_disconnect_from_ap::TCmd*>(payload); // NOLINT - we need reinterpret cast
+    const prot::wifi_disconnect_from_ap::TCmd *pCmd = reinterpret_cast<const prot::wifi_disconnect_from_ap::TCmd *>(payload); // NOLINT - we need reinterpret cast
     prot::wifi_disconnect_from_ap::TRes res = {};
 
     bool functionSucceded = app::pAppController->getWiFiController()->disconnectFromAccessPoint();
@@ -105,7 +102,7 @@ static EPacketHandlingResult handleCommand_wiFiDisconnectFromAp(BleController* p
     res.succeded = true;
 
     LOG_INFO("About to send response RES_WIFI_DISCONNECT_FROM_AP ...");
-    bool result = pController->sendPacket(prot::EPacketType::RES_WIFI_DISCONNECT_FROM_AP, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(prot::EPacketType::RES_WIFI_DISCONNECT_FROM_AP, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
     if (!result)
     {
         LOG_ERROR("Failed to send response for 'WiFi Disconnect From AP' command");
@@ -115,7 +112,7 @@ static EPacketHandlingResult handleCommand_wiFiDisconnectFromAp(BleController* p
     return EPacketHandlingResult::HANDLED;
 }
 
-static EPacketHandlingResult handleCommand_wiFiScanAp(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+static EPacketHandlingResult handleCommand_wiFiScanAp(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'WiFi Scan AP'...");
 
@@ -124,7 +121,7 @@ static EPacketHandlingResult handleCommand_wiFiScanAp(BleController* pController
         LOG_WARNING("Invalid 'WiFi Scan AP' command. Payload length: %d", payloadLen);
         return EPacketHandlingResult::SEND_NACK;
     }
-    const prot::wifi_scan_ap::TCmd* pCmd = reinterpret_cast<const prot::wifi_scan_ap::TCmd*>(payload);  // NOLINT - we need reinterpret cast
+    const prot::wifi_scan_ap::TCmd *pCmd = reinterpret_cast<const prot::wifi_scan_ap::TCmd *>(payload); // NOLINT - we need reinterpret cast
 
     prot::wifi_scan_ap::TRes res = {};
     bool functionSucceded = app::pAppController->getWiFiController()->scanAvailableAccessPoints(res);
@@ -136,7 +133,7 @@ static EPacketHandlingResult handleCommand_wiFiScanAp(BleController* pController
     }
 
     LOG_INFO("About to send response RES_WIFI_SCAN_AP...");
-    bool result = pController->sendPacket(prot::EPacketType::RES_WIFI_SCAN_AP, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(prot::EPacketType::RES_WIFI_SCAN_AP, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
     if (!result)
     {
         LOG_ERROR("Failed to send response for 'WiFi Scan AP' command");
@@ -145,7 +142,7 @@ static EPacketHandlingResult handleCommand_wiFiScanAp(BleController* pController
 
     return EPacketHandlingResult::HANDLED;
 }
-static EPacketHandlingResult handleCommand_wiFiSaveApCredentials(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+static EPacketHandlingResult handleCommand_wiFiSaveApCredentials(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'WiFi Save AP Credentials'...");
 
@@ -155,7 +152,7 @@ static EPacketHandlingResult handleCommand_wiFiSaveApCredentials(BleController* 
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    const prot::wifi_save_ap_credentials::TCmd* pCmd = reinterpret_cast<const prot::wifi_save_ap_credentials::TCmd*>(payload); // NOLINT - we need reinterpret cast
+    const prot::wifi_save_ap_credentials::TCmd *pCmd = reinterpret_cast<const prot::wifi_save_ap_credentials::TCmd *>(payload); // NOLINT - we need reinterpret cast
 
     pConfig->setWifiCredentials(pCmd->credentials);
 
@@ -164,7 +161,7 @@ static EPacketHandlingResult handleCommand_wiFiSaveApCredentials(BleController* 
 
     LOG_INFO("About to send response RES_WIFI_SAVE_AP_CREDENTIALS...");
     bool result = pController->sendPacket(prot::EPacketType::RES_WIFI_SAVE_AP_CREDENTIALS,
-                                          reinterpret_cast<uint8_t*>(&res), // NOLINT - we need reinterpret cast
+                                          reinterpret_cast<uint8_t *>(&res), // NOLINT - we need reinterpret cast
                                           sizeof(res));
     if (!result)
     {
@@ -181,7 +178,6 @@ prot::global_get_status::TGlobalStatus fillStatus()
 
     result.isWiFiConnected = app::pAppController->getWiFiController()->getConnectionStatus();
     result.timeSinceDeviceStartupMs = commons::getCurrentTimestampMs();
-    result.lightPercentageLevel = app::pAppController->getLightControlInterface()->getPower();
 
     result.cloudConnectionStatus = app::pAppController->getCloudController()->getConnectionStatus();
 
@@ -194,7 +190,7 @@ prot::global_get_status::TGlobalStatus fillStatus()
     return result;
 }
 
-EPacketHandlingResult handleCommand_globalGetStatus(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+EPacketHandlingResult handleCommand_globalGetStatus(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'global Get Status");
 
@@ -204,15 +200,15 @@ EPacketHandlingResult handleCommand_globalGetStatus(BleController* pController, 
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    const prot::global_get_status::TCmd* pCmd =
-            reinterpret_cast<const prot::global_get_status::TCmd*>(payload); // NOLINT - we need reinterpret cast
+    const prot::global_get_status::TCmd *pCmd =
+        reinterpret_cast<const prot::global_get_status::TCmd *>(payload); // NOLINT - we need reinterpret cast
 
     prot::global_get_status::TRes res = {};
 
     res.status = fillStatus();
 
     LOG_INFO("About to send response RES_GLOBAL_GET_STATUS...");
-    bool result = pController->sendPacket(prot::EPacketType::RES_GLOBAL_GET_STATUS, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(prot::EPacketType::RES_GLOBAL_GET_STATUS, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
     if (!result)
     {
         LOG_ERROR("Failed to send response for 'Global Get Status' command");
@@ -222,7 +218,7 @@ EPacketHandlingResult handleCommand_globalGetStatus(BleController* pController, 
     return EPacketHandlingResult::HANDLED;
 }
 
-EPacketHandlingResult handleCommand_lightSetLevel(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+EPacketHandlingResult handleCommand_lightSetLevel(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'Light Set Level'...");
 
@@ -232,11 +228,11 @@ EPacketHandlingResult handleCommand_lightSetLevel(BleController* pController, co
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    const prot::light_set_level::TCmd* pCmd = reinterpret_cast<const prot::light_set_level::TCmd*>(payload); // NOLINT - we need reinterpret cast
+    const prot::light_set_level::TCmd *pCmd = reinterpret_cast<const prot::light_set_level::TCmd *>(payload); // NOLINT - we need reinterpret cast
 
     prot::light_set_level::TRes res = {};
 
-    app::TEventData eventData = { };
+    app::TEventData eventData = {};
     eventData.lightControlSetPower.percentage = pCmd->lightPercentageLevel;
 
     bool functionSucceded = app::pAppController->addEvent(app::EEventType::LIGHT_CONTROL__SET_POWER, app::EEventExecutionType::SYNCHRONOUS, &eventData);
@@ -248,7 +244,7 @@ EPacketHandlingResult handleCommand_lightSetLevel(BleController* pController, co
     }
 
     LOG_INFO("About to send response RES_LIGHT_SET_LEVEL...");
-    bool result = pController->sendPacket(prot::EPacketType::RES_LIGHT_SET_LEVEL, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(prot::EPacketType::RES_LIGHT_SET_LEVEL, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
     if (!result)
     {
         LOG_ERROR("Failed to send response for 'Light Set Level' command");
@@ -258,7 +254,7 @@ EPacketHandlingResult handleCommand_lightSetLevel(BleController* pController, co
     return EPacketHandlingResult::HANDLED;
 }
 
-EPacketHandlingResult handleCommand_resetEsp(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+EPacketHandlingResult handleCommand_resetEsp(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     UNUSED(pController);
     UNUSED(payload);
@@ -270,10 +266,10 @@ EPacketHandlingResult handleCommand_resetEsp(BleController* pController, const u
     SLEEP_MS(500);
     esp_restart();
 
-    return EPacketHandlingResult::UNKNOWN;  // will not happen, because we called reset above, but compiler is complaining
+    return EPacketHandlingResult::UNKNOWN; // will not happen, because we called reset above, but compiler is complaining
 }
 
-EPacketHandlingResult handleCommand_cloudSendCredentials(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+EPacketHandlingResult handleCommand_cloudSendCredentials(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'Cloud Send Credentials'...");
     if (payloadLen != sizeof(prot::cloud_set_credentials::TCmd))
@@ -282,7 +278,7 @@ EPacketHandlingResult handleCommand_cloudSendCredentials(BleController* pControl
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    const prot::cloud_set_credentials::TCmd* pCmd = reinterpret_cast<const prot::cloud_set_credentials::TCmd*>(payload); // NOLINT - we need reinterpret cast
+    const prot::cloud_set_credentials::TCmd *pCmd = reinterpret_cast<const prot::cloud_set_credentials::TCmd *>(payload); // NOLINT - we need reinterpret cast
 
     prot::cloud_set_credentials::TRes res = {};
 
@@ -302,7 +298,7 @@ EPacketHandlingResult handleCommand_cloudSendCredentials(BleController* pControl
 
     LOG_INFO("About to send respose RES_CLOUD_SEND_CREDENTIALS...");
 
-    bool result = pController->sendPacket(prot::EPacketType::RES_CLOUD_SEND_CREDENTIALS, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(prot::EPacketType::RES_CLOUD_SEND_CREDENTIALS, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
     if (!result)
     {
         LOG_ERROR("Failed to send response for 'Cloud Send Credentials' command");
@@ -312,7 +308,7 @@ EPacketHandlingResult handleCommand_cloudSendCredentials(BleController* pControl
     return EPacketHandlingResult::HANDLED;
 }
 
-EPacketHandlingResult handleCommand_otaPerform(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+EPacketHandlingResult handleCommand_otaPerform(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'OTA_PEFORM'...");
     if (payloadLen != sizeof(prot::ota_perform::TCmd))
@@ -321,7 +317,7 @@ EPacketHandlingResult handleCommand_otaPerform(BleController* pController, const
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    const prot::ota_perform::TCmd* pCmd = reinterpret_cast<const prot::ota_perform::TCmd*>(payload); // NOLINT - we need reinterpret cast
+    const prot::ota_perform::TCmd *pCmd = reinterpret_cast<const prot::ota_perform::TCmd *>(payload); // NOLINT - we need reinterpret cast
     prot::ota_perform::TRes res = {};
 
     app::TEventData eventData = {};
@@ -335,13 +331,13 @@ EPacketHandlingResult handleCommand_otaPerform(BleController* pController, const
     if (functionSucceeded)
     {
         res.updateSuccess = true;
-        bool result = pController->sendPacket(prot::EPacketType::RES_OTA_PERFORM, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+        bool result = pController->sendPacket(prot::EPacketType::RES_OTA_PERFORM, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
         if (result)
         {
             LOG_INFO("About to reset in 2000 ms...");
             SLEEP_MS(2000);
             esp_restart();
-            return EPacketHandlingResult::HANDLED;  // This instruction will not be executed due to esp restart, but compiler would be complaining if it was not here
+            return EPacketHandlingResult::HANDLED; // This instruction will not be executed due to esp restart, but compiler would be complaining if it was not here
         }
         else
         {
@@ -353,7 +349,7 @@ EPacketHandlingResult handleCommand_otaPerform(BleController* pController, const
     {
         LOG_ERROR("Could not perform OTA");
         res.updateSuccess = false;
-        bool result = pController->sendPacket(prot::EPacketType::RES_OTA_PERFORM, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+        bool result = pController->sendPacket(prot::EPacketType::RES_OTA_PERFORM, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
 
         if (!result)
         {
@@ -365,35 +361,35 @@ EPacketHandlingResult handleCommand_otaPerform(BleController* pController, const
     }
 }
 
-EPacketHandlingResult handleCommand(BleController* pController, prot::EPacketType packetType,  const uint8_t* payload, uint16_t payloadLen)
+EPacketHandlingResult handleCommand(BleController *pController, prot::EPacketType packetType, const uint8_t *payload, uint16_t payloadLen)
 {
     switch (packetType)
     {
-        case prot::EPacketType::CMD_TEST:
-            return handleCommand_test(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_TEST:
+        return handleCommand_test(pController, payload, payloadLen);
 
-        case prot::EPacketType::CMD_WIFI_CONNECT_TO_AP:
-                return handleCommand_wiFiConnectToAp(pController, payload, payloadLen);
-        case prot::EPacketType::CMD_WIFI_DISCONNECT_FROM_AP:
-                return handleCommand_wiFiDisconnectFromAp(pController, payload, payloadLen);
-        case prot::EPacketType::CMD_WIFI_SCAN_AP:
-                return handleCommand_wiFiScanAp(pController, payload, payloadLen);
-        case prot::EPacketType::CMD_WIFI_SAVE_AP_CREDENTIALS:
-                return handleCommand_wiFiSaveApCredentials(pController, payload, payloadLen);
-        case prot::EPacketType::CMD_GLOBAL_GET_STATUS:
-                return handleCommand_globalGetStatus(pController, payload, payloadLen);
-        case prot::EPacketType::CMD_LIGHT_SET_LEVEL:
-                return handleCommand_lightSetLevel(pController, payload, payloadLen);
-        case prot::EPacketType::CMD_RESET_ESP:
-            return handleCommand_resetEsp(pController, payload, payloadLen);
-        case prot::EPacketType::CMD_CLOUD_SEND_CREDENTIALS:
-            return handleCommand_cloudSendCredentials(pController, payload, payloadLen);
-        case prot::EPacketType::CMD_OTA_PERFORM:
-            return handleCommand_otaPerform(pController, payload, payloadLen);
-        default:
-            LOG_ERROR("Unknown command packet type: %d (0x%04X). Length %u", packetType, packetType, payloadLen);
-            return EPacketHandlingResult::SEND_NACK;
+    case prot::EPacketType::CMD_WIFI_CONNECT_TO_AP:
+        return handleCommand_wiFiConnectToAp(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_WIFI_DISCONNECT_FROM_AP:
+        return handleCommand_wiFiDisconnectFromAp(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_WIFI_SCAN_AP:
+        return handleCommand_wiFiScanAp(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_WIFI_SAVE_AP_CREDENTIALS:
+        return handleCommand_wiFiSaveApCredentials(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_GLOBAL_GET_STATUS:
+        return handleCommand_globalGetStatus(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_LIGHT_SET_LEVEL:
+        return handleCommand_lightSetLevel(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_RESET_ESP:
+        return handleCommand_resetEsp(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_CLOUD_SEND_CREDENTIALS:
+        return handleCommand_cloudSendCredentials(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_OTA_PERFORM:
+        return handleCommand_otaPerform(pController, payload, payloadLen);
+    default:
+        LOG_ERROR("Unknown command packet type: %d (0x%04X). Length %u", packetType, packetType, payloadLen);
+        return EPacketHandlingResult::SEND_NACK;
     }
 }
 
-#endif  // IS_ESP
+#endif // IS_ESP
