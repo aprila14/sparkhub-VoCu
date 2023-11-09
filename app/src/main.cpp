@@ -16,6 +16,7 @@ static const char *LOG_TAG = "Main";
 #include "ntp_client.h"
 #include "reset_button_handler.h"
 #include "wifi_controller.h"
+#include "cloud_config.h"
 
 void initCommonGlobalModules()
 {
@@ -53,15 +54,17 @@ void initCommonGlobalModules()
     app::pAppController = &appController;
 
     // run modules which are tasks
-    bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about
+    // TODO bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about
     wifiController.runTask();
     wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
-    bleController.runTask();
+    // TODO bleController.runTask();
     ntpClient.runTask();
     cloudController.runTask();
 }
 
 #if IS_DEBUG_BUILD
+// TCloudCertificatePack newCloudCertificates;
+
 void temporaryDevelopmentCode()
 {
     // just some quick code for testing purposes
@@ -71,11 +74,27 @@ void temporaryDevelopmentCode()
     LOG_INFO("Configuration finished state = %d", state);
     pConfig->setConfigurationFinishedState(true);
 
-    LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
-    TWiFiCredentials newWifiCredentials;
-    newWifiCredentials.setSsid("4G UFI-4205");
-    newWifiCredentials.setPassword("1234567890");
-    pConfig->setWifiCredentials(newWifiCredentials);
+    {
+        LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
+        TWiFiCredentials newWifiCredentials;
+        newWifiCredentials.setSsid("4G UFI-4205");
+        newWifiCredentials.setPassword("1234567890");
+        pConfig->setWifiCredentials(newWifiCredentials);
+    }
+
+    {
+        LOG_INFO("cloud address: %s", pConfig->getCloudCredentials().cloudAddress);
+        TCloudCredentials newCloudCredentials;
+        newCloudCredentials.setCloudAddress(CLOUD_ADDRESS);
+        pConfig->setCloudCredentials(newCloudCredentials);
+    }
+
+    // {
+    //     LOG_INFO("clientPublicCertificate: %s", pConfig->getCloudCertificates().clientPublicCertificate);
+    //     newCloudCertificates.setServerPublicCertificate(DEFAULT_SERVER_PUBLIC_CERT);
+    //     newCloudCertificates.setClientPublicCertificate(DEFAULT_CLIENT_PUBLIC_CERT);
+    //     newCloudCertificates.setClientPrivateKey(DEFAULT_CLIENT_PRIVATE_KEY);
+    // }
 }
 #endif // IS_DEBUG_BUILD
 

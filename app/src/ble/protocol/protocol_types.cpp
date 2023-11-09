@@ -156,6 +156,11 @@ namespace prot
             return true;
         }
 
+        bool TCloudCertificatePack::isSetServerPublicCertificate() const
+        {
+            return serverPublicCertificate[0] != 0;
+        }
+
         bool TCloudCertificatePack::setClientPublicCertificate(const std::string &newClientPublicCertificate)
         {
             if (newClientPublicCertificate.size() > CLOUD_MAX_CERT_LENGTH)
@@ -170,6 +175,11 @@ namespace prot
             return true;
         }
 
+        bool TCloudCertificatePack::isSetClientPublicCertificate() const
+        {
+            return clientPublicCertificate[0] != 0;
+        }
+
         bool TCloudCertificatePack::setClientPrivateKey(const std::string &newClientPrivateKey)
         {
             if (newClientPrivateKey.size() > CLOUD_MAX_PRIVATE_KEY_LENGTH)
@@ -182,6 +192,11 @@ namespace prot
             ::strcpy(clientPrivateKey, newClientPrivateKey.c_str());
 
             return true;
+        }
+
+        bool TCloudCertificatePack::isSetClientPrivateKey() const
+        {
+            return clientPrivateKey[0] != 0;
         }
 
         bool TCloudCertificatePack::setClientUuid(const std::string &newClientUuid)

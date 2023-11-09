@@ -59,17 +59,6 @@ ECloudConnectionStatus CloudController::getConnectionStatus() const
     return m_connectionStatus;
 }
 
-bool CloudController::handleSetLightIntensityLevel(const json_parser::TSetLightLevel &setLightLevelStructure)
-{
-    LOG_INFO("Handling SetLightIntensityLevel");
-
-    app::TEventData eventData = {};
-    eventData.lightControlSetPower.percentage = setLightLevelStructure.lightIntensityLevel;
-
-    bool result = app::pAppController->addEvent(app::EEventType::LIGHT_CONTROL__SET_POWER, app::EEventExecutionType::SYNCHRONOUS, &eventData);
-    return result;
-}
-
 void CloudController::handleStatusReportResponse(bool ACK)
 {
     LOG_INFO("Status Report ACK received");
@@ -120,12 +109,7 @@ void CloudController::_run()
 
     configureCloudConnection(credentials);
 
-    const prot::cloud_set_credentials::TCloudCertificatePack &certificates = pConfig->getCloudCertificates();
-
-    m_clientUuid = std::string(certificates.clientUuid);
-    m_deviceStatusTopic = m_clientUuid + std::string("/deviceStatus");
-    m_heartbeatTopic = m_clientUuid + std::string("/heartbeat");
-
+    m_deviceStatusTopic = std::string("/deviceStatus");
     if (m_connectionStatus == ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED)
     {
         LOG_INFO("Client could not be configured");
@@ -152,7 +136,6 @@ void CloudController::_run()
 void CloudController::perform()
 {
     updateDeviceStatus();
-    sendHeartbeat();
     SLEEP_MS(SLEEP_TIME_BETWEEN_SENDING_MESSAGES);
 }
 
@@ -170,14 +153,6 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
 
     m_msgCounter++;
     m_mqttClientController.sendMessage(m_deviceStatusTopic, deviceStatusMessage);
-}
-
-void CloudController::sendHeartbeat() // NOLINT - we don't want to make it const
-{
-    std::string heartbeatMessage = json_parser::prepareHeartbeatMessage(m_msgCounter);
-
-    m_msgCounter++;
-    m_mqttClientController.sendMessage(m_heartbeatTopic, heartbeatMessage);
 }
 
 void CloudController::setConnectionStatus(ECloudConnectionStatus status)
@@ -235,11 +210,6 @@ void CloudController::startCloudConnection()
         LOG_INFO("Error while starting mqttClientController, could not connect to the cloud");
         m_connectionStatus = ECloudConnectionStatus::CLOUD_STATUS_DISABLED;
     }
-}
-
-const std::string &CloudController::getClientUuid() const
-{
-    return m_clientUuid;
 }
 
 void CloudController::heartbeatWatchdogTimerCallback()

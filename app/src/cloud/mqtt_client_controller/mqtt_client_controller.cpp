@@ -9,10 +9,10 @@ static const char *LOG_TAG = "MqttClient";
 #include "config_nvs.h"
 #include "json_parser.h"
 #include "sleep.h"
+#include "cloud_config.h"
 
 namespace
 {
-
     const std::string TELEMETRY_TOPIC = std::string("v1/devices/sparkhub-pressure-sensor-2/messages/events");
 
     constexpr uint8_t MAX_QUEUE_SIZE = 10;
@@ -83,80 +83,9 @@ void MqttClientController::handleMessages()
     }
 }
 
-bool MqttClientController::handleFrame(const json_parser::TFrame &frame) // NOLINT - we don't want to make it const
-{
-    bool result = false;
-    switch (frame.msgCode)
-    {
-    case json_parser::EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL:
-        result = m_pCloudController->handleSetLightIntensityLevel(frame.frameData.setLightLevelStruct);
-        if (!result)
-        {
-            LOG_INFO("Could not set light intensity level");
-            return false;
-        }
-        break;
-    case json_parser::EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE:
-        LOG_INFO("Unexpected event occured, this message should be sent from ESP to cloud, not the other way round");
-        return false;
-    case json_parser::EMsgCode::MSG_STATUS_REPORT:
-        LOG_INFO("Unexpected event occured, this message should be sent from ESP to cloud, not the other way round");
-        return false;
-    case json_parser::EMsgCode::MSG_STATUS_REPORT_RESPONSE:
-        m_pCloudController->handleStatusReportResponse(frame.frameData.responseStruct.ACK);
-        break;
-    case json_parser::EMsgCode::MSG_HEARTBEAT:
-        LOG_INFO("Unexpected event occured, this message should be sent from ESP to cloud, not the other way round");
-        return false;
-    case json_parser::EMsgCode::MSG_HEARTBEAT_RESPONSE:
-        m_pCloudController->handleHeartbeatResponse();
-        break;
-    case json_parser::EMsgCode::MSG_GET_LIGHT_INTENSITY_LEVEL:
-        break;
-    case json_parser::EMsgCode::MSG_OTA_UPDATE_LINK:
-    {
-        LOG_INFO("Handling frame MSG_OTA_UPDATE_LINK");
-        m_pCloudController->handleOtaUpdateLink(frame.frameData.otaUpdateLinkStruct);
-        break;
-    }
-
-    case json_parser::EMsgCode::MSG_OTA_UPDATE_LINK_RESPONSE:
-    {
-        LOG_INFO("Unexpected event occured, this message should be sent from ESP to cloud, not the other way round");
-        return false;
-    }
-
-    case json_parser::EMsgCode::MSG_TIME_SLOTS_LIST:
-    {
-        LOG_INFO("Handling frame MSG_TIME_SLOTS_LIST");
-        // TODO call appropiate CloudController function
-        break;
-    }
-
-    case json_parser::EMsgCode::MSG_TIME_SLOTS_LIST_RESPONSE:
-    {
-        LOG_INFO("Unexpected event occured, this message should be sent from ESP to cloud, not the other way round");
-        return false;
-    }
-    default:
-    {
-        LOG_INFO("Cannot handle the frame, unknown msgCode");
-        return false;
-    }
-    }
-
-    return true;
-}
-
 void MqttClientController::subscribeToRequiredTopics() // NOLINT - we don't want to make it const
 {
-    std::string rpcRequestTopicAws = m_pCloudController->getClientUuid() + std::string("/requests");
-    std::string heartbeatResponseTopicAws = m_pCloudController->getClientUuid() + std::string("/heartbeat/response");
-    std::string deviceStatusResponseTopicAws = m_pCloudController->getClientUuid() + std::string("/deviceStatus/response");
-
-    subscribeToTopic(rpcRequestTopicAws, 1);
-    subscribeToTopic(heartbeatResponseTopicAws, 1);
-    subscribeToTopic(deviceStatusResponseTopicAws, 1);
+    // TODO add later subscribe topics
 }
 
 bool MqttClientController::init(const prot::cloud_set_credentials::TCloudCredentials &credentials)
@@ -183,10 +112,41 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(const prot
 
     esp_mqtt_client_config_t mqttConfig = {};
     mqttConfig.uri = credentials.cloudAddress;
+    mqttConfig.port = 8883;
+    mqttConfig.keepalive = 60; // seconds
+    // mqttConfig.buffer_size = 4200;
+    mqttConfig.client_id = DEFAULT_DEVICE_ID;
+    mqttConfig.username = DEFAULT_MQTT_USERNAME;
 
-    mqttConfig.cert_pem = cloudCertificatePack.serverPublicCertificate;
-    mqttConfig.client_cert_pem = cloudCertificatePack.clientPublicCertificate;
-    mqttConfig.client_key_pem = cloudCertificatePack.clientPrivateKey;
+    if (cloudCertificatePack.isSetServerPublicCertificate())
+    {
+        mqttConfig.cert_pem = cloudCertificatePack.serverPublicCertificate;
+    }
+    else
+    {
+        LOG_WARNING("Default root public cert");
+        mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
+    }
+
+    if (cloudCertificatePack.isSetClientPublicCertificate())
+    {
+        mqttConfig.client_cert_pem = cloudCertificatePack.clientPublicCertificate;
+    }
+    else
+    {
+        LOG_WARNING("Default device public cert");
+        mqttConfig.client_cert_pem = DEFAULT_CLIENT_PUBLIC_CERT;
+    }
+
+    if (cloudCertificatePack.isSetClientPrivateKey())
+    {
+        mqttConfig.client_key_pem = cloudCertificatePack.clientPrivateKey;
+    }
+    else
+    {
+        LOG_WARNING("Default device private key");
+        mqttConfig.client_key_pem = DEFAULT_CLIENT_PRIVATE_KEY;
+    }
 
     return mqttConfig;
 }
@@ -244,13 +204,11 @@ void MqttClientController::eventHandler(void *handlerArgs, esp_event_base_t base
             break;
         }
         std::string newMessage = std::string(event->data, 0, event->data_len);
-        requestId = json_parser::extractRequestIdFromTopic(std::string(event->topic,
-                                                                       0,
-                                                                       event->topic_len));
+
         {
             LOCK_GUARD(m_messageQueueMutex, messageQueueMutex);
             messageStruct.message = newMessage;
-            messageStruct.requestId = requestId;
+            messageStruct.requestId = -1;
             m_messageQueue.push(messageStruct);
         }
 
@@ -302,18 +260,6 @@ bool MqttClientController::sendMessage(const std::string &topic, const std::stri
 bool MqttClientController::checkIfMessageBufferIsEmpty() const
 {
     return m_messageQueue.empty();
-}
-
-bool MqttClientController::sendWidgetLightIntensity(const json_parser::TSetLightLevel &setLightLevelStructure, int32_t requestId)
-{
-    std::string message = std::to_string(setLightLevelStructure.lightIntensityLevel);
-    std::string topic = std::string("v1/devices/me/rpc/response/") + std::to_string(requestId);
-
-    LOG_INFO("Topic: %s, message: %s", topic.c_str(), message.c_str());
-
-    bool result = sendMessage(topic, message);
-
-    return result;
 }
 
 json_parser::TMessage MqttClientController::getNextMessage()

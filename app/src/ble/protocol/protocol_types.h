@@ -16,74 +16,74 @@
 #include <string>
 
 // enum copied from 'esp_wifi_types.h' (wifi_auth_mode_t)
-enum class i2a_wifi_auth_mode_t : uint32_t
+enum class device_wifi_auth_mode_t : uint32_t
 {
-    I2A_WIFI_AUTH_OPEN = 0,
+    DEVICE_WIFI_AUTH_OPEN = 0,
     /**< authenticate mode : open */ // auth method tested
     // WIFI_AUTH_WEP = 1,              /**< authenticate mode : WEP */
-    I2A_WIFI_AUTH_WPA_PSK = 2,
+    DEVICE_WIFI_AUTH_WPA_PSK = 2,
     /**< authenticate mode : WPA_PSK */ // auth method not tested
-    I2A_WIFI_AUTH_WPA2_PSK = 3,
+    DEVICE_WIFI_AUTH_WPA2_PSK = 3,
     /**< authenticate mode : WPA2_PSK */ // auth method tested
-    I2A_WIFI_AUTH_WPA_WPA2_PSK = 4,
+    DEVICE_WIFI_AUTH_WPA_WPA2_PSK = 4,
     /**< authenticate mode : WPA_WPA2_PSK */ // auth method not tested
     // WIFI_AUTH_WPA2_ENTERPRISE = 5,  /**< authenticate mode : WPA2_ENTERPRISE */
-    I2A_WIFI_AUTH_WPA3_PSK = 6,
+    DEVICE_WIFI_AUTH_WPA3_PSK = 6,
     /**< authenticate mode : WPA3_PSK */ // auth method tested
-    I2A_WIFI_AUTH_WPA2_WPA3_PSK = 7,
+    DEVICE_WIFI_AUTH_WPA2_WPA3_PSK = 7,
     /**< authenticate mode : WPA2_WPA3_PSK */ // auth method not tested
     // WIFI_AUTH_WAPI_PSK = 8 ,         /**< authenticate mode : WAPI_PSK */
-    I2A_WIFI_AUTH_NOT_SET = 10, // use WPA2 or open then
+    DEVICE_WIFI_AUTH_NOT_SET = 10, // use WPA2 or open then
 };
 
-enum class i2a_wifi_second_chan_t : uint32_t
+enum class device_wifi_second_chan_t : uint32_t
 {
-    I2A_WIFI_SECOND_CHAN_NONE = 0, /**< the channel width is HT20 */
-    I2A_WIFI_SECOND_CHAN_ABOVE,    /**< the channel width is HT40 and the secondary channel is above the primary channel */
-    I2A_WIFI_SECOND_CHAN_BELOW,    /**< the channel width is HT40 and the secondary channel is below the primary channel */
+    DEVICE_WIFI_SECOND_CHAN_NONE = 0, /**< the channel width is HT20 */
+    DEVICE_WIFI_SECOND_CHAN_ABOVE,    /**< the channel width is HT40 and the secondary channel is above the primary channel */
+    DEVICE_WIFI_SECOND_CHAN_BELOW,    /**< the channel width is HT40 and the secondary channel is below the primary channel */
 };
 
 enum class EConnectToSsidErrorReason : uint32_t
 {
-    I2A_WIFI_REASON_NO_ERROR = 0,
-    I2A_WIFI_REASON_UNSPECIFIED = 1,   // Internal failure
-    I2A_WIFI_REASON_AUTH_EXPIRE = 2,   // Previous authenthication is no longer valid
-    I2A_WIFI_REASON_AUTH_LEAVE = 3,    // Sending station is leaving/has left
-    I2A_WIFI_REASON_ASSOC_EXPIRE = 4,  // Disassociated due to inactivity
-    I2A_WIFI_REASON_ASSOC_TOOMANY = 5, // Access point not able to handle all associated STAs
-    // I2A_WIFI_REASON_NOT_AUTHED               = 6,
-    // I2A_WIFI_REASON_NOT_ASSOCED              = 7,
-    I2A_WIFI_REASON_ASSOC_LEAVE = 8, // station disconnected
-    // I2A_WIFI_REASON_ASSOC_NOT_AUTHED         = 9,
-    // I2A_WIFI_REASON_DISASSOC_PWRCAP_BAD      = 10,
-    // I2A_WIFI_REASON_DISASSOC_SUPCHAN_BAD     = 11,
-    // I2A_WIFI_REASON_IE_INVALID               = 13,
-    I2A_WIFI_REASON_MIC_FAILURE = 14,            // Message integrity code failure
-    I2A_WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT = 15, // wrong password or timeout occured
-    // I2A_WIFI_REASON_GROUP_KEY_UPDATE_TIMEOUT = 16,
-    // I2A_WIFI_REASON_IE_IN_4WAY_DIFFERS       = 17,
-    // I2A_WIFI_REASON_GROUP_CIPHER_INVALID     = 18,
-    // I2A_WIFI_REASON_PAIRWISE_CIPHER_INVALID  = 19,
-    // I2A_WIFI_REASON_AKMP_INVALID             = 20,
-    // I2A_WIFI_REASON_UNSUPP_RSN_IE_VERSION    = 21,
-    // I2A_WIFI_REASON_INVALID_RSN_IE_CAP       = 22,
-    // I2A_WIFI_REASON_802_1X_AUTH_FAILED       = 23,
-    // I2A_WIFI_REASON_CIPHER_SUITE_REJECTED    = 24,
+    DEVICE_WIFI_REASON_NO_ERROR = 0,
+    DEVICE_WIFI_REASON_UNSPECIFIED = 1,   // Internal failure
+    DEVICE_WIFI_REASON_AUTH_EXPIRE = 2,   // Previous authenthication is no longer valid
+    DEVICE_WIFI_REASON_AUTH_LEAVE = 3,    // Sending station is leaving/has left
+    DEVICE_WIFI_REASON_ASSOC_EXPIRE = 4,  // Disassociated due to inactivity
+    DEVICE_WIFI_REASON_ASSOC_TOOMANY = 5, // Access point not able to handle all associated STAs
+    // DEVICE_WIFI_REASON_NOT_AUTHED               = 6,
+    // DEVICE_WIFI_REASON_NOT_ASSOCED              = 7,
+    DEVICE_WIFI_REASON_ASSOC_LEAVE = 8, // station disconnected
+    // DEVICE_WIFI_REASON_ASSOC_NOT_AUTHED         = 9,
+    // DEVICE_WIFI_REASON_DISASSOC_PWRCAP_BAD      = 10,
+    // DEVICE_WIFI_REASON_DISASSOC_SUPCHAN_BAD     = 11,
+    // DEVICE_WIFI_REASON_IE_INVALID               = 13,
+    DEVICE_WIFI_REASON_MIC_FAILURE = 14,            // Message integrity code failure
+    DEVICE_WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT = 15, // wrong password or timeout occured
+    // DEVICE_WIFI_REASON_GROUP_KEY_UPDATE_TIMEOUT = 16,
+    // DEVICE_WIFI_REASON_IE_IN_4WAY_DIFFERS       = 17,
+    // DEVICE_WIFI_REASON_GROUP_CIPHER_INVALID     = 18,
+    // DEVICE_WIFI_REASON_PAIRWISE_CIPHER_INVALID  = 19,
+    // DEVICE_WIFI_REASON_AKMP_INVALID             = 20,
+    // DEVICE_WIFI_REASON_UNSUPP_RSN_IE_VERSION    = 21,
+    // DEVICE_WIFI_REASON_INVALID_RSN_IE_CAP       = 22,
+    // DEVICE_WIFI_REASON_802_1X_AUTH_FAILED       = 23,
+    // DEVICE_WIFI_REASON_CIPHER_SUITE_REJECTED    = 24,
 
-    // I2A_WIFI_REASON_INVALID_PMKID            = 53,
+    // DEVICE_WIFI_REASON_INVALID_PMKID            = 53,
 
-    I2A_WIFI_REASON_BEACON_TIMEOUT = 200, // lost connection to the Access Point (e.g. Access Point switched off)
-    I2A_WIFI_REASON_NO_AP_FOUND = 201,    // wrong SSID, authenthication method or AP not found
-    I2A_WIFI_REASON_AUTH_FAIL = 202,      // other authentication issue
-    I2A_WIFI_REASON_ASSOC_FAIL = 203,     // otther association failure
-    // I2A_WIFI_REASON_HANDSHAKE_TIMEOUT        = 204,
-    I2A_WIFI_REASON_CONNECTION_FAIL = 205, // connection to the AP has failed
-    // I2A_WIFI_REASON_AP_TSF_RESET             = 206,
-    // I2A_WIFI_REASON_ROAMING                  = 207,
+    DEVICE_WIFI_REASON_BEACON_TIMEOUT = 200, // lost connection to the Access Point (e.g. Access Point switched off)
+    DEVICE_WIFI_REASON_NO_AP_FOUND = 201,    // wrong SSID, authenthication method or AP not found
+    DEVICE_WIFI_REASON_AUTH_FAIL = 202,      // other authentication issue
+    DEVICE_WIFI_REASON_ASSOC_FAIL = 203,     // otther association failure
+    // DEVICE_WIFI_REASON_HANDSHAKE_TIMEOUT        = 204,
+    DEVICE_WIFI_REASON_CONNECTION_FAIL = 205, // connection to the AP has failed
+    // DEVICE_WIFI_REASON_AP_TSF_RESET             = 206,
+    // DEVICE_WIFI_REASON_ROAMING                  = 207,
 
-    I2A_WIFI_REASON_TIMEOUT = 401,            // timeout reported (on application level)
-    I2A_WIFI_REASON_MAX_RETRY_EXCEEDED = 402, // max retry number exceeded (on application level)
-    I2A_WIFI_REASON_OTHER = 500               // unknown reason, check low-level code to verify exact cause
+    DEVICE_WIFI_REASON_TIMEOUT = 401,            // timeout reported (on application level)
+    DEVICE_WIFI_REASON_MAX_RETRY_EXCEEDED = 402, // max retry number exceeded (on application level)
+    DEVICE_WIFI_REASON_OTHER = 500               // unknown reason, check low-level code to verify exact cause
 };
 
 enum class ECloudConnectionStatus : uint8_t
@@ -192,9 +192,9 @@ namespace prot
             uint8_t ssid[MAX_WIFI_SSID_LENGTH + 1];
             uint8_t bssid[BSSID_OR_MAC_LENGTH];
             uint8_t primaryChannel;
-            i2a_wifi_second_chan_t secondaryChannel;
+            device_wifi_second_chan_t secondaryChannel;
             int8_t rssi;
-            i2a_wifi_auth_mode_t authmode;
+            device_wifi_auth_mode_t authmode;
         };
 
         /** Response of a 'WiFi scan AP' command */
@@ -218,7 +218,7 @@ namespace prot
         {
             char ssid[MAX_WIFI_SSID_LENGTH + 1];         // null terminated, +1 for the last null
             char password[MAX_WIFI_PASSWORD_LENGTH + 1]; // null terminated, +1 for the last null
-            i2a_wifi_auth_mode_t authorizationMode;      // optional authorization mode to use. If not set WPA2 or AUTH_OPEN will be used
+            device_wifi_auth_mode_t authorizationMode;   // optional authorization mode to use. If not set WPA2 or AUTH_OPEN will be used
 
             TWiFiCredentials();
 
@@ -365,6 +365,9 @@ namespace prot
             bool setClientPrivateKey(const std::string &newClientPrivateKey);
 
             bool setClientUuid(const std::string &newClientUuid);
+            bool isSetServerPublicCertificate() const;
+            bool isSetClientPublicCertificate() const;
+            bool isSetClientPrivateKey() const;
         };
 
         struct __attribute__((packed)) TCmd

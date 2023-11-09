@@ -7,18 +7,18 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
-
-###############################################################################
+# ##############################################################################
 # LINTING
-###############################################################################
- if (RUN_LINTING AND UNIX)
-     find_program(CLANG_TIDY_COMMAND NAMES clang-tidy-10)
-     if(NOT CLANG_TIDY_COMMAND)
-         message(FATAL_ERROR "CMake_RUN_CLANG_TIDY is ON but clang-tidy is not found!")
-         set(CMAKE_CXX_CLANG_TIDY "" CACHE STRING "" FORCE)
-     else()
-         set(CLANG_TIDY_CHECKS
-             "\
+# ##############################################################################
+if(RUN_LINTING AND UNIX)
+    find_program(CLANG_TIDY_COMMAND NAMES clang-tidy-10)
+
+    if(NOT CLANG_TIDY_COMMAND)
+        message(FATAL_ERROR "CMake_RUN_CLANG_TIDY is ON but clang-tidy is not found!")
+        set(CMAKE_CXX_CLANG_TIDY "" CACHE STRING "" FORCE)
+    else()
+        set(CLANG_TIDY_CHECKS
+            "\
  -*,\
  bugprone-*,\
  -bugprone-branch-clone,\
@@ -59,28 +59,23 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
  -readability-uppercase-literal-suffix\
  ")
 
-          set(CLANG_TIDY_WARNINGS_AS_ERRORS "-warnings-as-errors=*;")
-#          set(CLANG_TIDY_WARNINGS_AS_ERRORS "")  # if you would like to disbale error, to quickly fix many warning instead
+        set(CLANG_TIDY_WARNINGS_AS_ERRORS "-warnings-as-errors=*;")
 
-         set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND};-format-style=file;${CLANG_TIDY_WARNINGS_AS_ERRORS}-checks=${CLANG_TIDY_CHECKS};-header-filter='${CMAKE_SOURCE_DIR}/src/*'")
-     endif()
- endif ()
+        # set(CLANG_TIDY_WARNINGS_AS_ERRORS "")  # if you would like to disbale error, to quickly fix many warning instead
+        set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND};-format-style=file;${CLANG_TIDY_WARNINGS_AS_ERRORS}-checks=${CLANG_TIDY_CHECKS};-header-filter='${CMAKE_SOURCE_DIR}/src/*'")
+    endif()
+endif()
 
 add_definitions(-DTESTING)
-
 
 set(TEST_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(TOP_REPO_PATH "${CMAKE_CURRENT_SOURCE_DIR}/..")
 set(COMPONENT_PATH "${TOP_REPO_PATH}/app")
 set(SRC_DIR "${TOP_REPO_PATH}/app/src/")
 
-
 include(${COMPONENT_PATH}/src/sources_list.cmake)
 
-
 add_definitions(-DIS_ESP)
-
-
 
 # Test files - independent from the main project sources
 set(TEST_FILES
@@ -104,17 +99,14 @@ set(TEST_FILES
 
     ${TEST_SRC_DIR}/cobs_test.cpp
     ${TEST_SRC_DIR}/test_circular_buffer.cpp
-    )
+)
 
 set(TEST_INCLUDE_DIRS
     ${TEST_SRC_DIR}
     ${TEST_SRC_DIR}/code_mocks
-    )
-
-
+)
 
 # MOCK_FILES
-
 set(ESP_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mocks/headers_for_mocks/")
 
 # all headers copied directly from the esp-idf (some modified to compile)
@@ -358,7 +350,6 @@ set(ESP_HEADERS_FILES
     ${ESP_HEADERS_DIR}/freertos/include/esp_additions/freertos/FreeRTOSConfig.h
     ${ESP_HEADERS_DIR}/freertos/port/xtensa/include/freertos/FreeRTOSConfig_arch.h
 
-
     ${ESP_HEADERS_DIR}/bt/host/nimble/nimble/nimble/host/include/host/ble_uuid.h
     ${ESP_HEADERS_DIR}/bt/host/nimble/nimble/porting/nimble/include/sysinit/sysinit.h
     ${ESP_HEADERS_DIR}/bt/host/nimble/nimble/nimble/host/include/host/ble_hs.h
@@ -430,10 +421,7 @@ set(ESP_HEADERS_FILES
     ${ESP_HEADERS_DIR}/freertos/port/xtensa/include/freertos/portmacro.h
     ${ESP_HEADERS_DIR}/freertos/port/xtensa/include/freertos/portbenchmark.h
 
-
-
-    #OTA
-
+    # OTA
     ${ESP_HEADERS_DIR}/aws/ota-for-aws-iot-embedded-sdk/source/include/ota.h
     ${ESP_HEADERS_DIR}/aws/ota-for-aws-iot-embedded-sdk/source/include/ota_cbor_private.h
     ${ESP_HEADERS_DIR}/aws/ota-for-aws-iot-embedded-sdk/source/include/ota_config_defaults.h
@@ -446,7 +434,6 @@ set(ESP_HEADERS_FILES
     ${ESP_HEADERS_DIR}/aws/ota-for-aws-iot-embedded-sdk/source/include/ota_private.h
 
     ${ESP_HEADERS_DIR}/aws/ota-for-aws-iot-embedded-sdk/source/portable/os/ota_os_freertos.h
-
 
     ${ESP_HEADERS_DIR}/standard/coreJSON/source/include/core_json.h
 
@@ -463,14 +450,15 @@ set(ESP_HEADERS_FILES
     ${ESP_HEADERS_DIR}/ota/aws_esp_ota_ops.h
     ${ESP_HEADERS_DIR}/ota/ota_pal.h
     ${ESP_HEADERS_DIR}/posix-compat/semaphore.h
-    )
+)
 
 # Directories where ESP_HEADERS_FILES are
 set(ESP_HEADERS_INCLUDE_DIRS
     ${ESP_HEADERS_DIR}/
     ${ESP_HEADERS_DIR}/log/include/
     ${ESP_HEADERS_DIR}/esp_rom/include/
-#    ${ESP_HEADERS_DIR}/esp_rom/include/esp32s3/rom/
+
+    # ${ESP_HEADERS_DIR}/esp_rom/include/esp32s3/rom/
     ${ESP_HEADERS_DIR}/driver/include
     ${ESP_HEADERS_DIR}/driver/include/driver/
     ${ESP_HEADERS_DIR}/esp_common/include/
@@ -548,8 +536,7 @@ set(ESP_HEADERS_INCLUDE_DIRS
     ${ESP_HEADERS_DIR}/standard/coreMQTT/source/include/
     ${ESP_HEADERS_DIR}/standard/coreMQTT/source/interface/
     ${ESP_HEADERS_DIR}/standard/backoffAlgorithm/source/include/
-    )
-
+)
 
 set(ESP_GENERATED_MOCKS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mocks/generated_mocks/")
 set(ESP_GENERATED_MOCKS_FILES
@@ -637,7 +624,7 @@ set(ESP_GENERATED_MOCKS_FILES
 
     ${ESP_GENERATED_MOCKS_DIR}/esp_rom/include/esp32s3/rom/mock_gpio.c
     ${ESP_GENERATED_MOCKS_DIR}/esp_rom/include/esp32s3/rom/mock_gpio.h
-    )
+)
 
 set(ESP_GENERATED_MOCKS_INCLUDE_DIRS
     ${ESP_GENERATED_MOCKS_DIR}/log/include/
@@ -673,7 +660,7 @@ set(ESP_GENERATED_MOCKS_INCLUDE_DIRS
     ${ESP_GENERATED_MOCKS_DIR}/aws/ota-for-aws-iot-embedded-sdk/source/include/
 
     ${ESP_GENERATED_MOCKS_DIR}/standard/coreMQTT/source/include/
-    )
+)
 
 set(ESP_IDF_FILES_COPIED_MANUALLY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mocks/copied_manually/")
 set(ESP_IDF_FILES_COPIED_MANUALLY_FILES
@@ -681,43 +668,38 @@ set(ESP_IDF_FILES_COPIED_MANUALLY_FILES
     ${ESP_IDF_FILES_COPIED_MANUALLY_DIR}/cJSON/cJSON.h
     ${ESP_IDF_FILES_COPIED_MANUALLY_DIR}/cJSON/cJSON_Utils.c
     ${ESP_IDF_FILES_COPIED_MANUALLY_DIR}/cJSON/cJSON_Utils.h
-    )
+)
 set(ESP_IDF_FILES_COPIED_MANUALLY_INCLUDE_DIRS
     ${ESP_IDF_FILES_COPIED_MANUALLY_DIR}/cJSON/
-    )
-
-
+)
 
 set(MISC_MOCKS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mocks/misc_mocks/")
 set(MISC_MOCKS_FILES
     ${MISC_MOCKS_DIR}/external_variables.cpp
     ${MISC_MOCKS_DIR}/sdkconfig.h
-    )
+)
 
 set(EMISC_MOCKS_INCLUDE_DIRS
     ${MISC_MOCKS_DIR}/
-    )
-
-
+)
 
 add_executable(esp32_test_on_pc
-              ${TESTABLE_APPLICATION_FILES}
-              ${TEST_FILES}
-              ${ESP_HEADERS_FILES}
-              ${ESP_GENERATED_MOCKS_FILES}
-              ${MISC_MOCKS_FILES}
-              ${ESP_IDF_FILES_COPIED_MANUALLY_FILES}
-              )
+    ${TESTABLE_APPLICATION_FILES}
+    ${TEST_FILES}
+    ${ESP_HEADERS_FILES}
+    ${ESP_GENERATED_MOCKS_FILES}
+    ${MISC_MOCKS_FILES}
+    ${ESP_IDF_FILES_COPIED_MANUALLY_FILES}
+)
 
 target_include_directories(esp32_test_on_pc PUBLIC
-                           ${TEST_INCLUDE_DIRS}
-                           ${TESTABLE_APPLICATION_INCLUDE_DIRS}
-                           ${ESP_HEADERS_INCLUDE_DIRS}
-                           ${ESP_GENERATED_MOCKS_INCLUDE_DIRS}
-                           ${EMISC_MOCKS_INCLUDE_DIRS}
-                           ${ESP_IDF_FILES_COPIED_MANUALLY_INCLUDE_DIRS}
-    )
-
+    ${TEST_INCLUDE_DIRS}
+    ${TESTABLE_APPLICATION_INCLUDE_DIRS}
+    ${ESP_HEADERS_INCLUDE_DIRS}
+    ${ESP_GENERATED_MOCKS_INCLUDE_DIRS}
+    ${EMISC_MOCKS_INCLUDE_DIRS}
+    ${ESP_IDF_FILES_COPIED_MANUALLY_INCLUDE_DIRS}
+)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wno-format -Wno-unused-variable -Wno-unused-function")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wno-format -Wno-unused-variable -Wno-unused-function")
@@ -727,28 +709,26 @@ foreach(FILE IN ITEMS ${CMOCK_FILES})
         "-Wno-comment -Wno-error -Wno-unused-function -Wno-return-type -Wno-cpp")
 endforeach()
 
-
-if (${BUILD_TESTS})
+if(${BUILD_TESTS})
     # Specify compilation switches
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-    endif ()
+    endif()
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTESTING")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTESTING")
 
-
     message("CMake current dir: ${CMAKE_CURRENT_BINARY_DIR}")
     set(GTEST_INSTALLED_DIR "${CMAKE_BINARY_DIR}/externals/googletest/bin")
-    set(GTest_DIR "${GTEST_INSTALLED_DIR}/lib/cmake/GTest/" )
+    set(GTest_DIR "${GTEST_INSTALLED_DIR}/lib/cmake/GTest/")
     find_package(GTest CONFIG REQUIRED NO_DEFAULT_PATH CONFIGS GTestConfig.cmake)
     include_directories("${GTEST_INSTALLED_DIR}/include")
     target_link_libraries(esp32_test_on_pc GTest::gtest GTest::gmock)
-endif ()
+endif()
 
 set(UNITY_INSTALLED_DIR "${CMAKE_BINARY_DIR}/externals/unity/bin")
-set(unity_DIR "${UNITY_INSTALLED_DIR}/lib/cmake/unity/" )
+set(unity_DIR "${UNITY_INSTALLED_DIR}/lib/cmake/unity/")
 find_package(unity REQUIRED CONFIGS "unityConfig.cmake")
 include_directories("${UNITY_INSTALLED_DIR}/include/unity")
 target_link_libraries(esp32_test_on_pc unity::framework ${CMOCK_LIBRARY})
@@ -757,17 +737,18 @@ target_link_libraries(esp32_test_on_pc unity::framework ${CMOCK_LIBRARY})
 find_library(CMOCK_LIBRARY
     NAMES cmock
     PATHS "${CMAKE_BINARY_DIR}/externals/cmock/src/")
+
 # Include directory from src dir meson/ninja because the build does not install these files
 include_directories("${CMAKE_SOURCE_DIR}/app/externals/CMock/src/")
 
 target_link_libraries(esp32_test_on_pc ${CMOCK_LIBRARY} stdc++fs)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME i2a)
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME sparkhub)
 
 # Define coverage run environment
 set(DIRECTORIES_TO_INCLUDE_IN_COVERAGE
     -d ${SRC_DIR}/
-    )
+)
 
 # Run all tests
 add_custom_target(run_tests
@@ -775,7 +756,7 @@ add_custom_target(run_tests
     COMMAND esp32_test_on_pc
     COMMAND echo "End of tests"
     DEPENDS esp32_test_on_pc
-    )
+)
 
 # Run all tests with code coverage extraction
 add_custom_target(run_coverage
@@ -783,18 +764,17 @@ add_custom_target(run_coverage
     COMMAND lcov --directory . --zerocounters
     COMMAND esp32_test_on_pc
     COMMAND lcov --no-extern ${DIRECTORIES_TO_INCLUDE_IN_COVERAGE}
-        --base-directory .
-        --directory .
-        --capture
-        --output-file i2a.info
-    COMMAND lcov --remove i2a.info '${CMAKE_BINARY_DIR}/externals/*' -o i2a.info.filtered
-    COMMAND genhtml -o ${CMAKE_BINARY_DIR}/test_coverage -t "I2A Test Coverage" --num-spaces 4 i2a.info.filtered
+    --base-directory .
+    --directory .
+    --capture
+    --output-file sparkhub.info
+    COMMAND lcov --remove sparkhub.info '${CMAKE_BINARY_DIR}/externals/*' -o sparkhub.info.filtered
+    COMMAND genhtml -o ${CMAKE_BINARY_DIR}/test_coverage -t "sparkhub Test Coverage" --num-spaces 4 sparkhub.info.filtered
     COMMAND echo "End of tests"
     DEPENDS esp32_test_on_pc
-    )
+)
 
-
-if (RUN_STATIC_ANALYSIS AND UNIX)
+if(RUN_STATIC_ANALYSIS AND UNIX)
     set(STATIC_ANALYSER_FLAGS "--analyze \
     -Xanalyzer -analyzer-output=html \
     -Xanalyzer -o ${CMAKE_BINARY_DIR}")
@@ -808,4 +788,4 @@ if (RUN_STATIC_ANALYSIS AND UNIX)
         ${ESP_GENERATED_MOCKS_INCLUDE_DIRS}
         ${EMISC_MOCKS_INCLUDE_DIRS}
     )
-endif ()
+endif()

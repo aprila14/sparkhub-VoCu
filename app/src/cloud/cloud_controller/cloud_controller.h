@@ -30,11 +30,6 @@ public:
     ECloudConnectionStatus getConnectionStatus() const;
 
     /**
-     * Function handling required actions after getting setLightIntensityLevel request
-     */
-    static bool handleSetLightIntensityLevel(const json_parser::TSetLightLevel &setLightLevelStructure);
-
-    /**
      * Function handling response to the StatusReport message
      */
     static void handleStatusReportResponse(bool ACK);
@@ -77,11 +72,6 @@ public:
 
     const esp_mqtt_client_handle_t &getMqttClientHandle();
 
-    /**
-     * Function returning client UUID, needed in case of connection with AWS cloud
-     */
-    const std::string &getClientUuid() const;
-
 #if !TESTING
 private:
 #endif
@@ -94,12 +84,6 @@ private:
      * Function preparing and sending device status information
      */
     void updateDeviceStatus();
-
-    /**
-     * Function preparing and sending heartbeat message
-     */
-
-    void sendHeartbeat();
 
     /**
      * Function setting connection status to given value
@@ -129,10 +113,7 @@ private:
 
     MqttClientController m_mqttClientController; // pointer to MqttClientController for calling lower-level functions
 
-    std::string m_clientUuid;
-
     std::string m_deviceStatusTopic;
-    std::string m_heartbeatTopic;
 };
 
 #endif // CLOUDCONTROLLER_H
