@@ -13,8 +13,6 @@ static const char *LOG_TAG = "MqttClient";
 
 namespace
 {
-    const std::string TELEMETRY_TOPIC = std::string("v1/devices/sparkhub-pressure-sensor-2/messages/events");
-
     constexpr uint8_t MAX_QUEUE_SIZE = 10;
     constexpr int MQTT_CLIENT_ERROR_PUBLISH = -1;
     constexpr int MQTT_CLIENT_SUBSCRIPTION_ERROR = -1;
@@ -114,7 +112,6 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(const prot
     mqttConfig.uri = credentials.cloudAddress;
     mqttConfig.port = 8883;
     mqttConfig.keepalive = 60; // seconds
-    // mqttConfig.buffer_size = 4200;
     mqttConfig.client_id = DEFAULT_DEVICE_ID;
     mqttConfig.username = DEFAULT_MQTT_USERNAME;
 

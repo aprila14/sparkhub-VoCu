@@ -6,6 +6,8 @@
 #define DEFAULT_DEVICE_ID "sparkhub-pressure-sensor-2"
 #define DEFAULT_MQTT_USERNAME "pressure-sensor-paid.azure-devices.net/" DEFAULT_DEVICE_ID "/?api-version=2021-04-12"
 
+#define DEFAULT_TELEMETRY_MQTT_TOPIC "devices/" DEFAULT_DEVICE_ID "/messages/events/"
+
 #define DEFAULT_SERVER_PUBLIC_CERT                                       \
     "-----BEGIN CERTIFICATE-----\n"                                      \
     "MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh\n" \

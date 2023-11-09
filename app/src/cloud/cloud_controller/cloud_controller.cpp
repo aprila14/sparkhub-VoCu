@@ -10,12 +10,13 @@ static const char *LOG_TAG = "CloudController";
 #include "ntp_client.h"
 #include "protocol_types.h"
 #include "sleep.h"
+#include "cloud_config.h"
 
 #include <memory>
 
 namespace
 {
-    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3000;
+    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3600 * 1000; // once per hour
     constexpr uint16_t LOCAL_TIME_OFFSET = UtcOffset::OFFSET_UTC_2;
     constexpr int8_t MQTT_CONNECTION_WAIT_TIME_INFINITE = -1;
     constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS = 1000;
@@ -109,7 +110,7 @@ void CloudController::_run()
 
     configureCloudConnection(credentials);
 
-    m_deviceStatusTopic = std::string("/deviceStatus");
+    m_deviceStatusTopic = std::string(DEFAULT_TELEMETRY_MQTT_TOPIC);
     if (m_connectionStatus == ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED)
     {
         LOG_INFO("Client could not be configured");
