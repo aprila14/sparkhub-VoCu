@@ -34,19 +34,13 @@ git submodule update --init --recursive
 
 ### Apply patches:
 ```
-cd $PROJECT_DIR
-cd app/externals/Unity
-git stash
-git apply ../../misc/unity-patch-1.patch
+cd ${PROJECT_DIR}/app/externals/Unity
+git apply ${PROJECT_DIR}/app/misc/unity-patch-1.patch
 
-cd $PROJECT_DIR
-cd app/externals/CMock
-git stash
-git apply ../../misc/cmock-patch-1.patch
+cd ${PROJECT_DIR}/app/externals/CMock
+git apply ${PROJECT_DIR}/app/misc/cmock-patch-1.patch
 
-cd ${$PROJECT_DIR}
-cd app/externals/esp-idf/components/bt/host/nimble/nimble
-git stash
+cd ${PROJECT_DIR}/app/externals/esp-idf/components/bt/host/nimble/nimble
 git apply ${PROJECT_DIR}/app/misc/ble-nimble-patch-1.patch
 ```
 
