@@ -122,8 +122,6 @@ namespace prot
 
         CMD_GLOBAL_GET_STATUS = 0x0024, ///< Get information regarding all modules
 
-        CMD_LIGHT_SET_LEVEL = 0x0025, ///< Set light level
-
         CMD_OTA_PERFORM = 0x0030, ///< Run OTA firmware update
 
         CMD_CLOUD_SEND_CREDENTIALS = 0x0040, ///< Send cloud credentials from BLE device to ESP
@@ -142,7 +140,6 @@ namespace prot
         RES_WIFI_SAVE_AP_CREDENTIALS = CMD_WIFI_SAVE_AP_CREDENTIALS | RESULT_FLAG, ///< Result of CMD_SAVE_AP_CREDENTIALS
 
         RES_GLOBAL_GET_STATUS = CMD_GLOBAL_GET_STATUS | RESULT_FLAG, ///< Result of CMD_GLOBAL_GET_STATUS
-        RES_LIGHT_SET_LEVEL = CMD_LIGHT_SET_LEVEL | RESULT_FLAG,     ///< Result of CMD_LIGHT_SET_LEVEL
 
         RES_OTA_PERFORM = CMD_OTA_PERFORM | RESULT_FLAG, ///< Result of CMD_OTA_PERFORM
 
@@ -282,7 +279,6 @@ namespace prot
         struct __attribute__((packed)) TGlobalStatus
         {
             bool isWiFiConnected;
-            uint8_t lightPercentageLevel;
             uint64_t timeSinceDeviceStartupMs;
             uint8_t macBle[MAC_ADDRESS_LENGTH_IN_BYTES];
             uint8_t macWiFi[MAC_ADDRESS_LENGTH_IN_BYTES];
@@ -311,20 +307,6 @@ namespace prot
         };
 
     } // namespace global_reset_esp
-
-    namespace light_set_level
-    {
-        struct __attribute__((packed)) TCmd
-        {
-            uint8_t lightPercentageLevel;
-        };
-
-        struct __attribute__((packed)) TRes
-        {
-            uint8_t dummyByte;
-        };
-
-    } // namespace light_set_level
 
     namespace cloud_set_credentials
     {

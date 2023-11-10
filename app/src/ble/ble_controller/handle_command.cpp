@@ -218,42 +218,6 @@ EPacketHandlingResult handleCommand_globalGetStatus(BleController *pController, 
     return EPacketHandlingResult::HANDLED;
 }
 
-EPacketHandlingResult handleCommand_lightSetLevel(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
-{
-    LOG_INFO("Handling command 'Light Set Level'...");
-
-    if (payloadLen != sizeof(prot::light_set_level::TCmd))
-    {
-        LOG_WARNING("Invalid 'light Set Level' command. Payload length: %d", payloadLen);
-        return EPacketHandlingResult::SEND_NACK;
-    }
-
-    const prot::light_set_level::TCmd *pCmd = reinterpret_cast<const prot::light_set_level::TCmd *>(payload); // NOLINT - we need reinterpret cast
-
-    prot::light_set_level::TRes res = {};
-
-    app::TEventData eventData = {};
-    eventData.lightControlSetPower.percentage = pCmd->lightPercentageLevel;
-
-    bool functionSucceded = app::pAppController->addEvent(app::EEventType::LIGHT_CONTROL__SET_POWER, app::EEventExecutionType::SYNCHRONOUS, &eventData);
-
-    if (!functionSucceded)
-    {
-        LOG_ERROR("LightControlInterface::setPower() failed!");
-        return EPacketHandlingResult::SEND_NACK;
-    }
-
-    LOG_INFO("About to send response RES_LIGHT_SET_LEVEL...");
-    bool result = pController->sendPacket(prot::EPacketType::RES_LIGHT_SET_LEVEL, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
-    if (!result)
-    {
-        LOG_ERROR("Failed to send response for 'Light Set Level' command");
-        return EPacketHandlingResult::SEND_NACK;
-    }
-
-    return EPacketHandlingResult::HANDLED;
-}
-
 EPacketHandlingResult handleCommand_resetEsp(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
 {
     UNUSED(pController);
@@ -378,8 +342,6 @@ EPacketHandlingResult handleCommand(BleController *pController, prot::EPacketTyp
         return handleCommand_wiFiSaveApCredentials(pController, payload, payloadLen);
     case prot::EPacketType::CMD_GLOBAL_GET_STATUS:
         return handleCommand_globalGetStatus(pController, payload, payloadLen);
-    case prot::EPacketType::CMD_LIGHT_SET_LEVEL:
-        return handleCommand_lightSetLevel(pController, payload, payloadLen);
     case prot::EPacketType::CMD_RESET_ESP:
         return handleCommand_resetEsp(pController, payload, payloadLen);
     case prot::EPacketType::CMD_CLOUD_SEND_CREDENTIALS:

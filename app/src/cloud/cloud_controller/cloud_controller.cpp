@@ -136,7 +136,7 @@ void CloudController::_run()
 
 void CloudController::perform()
 {
-    updateDeviceStatus();
+    updateDeviceStatus(); // TODO change to pressure value
     SLEEP_MS(SLEEP_TIME_BETWEEN_SENDING_MESSAGES);
 }
 
