@@ -20,12 +20,10 @@
  * under the License.
  */
 
-
 // Please keep these 2 lines at the beginning of each cpp module - tag and local log level
-static const char* LOG_TAG = "BLEUART_ESP";
+static const char *LOG_TAG = "BLEUART_ESP";
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 // NOTE: control Nimble logging level in modlog.h
-
 
 #include "bleuart_esp.h"
 
@@ -57,28 +55,25 @@ static const char* LOG_TAG = "BLEUART_ESP";
 #include <cstring>
 #include <cstdio>
 
+#define CONFIG_BLE_DEVICE_NAME "sparkhub-levelSense"
 
-#define CONFIG_BLE_DEVICE_NAME "i2a-LightControl"
-
-
-constexpr uint16_t BLEUART_ESP_NUMBER_OF_TRANSMISSION_BUFFERS = (CONFIG_BT_NIMBLE_ACL_BUF_COUNT - 1);  // -1 for safety
-constexpr uint16_t BLEUART_ESP_TRANSMISSION_BUFFER_SIZE = (CONFIG_BT_NIMBLE_ACL_BUF_SIZE - 5);  // theoretically -3 is enough
+constexpr uint16_t BLEUART_ESP_NUMBER_OF_TRANSMISSION_BUFFERS = (CONFIG_BT_NIMBLE_ACL_BUF_COUNT - 1); // -1 for safety
+constexpr uint16_t BLEUART_ESP_TRANSMISSION_BUFFER_SIZE = (CONFIG_BT_NIMBLE_ACL_BUF_SIZE - 5);        // theoretically -3 is enough
 constexpr uint16_t BLEUART_RX_CIRCULAR_BUFFER_SIZE = (MAX_BLE_PACKET_SIZE * 1.3);
 constexpr uint16_t BLEUART_TX_CIRCULAR_BUFFER_SIZE = (MAX_BLE_PACKET_SIZE * 1.2);
-
 
 // Nimble global parameters - TODO - consider if it is worth refactoring to get rid of global parameters completely
 // But is it worth the effort at all?
 // (but it would require refactorization of bleuart.c - nimble code)
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-void ble_store_config_init(void);
+    void ble_store_config_init(void);
 #ifdef __cplusplus
 }
 #endif
-
 
 extern uint16_t g_console_conn_handle;
 extern uint16_t g_bleuart_attr_read_handle;
@@ -86,18 +81,14 @@ extern uint16_t g_bleuart_attr_read_handle;
 static uint8_t bleuartRxCircularBuffer[BLEUART_RX_CIRCULAR_BUFFER_SIZE];
 static uint8_t bleuartTxCircularBuffer[BLEUART_TX_CIRCULAR_BUFFER_SIZE];
 
-
-BleuartDriver* g_pBleuartDriver = nullptr;
-
-
+BleuartDriver *g_pBleuartDriver = nullptr;
 
 BleuartDriver::BleuartDriver()
-:
-m_rxBuffer(bleuartRxCircularBuffer, BLEUART_RX_CIRCULAR_BUFFER_SIZE),
-m_txBuffer(bleuartTxCircularBuffer, BLEUART_TX_CIRCULAR_BUFFER_SIZE),
-m_txLoopTaskHandle(nullptr),
-m_isSynced(false),
-m_isClientConnected(false)
+    : m_rxBuffer(bleuartRxCircularBuffer, BLEUART_RX_CIRCULAR_BUFFER_SIZE),
+      m_txBuffer(bleuartTxCircularBuffer, BLEUART_TX_CIRCULAR_BUFFER_SIZE),
+      m_txLoopTaskHandle(nullptr),
+      m_isSynced(false),
+      m_isClientConnected(false)
 {
     m_txDataAvailable = xSemaphoreCreateBinary();
 
@@ -112,7 +103,7 @@ m_isClientConnected(false)
     m_clientConnectedSemaphore = xSemaphoreCreateBinary();
 }
 
-bool BleuartDriver::writeData(const uint8_t* pData, uint32_t dataLength)
+bool BleuartDriver::writeData(const uint8_t *pData, uint32_t dataLength)
 {
     if (!m_isClientConnected)
     {
@@ -171,22 +162,22 @@ int BleuartDriver::getFreeTxBufferSize()
     uint32_t freeSize = m_txBuffer.getFreeSize();
     xSemaphoreGive(m_rxBufferMutex);
 
-    return (int) freeSize;
+    return (int)freeSize;
 }
 
 /**
  * @brief global function, required to be called from other module that we don't really control
  */
-void bleuart_handleIncomingData(const uint8_t* pData, uint32_t dataSize)
+void bleuart_handleIncomingData(const uint8_t *pData, uint32_t dataSize)
 {
     g_pBleuartDriver->handleIncomingData(pData, dataSize);
 }
 
-void BleuartDriver::handleIncomingData(const uint8_t* pData, uint32_t dataSize)
+void BleuartDriver::handleIncomingData(const uint8_t *pData, uint32_t dataSize)
 {
 #ifdef IS_DEBUG_BUILD
-        std::string txt = commons::dataArrayToHexStr(128, pData, (uint32_t) dataSize);
-        LOG_INFO("handleIncomingData, size %u: %s", dataSize, txt.c_str());
+    std::string txt = commons::dataArrayToHexStr(128, pData, (uint32_t)dataSize);
+    LOG_INFO("handleIncomingData, size %u: %s", dataSize, txt.c_str());
 #else
     LOG_DEBUG("handleIncomingData, size %u", dataSize);
 #endif
@@ -219,7 +210,7 @@ void BleuartDriver::waitUntilClientConnected()
     seamphoreTake(m_clientConnectedSemaphore);
 
     LOG_INFO("BLE client finally connected!");
-    SLEEP_MS(300);  // TODO - determine what time is requried to be slept before data sending works after establishing connection (or if there is some flag for that...)
+    SLEEP_MS(300); // TODO - determine what time is requried to be slept before data sending works after establishing connection (or if there is some flag for that...)
 }
 
 bool BleuartDriver::isClientConnected() const
@@ -241,19 +232,19 @@ void BleuartDriver::printBleMacAddress()
            macAddress[2], macAddress[1], macAddress[0]);
 }
 
-int BleuartDriver::handleGapEvent(struct ble_gap_event* event, void* arg)
+int BleuartDriver::handleGapEvent(struct ble_gap_event *event, void *arg)
 {
-    BleuartDriver* pDriver = reinterpret_cast<BleuartDriver*>(arg);  // NOLINT we need reinterpret cast
+    BleuartDriver *pDriver = reinterpret_cast<BleuartDriver *>(arg); // NOLINT we need reinterpret cast
     return pDriver->_handleGapEvent(event);
 }
 
-int BleuartDriver::_handleGapEvent(struct ble_gap_event* event)
+int BleuartDriver::_handleGapEvent(struct ble_gap_event *event)
 {
     struct ble_gap_conn_desc desc = {};
     int rc = 0;
-    #ifndef IS_DEBUG_BUILD
-        UNUSED(rc);
-    #endif
+#ifndef IS_DEBUG_BUILD
+    UNUSED(rc);
+#endif
 
     LOG_DEBUG("BLE_GAP_EVENT %d", event->type);
 
@@ -270,13 +261,15 @@ int BleuartDriver::_handleGapEvent(struct ble_gap_event* event)
     case BLE_GAP_EVENT_CONNECT:
         LOG_INFO("BLE_GAP_EVENT_CONNECT");
         /* A new connection was established or a connection attempt failed. */
-        if (event->connect.status == 0) {
+        if (event->connect.status == 0)
+        {
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             DEBUG_ASSERT(rc == 0);
             bleuart_set_conn_handle(event->connect.conn_handle);
         }
 
-        if (event->connect.status != 0) {
+        if (event->connect.status != 0)
+        {
             /* Connection failed; resume advertising. */
             advertise();
         }
@@ -291,7 +284,6 @@ int BleuartDriver::_handleGapEvent(struct ble_gap_event* event)
         /* Connection terminated; resume advertising. */
         advertise();
         return 0;
-
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
         LOG_INFO("BLE_GAP_EVENT_ADV_COMPLETE");
@@ -320,11 +312,10 @@ int BleuartDriver::_handleGapEvent(struct ble_gap_event* event)
     return 0;
 }
 
-
-void BleuartDriver::advertise()  // NOLINT not static
+void BleuartDriver::advertise() // NOLINT not static
 {
-    struct ble_gap_adv_params adv_params = { };
-    struct ble_hs_adv_fields fields = { };
+    struct ble_gap_adv_params adv_params = {};
+    struct ble_hs_adv_fields fields = {};
     int rc = 0;
 
     /*
@@ -340,7 +331,7 @@ void BleuartDriver::advertise()  // NOLINT not static
      *     o Discoverability in forthcoming advertisement (general)
      *     o BLE-only (BR/EDR unsupported).
      */
-    fields.flags = BLE_HS_ADV_F_DISC_GEN |  // NOLINT - we don't control these flags
+    fields.flags = BLE_HS_ADV_F_DISC_GEN | // NOLINT - we don't control these flags
                    BLE_HS_ADV_F_BREDR_UNSUP;
 
     /* Indicate that the TX power level field should be included; have the
@@ -350,22 +341,24 @@ void BleuartDriver::advertise()  // NOLINT not static
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
-    fields.uuids128 = BLE_UUID128(&gatt_svr_svc_uart_uuid.u);  // NOLINT - we don't control these macros
+    fields.uuids128 = BLE_UUID128(&gatt_svr_svc_uart_uuid.u); // NOLINT - we don't control these macros
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         return;
     }
 
     memset(&fields, 0, sizeof fields);
-    fields.name = (uint8_t *)ble_svc_gap_device_name();  // NOLINT rabbit hole with const cast, don't touch this is not our code anyway and works
-    fields.name_len = strlen((char *)fields.name);  //  NOLINT rabbit hole with const cast, don't touch this is not our code anyway and works
+    fields.name = (uint8_t *)ble_svc_gap_device_name(); // NOLINT rabbit hole with const cast, don't touch this is not our code anyway and works
+    fields.name_len = strlen((char *)fields.name);      //  NOLINT rabbit hole with const cast, don't touch this is not our code anyway and works
     fields.name_is_complete = 1;
 
     rc = ble_gap_adv_rsp_set_fields(&fields);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         return;
     }
 
@@ -375,17 +368,16 @@ void BleuartDriver::advertise()  // NOLINT not static
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
     rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, BleuartDriver::handleGapEvent, g_pBleuartDriver);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         return;
     }
 }
-
 
 void BleuartDriver::synchronizationCallback()
 {
     g_pBleuartDriver->_synchronizationCallback();
 }
-
 
 void BleuartDriver::_synchronizationCallback()
 {
@@ -400,7 +392,7 @@ void BleuartDriver::_synchronizationCallback()
  * @brief Run function for the BLE task
  * @param param - user data
  */
-static void _runBlePrphHostTask(void* param)
+static void _runBlePrphHostTask(void *param)
 {
     UNUSED(param);
 
@@ -418,11 +410,11 @@ static void _runBlePrphHostTask(void* param)
  * @param dataLength Length of the array to transmit
  * @return True on success, false otherwise
  */
-static bool _transmitSingleBuffer(const uint8_t* pData, uint32_t dataLength)
+static bool _transmitSingleBuffer(const uint8_t *pData, uint32_t dataLength)
 {
     DEBUG_ASSERT(dataLength <= BLEUART_ESP_TRANSMISSION_BUFFER_SIZE);
 
-    struct os_mbuf* om = ble_hs_mbuf_from_flat(pData, (uint16_t) dataLength);
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(pData, (uint16_t)dataLength);
     if (!om)
     {
         LOG_WARNING("Excessive TX transfer - no free buffer from ble_hs_mbuf_from_flat()");
@@ -430,7 +422,7 @@ static bool _transmitSingleBuffer(const uint8_t* pData, uint32_t dataLength)
     }
 
 #ifdef IS_DEBUG_BUILD
-    std::string txt = commons::dataArrayToHexStr(128, pData, (uint32_t) dataLength);
+    std::string txt = commons::dataArrayToHexStr(128, pData, (uint32_t)dataLength);
     LOG_INFO("About to send a buffer with %u bytes: %s", dataLength, txt.c_str());
 #endif
 
@@ -451,7 +443,7 @@ static bool _transmitSingleBuffer(const uint8_t* pData, uint32_t dataLength)
  * @param maxRetries Max number of transmission retrying before giving up
  * @return True on success, false otherwise
  */
-static bool _transmitSingleBufferWithRetries(const uint8_t* pData, uint32_t dataLength, int maxRetries)
+static bool _transmitSingleBufferWithRetries(const uint8_t *pData, uint32_t dataLength, int maxRetries)
 {
     int sendingIteration = 0;
 
@@ -465,7 +457,7 @@ static bool _transmitSingleBufferWithRetries(const uint8_t* pData, uint32_t data
             return true;
         }
 
-        if (i == (maxRetries  / 10))
+        if (i == (maxRetries / 10))
         {
             LOG_WARNING("Buffer still not transmitted after %d retires!", i);
         }
@@ -474,26 +466,25 @@ static bool _transmitSingleBufferWithRetries(const uint8_t* pData, uint32_t data
             LOG_INFO("Failed to sent a single buffer with %d bytes. Retrying in 10 ms", dataLength);
         }
 
-        SLEEP_MS(30);  // chosen arbitraly, after some testing
+        SLEEP_MS(30); // chosen arbitraly, after some testing
     }
 
     return false;
 }
 
-void BleuartDriver::performTxLoop(void* pBleuartDriverVoid)
+void BleuartDriver::performTxLoop(void *pBleuartDriverVoid)
 {
-    BleuartDriver* pDriver = reinterpret_cast<BleuartDriver*>(pBleuartDriverVoid);  // NOLINT we need reinterpret cast
+    BleuartDriver *pDriver = reinterpret_cast<BleuartDriver *>(pBleuartDriverVoid); // NOLINT we need reinterpret cast
     return pDriver->_performTxLoop();
 }
-
 
 void BleuartDriver::_performTxLoop()
 {
     LOG_INFO("performTxLoop started...");
-    uint8_t transmissionBuffer[BLEUART_ESP_TRANSMISSION_BUFFER_SIZE] = {0};  ///< Used as a working buffer to prepare a BLE transmission data
+    uint8_t transmissionBuffer[BLEUART_ESP_TRANSMISSION_BUFFER_SIZE] = {0}; ///< Used as a working buffer to prepare a BLE transmission data
 
     const int MAX_NUMBER_OF_BUFFER_TRANSMISSION_BEFORE_SLEEP = 10;
-    int buffersSentInRow = 0;  ///< Count buffers sent without any sleep. We don't want to send too much buffers at once - it would consume the whole CPU
+    int buffersSentInRow = 0; ///< Count buffers sent without any sleep. We don't want to send too much buffers at once - it would consume the whole CPU
 
     xSemaphoreTake(m_txDataAvailable, portMAX_DELAY);
     while (1)
@@ -512,11 +503,10 @@ void BleuartDriver::_performTxLoop()
             }
             else
             {
-                transmissionBuffer[bytesToSend] = (uint8_t) byte;
+                transmissionBuffer[bytesToSend] = (uint8_t)byte;
             }
         }
         xSemaphoreGive(m_txBufferMutex);
-
 
         if (bytesToSend == 0)
         {
@@ -556,8 +546,6 @@ bool BleuartDriver::runTask()
 {
     LOG_DEBUG("bleuart_initAndStartThread started...");
 
-
-
     esp_err_t espError = esp_nimble_hci_and_controller_init();
     if (espError != ESP_OK)
     {
@@ -565,14 +553,11 @@ bool BleuartDriver::runTask()
         return false;
     }
 
-
     nimble_port_init();
-
 
     /* Initialize the BLE host. */
     ble_hs_cfg.sync_cb = BleuartDriver::synchronizationCallback;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
-
 
     int rc = bleuart_gatt_svr_init();
     if (rc != 0)
@@ -589,29 +574,27 @@ bool BleuartDriver::runTask()
         return false;
     }
 
-
     ble_store_config_init();
 
     LOG_DEBUG("About to call nimble_port_freertos_init()");
     nimble_port_freertos_init(_runBlePrphHostTask);
-
 
     LOG_INFO("Waiting for bleUartControl.isSynced...");
     while (!m_isSynced)
     {
         SLEEP_MS(20);
     }
-    SLEEP_MS(500);  // TODO - determine if additional sleep required
+    SLEEP_MS(500); // TODO - determine if additional sleep required
 
     BleuartDriver::printBleMacAddress();
 
     BaseType_t xReturned = xTaskCreate(
-                BleuartDriver::performTxLoop,
-                "bleuart_tx_loop",
-                DEFAULT_STACK_SIZE * 2,  // one default stack size is not enough here
-                this,
-                DEFAULT_TASK_PRIORITY,
-                &m_txLoopTaskHandle);
+        BleuartDriver::performTxLoop,
+        "bleuart_tx_loop",
+        DEFAULT_STACK_SIZE * 2, // one default stack size is not enough here
+        this,
+        DEFAULT_TASK_PRIORITY,
+        &m_txLoopTaskHandle);
     if (xReturned != pdPASS)
     {
         LOG_ERROR("Failed to create task 'bleuart_tx'!");

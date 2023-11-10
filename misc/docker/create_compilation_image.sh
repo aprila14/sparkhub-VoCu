@@ -5,7 +5,7 @@
 
 set -e
 
-IMAGE_PREFIX="${IMAGE_PREFIX:-i2a-esp32}"
+IMAGE_PREFIX="${IMAGE_PREFIX:-sparkhub-esp32}"
 UBUNTU_VERSION="${UBUNTU_VERSION:-18.04}"
 SCRIPT_DIRECTORY=$(dirname "$0")
 

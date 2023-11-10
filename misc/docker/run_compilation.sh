@@ -2,7 +2,7 @@
 
 set -e
 
-IMAGE_PREFIX="i2a-esp32"
+IMAGE_PREFIX="sparkhub-esp32"
 TOP_DIRECTORY=$(realpath $(dirname $0)/../..)
 
 # Change these variables to match your setup or pass as a parameter

@@ -8,8 +8,8 @@ In this README, the following variables are assumed to be defined: `$PROJECT_DIR
 E.g.: 
 ```
 PROJECT_DIR=`pwd`  # source root - directory of this README
-BUILD_DIR=$(realpath $PROJECT_DIR/../build-skogluft-esp32)
-BUILD_TEST_DIR=$(realpath $PROJECT_DIR/../build-skogluft-esp32-test)
+BUILD_DIR=$(realpath $PROJECT_DIR/../build-sparkhub-esp32)
+BUILD_TEST_DIR=$(realpath $PROJECT_DIR/../build-sparkhub-esp32-test)
 ```
 
 ## 2.1. Prerequisites
@@ -47,7 +47,7 @@ git apply ../../misc/cmock-patch-1.patch
 cd ${$PROJECT_DIR}
 cd app/externals/esp-idf/components/bt/host/nimble/nimble
 git stash
-git apply ${SOURCE_ROOT_DIR}/app/misc/ble-nimble-patch-1.patch
+git apply ${PROJECT_DIR}/app/misc/ble-nimble-patch-1.patch
 
 cd $PROJECT_DIR
 cd app/externals/aws-iot-device-sdk-embedded-C/libraries/aws/ota-for-aws-iot-embedded-sdk/source/dependency/coreJSON
@@ -74,8 +74,8 @@ To build the firmware, issue the following commands:
 ```
 mkdir $BUILD_DIR
 cd $BUILD_DIR
-idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DBUILD_IN_DEBUG_MODE=ON build  
-# e.g.: idf.py -B . -C ../sparkhub-levelsense/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DBUILD_IN_DEBUG_MODE=ON build 
+idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=ON build  
+# e.g.: idf.py -B . -C ../sparkhub-levelsense/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=ON build 
 ```
 
 ## 2.5. IDE editing

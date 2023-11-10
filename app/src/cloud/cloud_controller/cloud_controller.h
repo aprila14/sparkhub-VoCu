@@ -22,17 +22,12 @@ public:
     /**
      * Set m_credentials to the values from the given structure
      */
-    bool setCredentials(const prot::cloud_set_credentials::TCloudCredentials& credentials);
+    bool setCredentials(const prot::cloud_set_credentials::TCloudCredentials &credentials);
 
     /**
      * Return current CloudController state
      */
     ECloudConnectionStatus getConnectionStatus() const;
-
-    /**
-     * Function handling required actions after getting setLightIntensityLevel request
-     */
-    static bool handleSetLightIntensityLevel(const json_parser::TSetLightLevel& setLightLevelStructure);
 
     /**
      * Function handling response to the StatusReport message
@@ -44,26 +39,15 @@ public:
      */
     void handleHeartbeatResponse();
 
-
-    /**
-     * Function handling getLightIntensityLevel request from the widget
-     */
-    void handleWidgetGetLightIntensityLevel(int32_t requestId);
-
-    /**
-     * Function handling setLightIntensityLevel request from the widget
-     */
-    bool handleWidgetSetLightIntensityLevel(const json_parser::TSetLightLevel& setLightLevelStructure, int32_t requestId);
-
     /**
      * Function handling OTA update initiated from cloud
      */
-    bool handleOtaUpdateLink(const TOtaUpdateLink& otaUpdateLinkStructure);
+    bool handleOtaUpdateLink(const TOtaUpdateLink &otaUpdateLinkStructure);
 
     /**
      * Function handling message with time slots list for LightScheduler
      */
-    bool handleTimeSlotsList(const json_parser::TTimeSlotsList& timeSlotsListStructure);
+    bool handleTimeSlotsList(const json_parser::TTimeSlotsList &timeSlotsListStructure);
 
     /**
      * Timer callback enabling to change CloudController status if the response for the heeartbeat from the cloud
@@ -73,7 +57,7 @@ public:
 
     /**
      * Function giving semaphore informing CloudController task, that CloudConnection is ready to be established
-    */
+     */
     void setReadinessToConnect();
 
     /**
@@ -86,21 +70,13 @@ public:
      */
     void setNotConnectedStatus();
 
-    const esp_mqtt_client_handle_t& getMqttClientHandle();
-
-#if !BUILD_WITH_THINGSBOARD
-    /**
-     * Function returning client UUID, needed in case of connection with AWS cloud
-     */
-    const std::string& getClientUuid() const;
-
-#endif  // !BUILD_WITH_THINGSBOARD
+    const esp_mqtt_client_handle_t &getMqttClientHandle();
 
 #if !TESTING
 private:
 #endif
 
-    static void run(void* pObject);
+    static void run(void *pObject);
     void _run();
     void perform();
 
@@ -110,12 +86,6 @@ private:
     void updateDeviceStatus();
 
     /**
-     * Function preparing and sending heartbeat message
-     */
-
-    void sendHeartbeat();
-
-    /**
      * Function setting connection status to given value
      */
     void setConnectionStatus(ECloudConnectionStatus status);
@@ -123,33 +93,27 @@ private:
     /**
      * Function initializing MqttClientController with the given credentials
      */
-    void configureCloudConnection(const prot::cloud_set_credentials::TCloudCredentials& credentials);
+    void configureCloudConnection(const prot::cloud_set_credentials::TCloudCredentials &credentials);
 
     /**
      * Function starting MqttClientController connection
      */
     void startCloudConnection();
 
-    TaskHandle_t m_taskHandle;                      //handle to runTask
-    TimerHandle_t m_heartbeatWatchdogTimer;         //handle to timer handling heartbeat checking
-    uint32_t m_heartbeatWatchdogCounter;            //watchdog counter that shall be zeroed everytime when heartbeat message
-                                                    //comes in. If it exceedes specified value, CloudController
-                                                    //is regarded as not connected
-    uint32_t m_msgCounter;                          //outgoing messages counter
+    TaskHandle_t m_taskHandle;              // handle to runTask
+    TimerHandle_t m_heartbeatWatchdogTimer; // handle to timer handling heartbeat checking
+    uint32_t m_heartbeatWatchdogCounter;    // watchdog counter that shall be zeroed everytime when heartbeat message
+                                            // comes in. If it exceedes specified value, CloudController
+                                            // is regarded as not connected
+    uint32_t m_msgCounter;                  // outgoing messages counter
 
-    SemaphoreHandle_t m_semaphoreCredentialsReady;  //sempahore indicating that credentials for cloud connection have already been stored in NVS
+    SemaphoreHandle_t m_semaphoreCredentialsReady; // sempahore indicating that credentials for cloud connection have already been stored in NVS
 
     ECloudConnectionStatus m_connectionStatus;
 
-    MqttClientController m_mqttClientController;    //pointer to MqttClientController for calling lower-level functions
-
-#if !BUILD_WITH_THINGSBOARD
-    std::string m_clientUuid;
-#endif // !BUILD_WITH_THINGSBOARD
+    MqttClientController m_mqttClientController; // pointer to MqttClientController for calling lower-level functions
 
     std::string m_deviceStatusTopic;
-    std::string m_heartbeatTopic;
-
 };
 
 #endif // CLOUDCONTROLLER_H

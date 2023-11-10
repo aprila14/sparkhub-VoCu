@@ -3,7 +3,7 @@
 set(NOT_TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/manual_tests/console_control.cpp
     ${SRC_DIR}/manual_tests/console_control.h
-    )
+)
 
 set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/main.cpp
@@ -29,8 +29,6 @@ set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/controller/app_controller.cpp
     ${SRC_DIR}/controller/app_controller.h
     ${SRC_DIR}/controller/app_events.h
-    ${SRC_DIR}/controller/business_logic/light_scheduler.cpp
-    ${SRC_DIR}/controller/business_logic/light_scheduler.h
 
     # too much hardware interactions for the time beeing?
     ${SRC_DIR}/ble/driver/bleuart.cpp
@@ -66,15 +64,13 @@ set(TESTABLE_APPLICATION_FILES
 
     ${SRC_DIR}/hardware/light/led_indicator.cpp
     ${SRC_DIR}/hardware/light/led_indicator.h
-    )
-
-
+)
 
 set(NOT_TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/common/os
     ${SRC_DIR}/manual_tests
     ${SRC_DIR}/ble/driver/
-    )
+)
 
 set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}
@@ -85,10 +81,9 @@ set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/common/config
     ${SRC_DIR}/hardware
     ${SRC_DIR}/hardware/light
-    ${SRC_DIR}/controller/business_logic/
     ${SRC_DIR}/wifi/
     ${SRC_DIR}/ble/
-    ${SRC_DIR}/ble/driver/  # we don't want this file in tests, because we have software mocks for it?
+    ${SRC_DIR}/ble/driver/ # we don't want this file in tests, because we have software mocks for it?
     ${SRC_DIR}/ble/util/
     ${SRC_DIR}/ble/protocol/
     ${SRC_DIR}/ble/ble_controller/
@@ -96,4 +91,4 @@ set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/cloud/mqtt_client_controller/
     ${SRC_DIR}/cloud/ntp_client/
     ${SRC_DIR}/cloud/parser/
-    )
+)
