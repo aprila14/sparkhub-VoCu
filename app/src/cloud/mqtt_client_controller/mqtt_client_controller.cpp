@@ -242,6 +242,7 @@ void MqttClientController::stop() // NOLINT - we don't want to make it const
 
 bool MqttClientController::sendMessage(const std::string &topic, const std::string &message) // NOLINT - we don't want to make it const
 {
+    LOG_INFO("sendMessage, topic: %s, payload: %s", topic.c_str(), message.c_str());
     int msgId = esp_mqtt_client_publish(m_mqttClient, topic.c_str(), message.c_str(), 0, 1, 0);
     if (msgId == MQTT_CLIENT_ERROR_PUBLISH)
     {
