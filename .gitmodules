@@ -7,6 +7,3 @@
 [submodule "app/externals/CMock"]
 	path = app/externals/CMock
 	url = https://github.com/ThrowTheSwitch/CMock.git
-[submodule "app/externals/Unity"]
-	path = app/externals/Unity
-	url = https://github.com/ThrowTheSwitch/Unity.git
