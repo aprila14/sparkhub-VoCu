@@ -4,6 +4,3 @@
 [submodule "app/externals/googletest"]
 	path = app/externals/googletest
 	url = https://github.com/google/googletest.git
-[submodule "app/externals/CMock"]
-	path = app/externals/CMock
-	url = https://github.com/ThrowTheSwitch/CMock.git
