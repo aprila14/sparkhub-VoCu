@@ -1,6 +1,3 @@
 [submodule "app/externals/esp-idf"]
 	path = app/externals/esp-idf
 	url = https://github.com/espressif/esp-idf
-[submodule "app/externals/googletest"]
-	path = app/externals/googletest
-	url = https://github.com/google/googletest.git
