@@ -11,12 +11,13 @@ static const char *LOG_TAG = "CloudController";
 #include "protocol_types.h"
 #include "sleep.h"
 #include "cloud_config.h"
+#include "adc_pressure.h"
 
 #include <memory>
 
 namespace
 {
-    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3600 * 1000; // once per hour
+    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 36 * 1000; // once per hour
     constexpr uint16_t LOCAL_TIME_OFFSET = UtcOffset::OFFSET_UTC_2;
     constexpr int8_t MQTT_CONNECTION_WAIT_TIME_INFINITE = -1;
     constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS = 1000;
@@ -128,6 +129,8 @@ void CloudController::_run()
     xTimerStart(m_heartbeatWatchdogTimer, 0);
     m_mqttClientController.runTask();
 
+    adcInit();
+
     while (true)
     {
         perform();
@@ -137,6 +140,7 @@ void CloudController::_run()
 void CloudController::perform()
 {
     updateDeviceStatus(); // TODO change to pressure value
+    getPressureSensorValue();
     SLEEP_MS(SLEEP_TIME_BETWEEN_SENDING_MESSAGES);
 }
 
