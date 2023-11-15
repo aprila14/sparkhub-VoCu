@@ -53,7 +53,7 @@ COPY peru.yaml /modules
 COPY app/misc/ble-nimble-patch-1.patch /modules/app/misc/ble-nimble-patch-1.patch
 
 RUN peru sync && cd app/externals && unzip esp-idf.zip && mv esp-idf-v4.4.3 esp-idf
-RUN cd app/externals/esp-idf/components/bt/host/nimble/nimble && git apply /modules/app/misc/ble-nimble-patch-1.patch
+RUN cd app/externals/esp-idf/components/bt/host/nimble/nimble && dos2unix /modules/app/misc/ble-nimble-patch-1.patch && git apply /modules/app/misc/ble-nimble-patch-1.patch
 
 # Jenkins user UID
 ARG UID
