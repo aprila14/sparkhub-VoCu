@@ -1,4 +1,4 @@
-﻿#ifndef CONFIGNVS_H
+#ifndef CONFIGNVS_H
 #define CONFIGNVS_H
 
 #include "custom_types.h"

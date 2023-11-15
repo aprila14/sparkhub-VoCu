@@ -1,6 +1,24 @@
 # 1. TLDR - build in docker
 
-TBD
+## Prerequisites
+### Windows
+Install Docker Desktop: https://docs.docker.com/desktop/install/windows-install/ (please use WSL 2 backend)
+
+### MAC
+Install Docker Desktop: https://docs.docker.com/desktop/install/mac-install/
+
+### Linux
+Install Docker Desktop: https://docs.docker.com/desktop/install/linux-install/
+
+Or 
+
+Install Docker Engine: https://docs.docker.com/engine/install/ubuntu/
+
+## Run Docker container and build firmware with ARM compiler
+Open a terminal in the project's directory and issue the following command (be sure that the Docker Desktop or Engine runs in the background)
+```
+docker-compose up
+```
 
 
 # 2. Development
@@ -26,20 +44,19 @@ sudo usermod -a -G dialout $USER
 ## 2.2. Build environment preparation
 Before first build, some one-time preparation is required
 
-### 2.2.1. Don't forget to update the submodules first
+## Don't forget to update the dependencies first
+Instal package manager
 ```
-git submodule init && git submodule update
-git submodule update --init --recursive
+pip install peru==1.3.1
+```
+Download dependencies
+```
+peru sync
+cd app/externals && unzip esp-idf.zip && mv esp-idf-v4.4.3 esp-idf && cd ../../
 ```
 
 ### Apply patches:
 ```
-cd ${PROJECT_DIR}/app/externals/Unity
-git apply ${PROJECT_DIR}/app/misc/unity-patch-1.patch
-
-cd ${PROJECT_DIR}/app/externals/CMock
-git apply ${PROJECT_DIR}/app/misc/cmock-patch-1.patch
-
 cd ${PROJECT_DIR}/app/externals/esp-idf/components/bt/host/nimble/nimble
 git apply ${PROJECT_DIR}/app/misc/ble-nimble-patch-1.patch
 ```
@@ -79,3 +96,24 @@ mkdir $BUILD_DIR
 cd $BUILD_DIR
 idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=ON build flash monitor
 ```
+
+# 3. Flashing and monitoring without ESP-IDF
+
+## Partitions for ESP32:
+0x1000  bootloader.bin
+0x8000  partition-table.bin
+0x10000 sparkhub-LevelSense.bin
+0xD000  ota_data_initial.bin
+
+## Firmware can be flashed with ESP Tool:
+
+### Command to erase flash:
+esptool.py erase_flash
+
+### For individual binaries in ESP32
+esptool.py write_flash 0x1000 bootloader/bootloader.bin 0x8000 partition_table/partition-table.bin 0x10000 sparkhub-LevelSense.bin 0xD000 ota_data_initial.bin
+
+### Or with GUI tool from Espressif on Windows, with partitions design as above
+
+### Checking logs on Linux
+sudo picocom /dev/ttyUSB0 -b 115200 2>&1 | ts "[%m-%d %H:%M:%S]" 2>&1 | tee -a sparkhub-esp32.logs
