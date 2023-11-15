@@ -720,14 +720,6 @@ namespace json_parser
             return nullptr;
         }
 
-        cJSON *pLightIntensityLevelJson = cJSON_CreateNumber(deviceStatus.lightIntensityLevel);
-        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "lightIntensityLevel", pLightIntensityLevelJson)))
-        {
-            LOG_INFO("Cannot add lightIntensityLevel JSON to deviceStatusJson");
-            cJSON_Delete(pDeviceStatusJson);
-            return nullptr;
-        }
-
         cJSON *pCurrentTimeFromStartupMsJson = cJSON_CreateNumber(deviceStatus.currentTimeFromStartupMs);
         if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentTimeFromStartupMs", pCurrentTimeFromStartupMsJson)))
         {
@@ -748,6 +740,14 @@ namespace json_parser
         if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentLocalTime", pCurrentLocalTimeJson)))
         {
             LOG_INFO("Cannot add currentLocalTime JSON to deviceStatusJson");
+            cJSON_Delete(pDeviceStatusJson);
+            return nullptr;
+        }
+
+        cJSON *pPressureSensorValueJson = cJSON_CreateNumber(deviceStatus.pressureSensorValue);
+        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "pressureSensorValue", pPressureSensorValueJson)))
+        {
+            LOG_INFO("Cannot add pressureSensorValue JSON to deviceStatusJson");
             cJSON_Delete(pDeviceStatusJson);
             return nullptr;
         }

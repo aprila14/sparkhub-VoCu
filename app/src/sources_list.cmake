@@ -64,6 +64,9 @@ set(TESTABLE_APPLICATION_FILES
 
     ${SRC_DIR}/hardware/light/led_indicator.cpp
     ${SRC_DIR}/hardware/light/led_indicator.h
+
+    ${SRC_DIR}/hardware/adc_pressure/adc_pressure.cpp
+    ${SRC_DIR}/hardware/adc_pressure/adc_pressure.h
 )
 
 set(NOT_TESTABLE_APPLICATION_INCLUDE_DIRS
@@ -81,6 +84,7 @@ set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/common/config
     ${SRC_DIR}/hardware
     ${SRC_DIR}/hardware/light
+    ${SRC_DIR}/hardware/adc_pressure
     ${SRC_DIR}/wifi/
     ${SRC_DIR}/ble/
     ${SRC_DIR}/ble/driver/ # we don't want this file in tests, because we have software mocks for it?

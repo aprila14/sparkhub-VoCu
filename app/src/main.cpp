@@ -17,6 +17,7 @@ static const char *LOG_TAG = "Main";
 #include "reset_button_handler.h"
 #include "wifi_controller.h"
 #include "cloud_config.h"
+#include "adc_pressure.h"
 
 #if IS_DEBUG_BUILD
 // TCloudCertificatePack newCloudCertificates;
@@ -92,6 +93,9 @@ void initCommonGlobalModules()
     // create and run app controller
     static app::AppController appController(&wifiController, &bleController, &cloudController, &ntpClient);
     app::pAppController = &appController;
+
+    // ADC for pressure sensor
+    adcInit();
 
     // run modules which are tasks
     // TODO bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about

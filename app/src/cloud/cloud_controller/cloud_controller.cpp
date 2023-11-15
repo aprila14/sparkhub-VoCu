@@ -11,6 +11,7 @@ static const char *LOG_TAG = "CloudController";
 #include "protocol_types.h"
 #include "sleep.h"
 #include "cloud_config.h"
+#include "adc_pressure.h"
 
 #include <memory>
 
@@ -136,7 +137,7 @@ void CloudController::_run()
 
 void CloudController::perform()
 {
-    updateDeviceStatus(); // TODO change to pressure value
+    updateDeviceStatus();
     SLEEP_MS(SLEEP_TIME_BETWEEN_SENDING_MESSAGES);
 }
 
@@ -146,6 +147,7 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     deviceStatus.isWiFiConnected = app::pAppController->getWiFiController()->getConnectionStatus();
     deviceStatus.isBleConnected = app::pAppController->getBleController()->isClientConnected();
     deviceStatus.currentTimeFromStartupMs = commons::getCurrentTimestampMs();
+    deviceStatus.pressureSensorValue = getPressureSensorValue();
 
     strcpy(deviceStatus.currentLocalTime, app::pAppController->getNtpClient()->getCurrentLocalTimeString(LOCAL_TIME_OFFSET));
     strcpy(deviceStatus.firmwareVersion, PROJECT_VER);
