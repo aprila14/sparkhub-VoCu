@@ -50,9 +50,9 @@ float getAvgPressureSensorValue(void)
 
     float avgPressureValue = 0;
     float sumPressureValue = 0;
-    int numberOfReadValue = 1;
+    int numberOfReadValue = 0;
 
-    for(int i=1; i<26; i++)
+    for(int i=1; i<101; i++)
     {
         const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(PRESSURE_SENSOR_CHANNEL));
 
@@ -67,17 +67,21 @@ float getAvgPressureSensorValue(void)
         LOG_INFO("Pressure value: %.6f", pressureValue);
 
         sumPressureValue = pressureValue + sumPressureValue;
-        numberOfReadValue++;
+        numberOfReadValue = i;
+
+        LOG_INFO("Number of Read Pressure Values: %d", numberOfReadValue);
+
+        LOG_INFO("Sum of Pressure Values: %.6f", sumPressureValue);
 
         SLEEP_MS(100);
 
     }
 
-    LOG_INFO("Number of Read Pressure Values: %.6f", numberOfReadValue);
-
-    LOG_INFO("Average pressure Value: %.6f", avgPressureValue);
+    LOG_INFO("Number of Read Pressure Values: %d", numberOfReadValue);
 
     avgPressureValue = sumPressureValue / numberOfReadValue;
+
+    LOG_INFO("Average pressure Value: %.6f", avgPressureValue);
 
     return avgPressureValue;
 }
