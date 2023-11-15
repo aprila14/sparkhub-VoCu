@@ -10,4 +10,7 @@ CMakeLists.txt.user
 
 *.old
 
+docker-build/build-esp32
+.peru
+
 
