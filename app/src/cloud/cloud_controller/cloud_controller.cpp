@@ -17,7 +17,7 @@ static const char *LOG_TAG = "CloudController";
 
 namespace
 {
-    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3600 * 1000; // TODO change to once per hour
+    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3600 * 1000; // once per hour
     constexpr uint16_t LOCAL_TIME_OFFSET = UtcOffset::OFFSET_UTC_2;
     constexpr int8_t MQTT_CONNECTION_WAIT_TIME_INFINITE = -1;
     constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS = 1000;
@@ -128,8 +128,6 @@ void CloudController::_run()
     m_heartbeatWatchdogTimer = xTimerCreate("Heartbeat Watchdog Timer", pdMS_TO_TICKS(HEARTBEAT_CHECK_TIMER_PERIOD_MS), true, static_cast<void *>(this), _heartbeatWatchdogTimerCallback);
     xTimerStart(m_heartbeatWatchdogTimer, 0);
     m_mqttClientController.runTask();
-
-    adcInit();
 
     while (true)
     {
