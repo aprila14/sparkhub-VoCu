@@ -117,3 +117,13 @@ esptool.py write_flash 0x1000 bootloader/bootloader.bin 0x8000 partition_table/p
 
 ### Checking logs on Linux
 sudo picocom /dev/ttyUSB0 -b 115200 2>&1 | ts "[%m-%d %H:%M:%S]" 2>&1 | tee -a sparkhub-esp32.logs
+
+# 4. Pressure sensor
+
+Documentation for used pressure sensor is in docs/TIZLA60 - TRANSDUCER ASSEMBLY - used.pdf
+
+For devboard ESP32-DevKitC-32E V4 the sensor is connected as follows:
+
+- IN sensor pin -> 5V0 devboard pin
+- GND sensor pin -> GND devboard pin (the one between 13 and 12 pin)
+- OUT sensor pin -> 32 devboard pin (ADC1 channel 4 is GPIO32)
