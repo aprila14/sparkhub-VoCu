@@ -34,8 +34,8 @@ void temporaryDevelopmentCode()
     {
         LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
         TWiFiCredentials newWifiCredentials;
-        newWifiCredentials.setSsid("4G UFI-4205");
-        newWifiCredentials.setPassword("1234567890");
+        newWifiCredentials.setSsid("Marty Router King");
+        newWifiCredentials.setPassword("mk1441bl");
         pConfig->setWifiCredentials(newWifiCredentials);
     }
 
