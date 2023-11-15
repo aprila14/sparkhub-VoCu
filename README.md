@@ -96,3 +96,24 @@ mkdir $BUILD_DIR
 cd $BUILD_DIR
 idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=ON build flash monitor
 ```
+
+# 3. Flashing and monitoring without ESP-IDF
+
+## Partitions for ESP32:
+0x1000  bootloader.bin
+0x8000  partition-table.bin
+0x10000 sparkhub-LevelSense.bin
+0xD000  ota_data_initial.bin
+
+## Firmware can be flashed with ESP Tool:
+
+### Command to erase flash:
+esptool.py erase_flash
+
+### For individual binaries in ESP32
+esptool.py write_flash 0x1000 bootloader/bootloader.bin 0x8000 partition_table/partition-table.bin 0x10000 sparkhub-LevelSense.bin 0xD000 ota_data_initial.bin
+
+### Or with GUI tool from Espressif on Windows, with partitions design as above
+
+### Checking logs on Linux
+sudo picocom /dev/ttyUSB0 -b 115200 2>&1 | ts "[%m-%d %H:%M:%S]" 2>&1 | tee -a sparkhub-esp32.logs
