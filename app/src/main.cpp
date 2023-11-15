@@ -18,50 +18,6 @@ static const char *LOG_TAG = "Main";
 #include "wifi_controller.h"
 #include "cloud_config.h"
 
-void initCommonGlobalModules()
-{
-    hw_misc::initializeNVS();
-
-    static ConfigNvs config;
-    pConfig = &config;
-    if (!pConfig->init())
-    {
-        LOG_ERROR("Failed to open the NVS, but there is nothing we can do about it anyway...");
-    }
-
-    // create modules
-    static WiFiController wifiController;
-    if (!wifiController.init())
-    {
-        LOG_ERROR("Failed to init WiFiController!");
-    }
-    else
-    {
-        LOG_INFO("WiFiController initialized correctly");
-    }
-
-    static NtpClient ntpClient;
-    ntpClient.init(); // no return value
-
-    static BleuartDriver bleuartDriver = BleuartDriver();
-    g_pBleuartDriver = &bleuartDriver; // we need to have a global singleton for hardware callbacks, see discussion near the variable declaration
-    static BleController bleController(&bleuartDriver);
-
-    static CloudController cloudController;
-
-    // create and run app controller
-    static app::AppController appController(&wifiController, &bleController, &cloudController, &ntpClient);
-    app::pAppController = &appController;
-
-    // run modules which are tasks
-    // TODO bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about
-    wifiController.runTask();
-    wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
-    // TODO bleController.runTask();
-    ntpClient.runTask();
-    cloudController.runTask();
-}
-
 #if IS_DEBUG_BUILD
 // TCloudCertificatePack newCloudCertificates;
 
@@ -98,6 +54,54 @@ void temporaryDevelopmentCode()
 }
 #endif // IS_DEBUG_BUILD
 
+void initCommonGlobalModules()
+{
+    hw_misc::initializeNVS();
+
+    static ConfigNvs config;
+    pConfig = &config;
+    if (!pConfig->init())
+    {
+        LOG_ERROR("Failed to open the NVS, but there is nothing we can do about it anyway...");
+    }
+
+#if IS_DEBUG_BUILD
+    temporaryDevelopmentCode();
+#endif
+
+    // create modules
+    static WiFiController wifiController;
+    if (!wifiController.init())
+    {
+        LOG_ERROR("Failed to init WiFiController!");
+    }
+    else
+    {
+        LOG_INFO("WiFiController initialized correctly");
+    }
+
+    static NtpClient ntpClient;
+    ntpClient.init(); // no return value
+
+    static BleuartDriver bleuartDriver = BleuartDriver();
+    g_pBleuartDriver = &bleuartDriver; // we need to have a global singleton for hardware callbacks, see discussion near the variable declaration
+    static BleController bleController(&bleuartDriver);
+
+    static CloudController cloudController;
+
+    // create and run app controller
+    static app::AppController appController(&wifiController, &bleController, &cloudController, &ntpClient);
+    app::pAppController = &appController;
+
+    // run modules which are tasks
+    // TODO bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about
+    wifiController.runTask();
+    wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
+    // TODO bleController.runTask();
+    ntpClient.runTask();
+    cloudController.runTask();
+}
+
 extern "C"
 {
 
@@ -110,10 +114,6 @@ extern "C"
         initCommonGlobalModules();
 
         app::pAppController->runTask();
-
-#if IS_DEBUG_BUILD
-        temporaryDevelopmentCode();
-#endif
 
 #if USE_CONSOLE
         console::runConsoleControl();

@@ -10,4 +10,7 @@ CMakeLists.txt.user
 
 *.old
 
-
+build_artifacts
+.peru
+externals
+build

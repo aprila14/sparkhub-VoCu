@@ -1,0 +1,22 @@
+imports:
+  Unity: app/externals/Unity
+  CMock: app/externals/CMock
+  googletest: app/externals/googletest
+  esp-idf: app/externals
+
+git module Unity:
+  url: https://github.com/ThrowTheSwitch/Unity.git
+  rev: 0b899aec14d3a9abb2bf260ac355f0f28630a6a3
+
+git module CMock:
+  url: https://github.com/ThrowTheSwitch/CMock.git
+  rev: 9d092898ef26ece140d9225e037274b64d4f851e
+
+git module googletest:
+  url: https://github.com/google/googletest.git
+  rev: 703bd9caab50b139428cea1aaff9974ebee5742e
+
+curl module esp-idf:
+  url: https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v4.4.3/esp-idf-v4.4.3.zip
+  filename: esp-idf.zip
+  sha1: 2391bfb51b704db2eb277a18e732d62f8d3dab3a
