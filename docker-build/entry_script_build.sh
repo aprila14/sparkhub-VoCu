@@ -9,9 +9,15 @@ IDF_PATH=${PROJECT_DIR}/app/externals/esp-idf
 
 main()
 {
-    BUILD_DIR="`realpath ${SCRIPT_DIR_RELATIVE}/build-esp32`"
+    BUILD_DIR="`realpath ${SCRIPT_DIR_RELATIVE}/build_artifacts`"
     echo "PROJECT_DIR = ${PROJECT_DIR}"
     echo "BUILD_DIR = ${BUILD_DIR}"
+
+    # Go to the project folder
+    pushd ${PROJECT_DIR}
+
+    # Convert CRLF if there are any to LF (Windows compatibility)
+    find . -type f -print0 | xargs -0 dos2unix
 
     if [ ! -d "${PROJECT_DIR}/app/externals" ]; then
         mkdir ${PROJECT_DIR}/app/externals
@@ -34,12 +40,6 @@ main()
     fi
 
     echo "----------------------------------------------------------------------------------------------------"
-
-    if [ "$DISABLE_ESP_IDF_PATCHING" = false ]; then
-        echo "Apply patches..."
-        cd ${PROJECT_DIR}/app/externals/esp-idf/components/bt/host/nimble/nimble && git apply /modules/app/misc/ble-nimble-patch-1.patch
-
-    fi
 
     echo "Activate ESP IDF environment..."
     export IDF_PATH=${IDF_PATH}

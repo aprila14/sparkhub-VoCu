@@ -36,6 +36,7 @@ RUN apt-get update && apt-get install --yes build-essential=12.* lcov=1.14-2 --n
     dfu-util=0.9-1 \
     libusb-1.0-0=2:1.0.* \
     zip=3.0-11build1 \
+    dos2unix \
     clang-12=1:12.0.0-3ubuntu1~20.04.5  \
     clang-tools-12=1:12.0.0-3ubuntu1~20.04.5 \
     clang-tidy-12=1:12.0.0-3ubuntu1~20.04.5 \

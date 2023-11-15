@@ -10,7 +10,7 @@ CMakeLists.txt.user
 
 *.old
 
-docker-build/build-esp32
+docker-build/build_artifacts
 .peru
 
 

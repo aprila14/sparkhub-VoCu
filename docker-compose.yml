@@ -14,10 +14,14 @@ services:
 
   # Service uses image from esp32-compile-image and builds binaries for ESP32
   esp32-container-build:
-    image: esp32-compile
+    image: esp32-compile-sparkhub
     volumes:
       - .:/media/src:rw
     command:
-      - "/media/src/docker-build/entry_script_build.sh"
+      - /bin/sh
+      - -c
+      - |
+        dos2unix /media/src/docker-build/entry_script_build.sh
+        /media/src/docker-build/entry_script_build.sh
     depends_on:
       - esp32-compile-image
