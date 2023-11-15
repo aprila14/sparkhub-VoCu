@@ -1,6 +1,24 @@
 # 1. TLDR - build in docker
 
-TBD
+## Prerequisites
+### Windows
+Install Docker Desktop: https://docs.docker.com/desktop/install/windows-install/ (please use WSL 2 backend)
+
+### MAC
+Install Docker Desktop: https://docs.docker.com/desktop/install/mac-install/
+
+### Linux
+Install Docker Desktop: https://docs.docker.com/desktop/install/linux-install/
+
+Or 
+
+Install Docker Engine: https://docs.docker.com/engine/install/ubuntu/
+
+## Run Docker container and build firmware with ARM compiler
+Open a terminal in the project's directory and issue the following command (be sure that the Docker Desktop or Engine runs in the background)
+```
+docker-compose up
+```
 
 
 # 2. Development
@@ -26,20 +44,19 @@ sudo usermod -a -G dialout $USER
 ## 2.2. Build environment preparation
 Before first build, some one-time preparation is required
 
-### 2.2.1. Don't forget to update the submodules first
+## Don't forget to update the dependencies first
+Instal package manager
 ```
-git submodule init && git submodule update
-git submodule update --init --recursive
+pip install peru==1.3.1
+```
+Download dependencies
+```
+peru sync
+cd app/externals && unzip esp-idf.zip && mv esp-idf-v4.4.3 esp-idf && cd ../../
 ```
 
 ### Apply patches:
 ```
-cd ${PROJECT_DIR}/app/externals/Unity
-git apply ${PROJECT_DIR}/app/misc/unity-patch-1.patch
-
-cd ${PROJECT_DIR}/app/externals/CMock
-git apply ${PROJECT_DIR}/app/misc/cmock-patch-1.patch
-
 cd ${PROJECT_DIR}/app/externals/esp-idf/components/bt/host/nimble/nimble
 git apply ${PROJECT_DIR}/app/misc/ble-nimble-patch-1.patch
 ```

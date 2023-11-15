@@ -12,5 +12,5 @@ CMakeLists.txt.user
 
 build_artifacts
 .peru
-
-
+externals
+build
