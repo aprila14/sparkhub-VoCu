@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  # Service for docker image build purpose only
+  esp32-compile-image:
+    image: esp32-compile-sparkhub
+    build:
+      context: .
+      dockerfile: ./docker-build/compile.dockerfile
+      target: compile
+      args:
+        USER_TO_USE_FOR_RUN: "user"
+        UID: 1001
+
+  # Service uses image from esp32-compile-image and builds binaries for ESP32
+  esp32-container-build:
+    image: esp32-compile-sparkhub
+    volumes:
+      - .:/home/user/repo:ro
+      - ./build_artifacts:/home/user/build_artifacts:rw
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cp /home/user/repo/docker-build/entry_script_build.sh /home/user
+        dos2unix /home/user/entry_script_build.sh
+        /home/user/entry_script_build.sh
+    depends_on:
+      - esp32-compile-image

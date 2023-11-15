@@ -1,116 +1,63 @@
-# CMake minimum required version
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# Pull in SDK (must be before project)
-if(NOT DEFINED PICO_SDK_PATH)
-    set(PICO_SDK_PATH ${CMAKE_SOURCE_DIR}/libraries/pico-sdk)
-    message(STATUS "PICO_SDK_PATH = ${PICO_SDK_PATH}")
+set(PROJECT_VER_MAJOR 0)
+set(PROJECT_VER_MINOR 4)
+set(PROJECT_VER_PATCH 0)
+set(PROJECT_VER "${PROJECT_VER_MAJOR}.${PROJECT_VER_MINOR}.${PROJECT_VER_PATCH}")
+
+add_definitions(-DPROJECT_VER="${PROJECT_VER}")
+add_definitions(-DPROJECT_VER_MAJOR=${PROJECT_VER_MAJOR})
+add_definitions(-DPROJECT_VER_MINOR=${PROJECT_VER_MINOR})
+add_definitions(-DPROJECT_VER_PATCH=${PROJECT_VER_PATCH})
+
+# ########### options specification ###########
+option(IS_DEBUG_BUILD "Enable some debug prints, logs and checks" OFF)
+option(BUILD_WITH_PRINTS_AND_LOGS "Enable printing log messages" OFF)
+option(USE_CONSOLE "Enable console with debugging commands" OFF)
+
+option(BUILD_TESTS "BUILD TESTS" OFF)
+option(RUN_LINTING "RUN_CLANG_TIDY linting" ON)
+option(RUN_STATIC_ANALYSIS "RUN_STATIC_ANALYSIS TESTS" OFF)
+
+# ########### options and definitions ###########
+if(${IS_DEBUG_BUILD})
+    message(WARNING "!!! Building program in debug mode!")
+    add_definitions(-DIS_DEBUG_BUILD)
 endif()
 
-include(wizfi360_evb_pico_azure_c-patch.cmake)
-include(pico_sdk_import.cmake)
-include(wizfi360_evb_pico_azure_c_sdk_version.cmake)
-
-# Set project name
-set(PROJECT_NAME WizFi360-EVB-Pico-AZURE-C)
-
-# Set project informations
-project(${PROJECT_NAME} C CXX ASM)
-
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
-
-# Initialize the SDK
-pico_sdk_init()
-
-# Set the project root directory if it's not already defined, as may happen if
-# the tests folder is included directly by a parent project, without including
-# the top level CMakeLists.txt.
-if(NOT DEFINED AZURE_SDK_DIR)
-# Set azure-iot-sdk-c directory path
-    set(AZURE_SDK_DIR ${CMAKE_SOURCE_DIR}/libraries/azure-iot-sdk-c)
-    message(STATUS "AZURE_SDK_DIR = ${AZURE_SDK_DIR}")
+if(${BUILD_WITH_PRINTS_AND_LOGS})
+    message(WARNING "!!! Building program with prints and logs!")
+    add_definitions(-DENABLE_PRINTS_AND_LOGS)
 endif()
 
-if(NOT DEFINED CMSIS_5_DIR)
-# Set CMSIS_5 directory path
-    set(CMSIS_5_DIR ${CMAKE_SOURCE_DIR}/libraries/CMSIS_5)
-    message(STATUS "CMSIS_5_DIR = ${CMSIS_5_DIR}")
+if(${USE_CONSOLE})
+    message(WARNING "!!! Building with console!")
+    add_definitions(-DUSE_CONSOLE)
 endif()
 
-if(NOT DEFINED WIZFI360_DRIVER_DIR)
-# Set WizFi360 driver directory path
-    set(WIZFI360_DRIVER_DIR ${CMAKE_SOURCE_DIR}/libraries/CMSIS-Driver/WiFi/WizFi360)
-    message(STATUS "WIZFI360_DRIVER_DIR = ${WIZFI360_DRIVER_DIR}")
+# ########### Build process cmake inclusion ###########
+if(${BUILD_TESTS} OR ${RUN_STATIC_ANALYSIS})
+    set(TESTS_CMAKE ${CMAKE_CURRENT_SOURCE_DIR}/test)
+    add_subdirectory(${TESTS_CMAKE})
+else()
+    if(DEFINED ENV{IDF_PATH})
+        set(IDF_PATH $ENV{IDF_PATH})
+    else()
+        set(IDF_PATH "${CMAKE_CURRENT_SOURCE_DIR}/app/externals/esp-idf")
+    endif()
+
+    set(IDF_CMAKE ${IDF_PATH}/tools/cmake/project.cmake)
+    set(EXTRA_COMPONENT_DIRS app/ ${EXTRA_COMPONENT_DIRS})
+    set(SUPPORTED_TARGETS esp32)
+    include(${IDF_CMAKE})
 endif()
 
-if(NOT DEFINED CMSIS_FREERTOS_DIR)
-# Set CMSIS-FreeRTOS directory path
-    set(CMSIS_FREERTOS_DIR ${CMAKE_SOURCE_DIR}/libraries/CMSIS-FreeRTOS/CMSIS/RTOS2/FreeRTOS)
-    message(STATUS "CMSIS_FREERTOS_DIR = ${CMSIS_FREERTOS_DIR}")
-endif()
+set(MARKER_SEQUENCE "^x^") # it is a sequence to easily match the parameter from bash
+add_custom_target(print_version
+    COMMAND echo "${MARKER_SEQUENCE}"
+    COMMAND echo "${PROJECT_VER}")
 
-if(NOT DEFINED FREERTOS_DIR)
-# Set FreeRTOS directory path
-    set(FREERTOS_DIR ${CMAKE_SOURCE_DIR}/libraries/CMSIS-FreeRTOS/Source)
-    message(STATUS "FREERTOS_DIR = ${FREERTOS_DIR}")
-endif()
+add_definitions(-DIS_ESP)
 
-if(NOT DEFINED IOT_SOCKET_DIR)
-# Set IoT_Socket directory path
-    set(IOT_SOCKET_DIR ${CMAKE_SOURCE_DIR}/libraries/IoT_Socket)
-    message(STATUS "IOT_SOCKET_DIR = ${IOT_SOCKET_DIR}")
-endif()
-
-if(NOT DEFINED MBEDTLS_DIR)
-# Set mbedtls directory path
-    set(MBEDTLS_DIR ${CMAKE_SOURCE_DIR}/libraries/mbedtls)
-    message(STATUS "MBEDTLS_DIR = ${MBEDTLS_DIR}")
-endif()
-
-if(NOT DEFINED PORT_DIR)
-# port directory path
-    set(PORT_DIR ${CMAKE_SOURCE_DIR}/port)
-    message(STATUS "PORT_DIR = ${PORT_DIR}")
-endif()
-
-if(NOT DEFINED DHT_DIR)
-# DHT directory path
-    set(DHT_DIR ${CMAKE_SOURCE_DIR}/dht)
-    message(STATUS "DHT_DIR = ${DHT_DIR}")
-endif()
-
-# Configure azure-iot-sdk-c
-add_definitions(-DUSE_MQTT)
-add_definitions(-DHSM_TYPE_SYMM_KEY)
-add_definitions(-DHSM_TYPE_X509)
-add_definitions(-DUSE_PROV_MODULE)
-add_definitions(-DUSE_PROV_MODULE_FULL)
-
-# Turn off mbedtls test mode 
-set(ENABLE_PROGRAMS OFF CACHE BOOL "Build mbedtls programs")
-set(ENABLE_TESTING OFF CACHE BOOL "Build mbedtls testing")
-
-# Configure mbedtls
-add_definitions(-DMBEDTLS_CONFIG_FILE="${PORT_DIR}/mbedtls/inc/ssl_config.h")
-add_definitions(-DSET_TRUSTED_CERT_IN_SAMPLES)
-
-# Configure Wi-Fi for WizFi360
-add_definitions(-DDRIVER_WIFI_NUM=1)
-
-# Hardware-specific examples in subdirectories:
-add_subdirectory(examples)
-
-# Add libraries in subdirectories:
-add_subdirectory(${CMAKE_SOURCE_DIR}/libraries)
-add_subdirectory(${MBEDTLS_DIR})
-add_subdirectory(${PORT_DIR})
-add_subdirectory(${DHT_DIR})
-
-# Set compile options
-add_compile_options(
-        -Wall
-        -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
-        -Wno-unused-function # we have some for the docs that aren't called
-        -Wno-maybe-uninitialized
-        )
+project(sparkhub-LevelSense)
