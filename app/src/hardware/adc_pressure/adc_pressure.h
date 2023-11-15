@@ -4,6 +4,6 @@
 #include "defines.h"
 
 void adcInit(void);
-float getPressureSensorValue(void);
+uint32_t getPressureSensorValue(void);
 
 #endif // ADC_PRESSURE_H

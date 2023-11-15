@@ -9,19 +9,40 @@ static const char *LOG_TAG = "adcPressure";
 namespace
 {
     constexpr adc1_channel_t PRESSURE_SENSOR_CHANNEL = ADC1_CHANNEL_4; /*!< ADC1 channel 4 is GPIO32 */
+    esp_adc_cal_characteristics_t adcChars = {};
 }
 
 void adcInit(void)
 {
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(PRESSURE_SENSOR_CHANNEL, ADC_ATTEN_DB_11);
+    esp_adc_cal_value_t val_type =
+        esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adcChars);
+
+    // Check type of calibration value used to characterize ADC
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
+    {
+        LOG_INFO("Available ADC calibration: eFuse Vref");
+    }
+    else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP)
+    {
+        LOG_INFO("Available ADC calibration: Two Point");
+    }
+    else
+    {
+        LOG_INFO("Available ADC calibration: Default");
+    }
 }
 
-float getPressureSensorValue(void)
+uint32_t getPressureSensorValue(void)
 {
-    uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(PRESSURE_SENSOR_CHANNEL));
+    const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(PRESSURE_SENSOR_CHANNEL));
 
-    LOG_INFO("Raw ADC reading: %d", adcReading);
+    LOG_INFO("Raw ADC reading: %lu", adcReading);
 
-    return 0;
+    const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
+
+    LOG_INFO("ADC voltage: %lu", voltage);
+
+    return voltage;
 }
