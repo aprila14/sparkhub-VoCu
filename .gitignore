@@ -10,7 +10,7 @@ CMakeLists.txt.user
 
 *.old
 
-docker-build/build_artifacts
+build_artifacts
 .peru
 
 
