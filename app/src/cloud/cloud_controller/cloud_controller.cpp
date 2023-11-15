@@ -147,7 +147,7 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     deviceStatus.isWiFiConnected = app::pAppController->getWiFiController()->getConnectionStatus();
     deviceStatus.isBleConnected = app::pAppController->getBleController()->isClientConnected();
     deviceStatus.currentTimeFromStartupMs = commons::getCurrentTimestampMs();
-    deviceStatus.pressureSensorValue = getPressureSensorValue();
+    deviceStatus.pressureSensorValue = getAvgPressureSensorValue();
 
     strcpy(deviceStatus.currentLocalTime, app::pAppController->getNtpClient()->getCurrentLocalTimeString(LOCAL_TIME_OFFSET));
     strcpy(deviceStatus.firmwareVersion, PROJECT_VER);

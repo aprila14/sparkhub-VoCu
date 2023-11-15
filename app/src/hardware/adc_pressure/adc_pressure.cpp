@@ -3,6 +3,7 @@ static const char *LOG_TAG = "adcPressure";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
 #include "adc_pressure.h"
+#include "sleep.h"
 
 #include "esp_adc_cal.h"
 
@@ -44,19 +45,39 @@ static float calculate_pressure_from_voltage(uint32_t voltageInMillivolts)
     return (float)(voltage - pressureMeasurementOffset);
 }
 
-float getPressureSensorValue(void)
+float getAvgPressureSensorValue(void)
 {
-    const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(PRESSURE_SENSOR_CHANNEL));
 
-    LOG_INFO("Raw ADC reading: %lu", adcReading);
+    float avgPressureValue = 0;
+    float sumPressureValue = 0;
+    int numberOfReadValue = 1;
 
-    const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
+    for(int i=1; i<26; i++)
+    {
+        const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(PRESSURE_SENSOR_CHANNEL));
 
-    LOG_INFO("ADC voltage: %lu", voltage);
+        LOG_INFO("Raw ADC reading: %lu", adcReading);
 
-    const float pressureValue = calculate_pressure_from_voltage(voltage);
+        const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
 
-    LOG_INFO("Pressure value: %.6f", pressureValue);
+        LOG_INFO("ADC voltage: %lu", voltage);
 
-    return pressureValue;
+        const float pressureValue = calculate_pressure_from_voltage(voltage);
+
+        LOG_INFO("Pressure value: %.6f", pressureValue);
+
+        sumPressureValue = pressureValue + sumPressureValue;
+        numberOfReadValue++;
+
+        SLEEP_MS(100);
+
+    }
+
+    LOG_INFO("Number of Read Pressure Values: %.6f", numberOfReadValue);
+
+    LOG_INFO("Average pressure Value: %.6f", avgPressureValue);
+
+    avgPressureValue = sumPressureValue / numberOfReadValue;
+
+    return avgPressureValue;
 }
