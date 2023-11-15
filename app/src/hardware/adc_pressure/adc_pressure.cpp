@@ -10,6 +10,9 @@ namespace
 {
     constexpr adc1_channel_t PRESSURE_SENSOR_CHANNEL = ADC1_CHANNEL_4; /*!< ADC1 channel 4 is GPIO32 */
     esp_adc_cal_characteristics_t adcChars = {};
+
+    // Pressure sensor
+    const float pressureMeasurementOffset = 0.2;
 }
 
 void adcInit(void)
@@ -34,7 +37,14 @@ void adcInit(void)
     }
 }
 
-uint32_t getPressureSensorValue(void)
+static float calculate_pressure_from_voltage(uint32_t voltageInMillivolts)
+{
+    const float voltage = (float)(voltageInMillivolts / 1000.0);
+
+    return (float)(voltage - pressureMeasurementOffset);
+}
+
+float getPressureSensorValue(void)
 {
     const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(PRESSURE_SENSOR_CHANNEL));
 
@@ -44,5 +54,9 @@ uint32_t getPressureSensorValue(void)
 
     LOG_INFO("ADC voltage: %lu", voltage);
 
-    return voltage;
+    const float pressureValue = calculate_pressure_from_voltage(voltage);
+
+    LOG_INFO("Pressure value: %.6f", pressureValue);
+
+    return pressureValue;
 }

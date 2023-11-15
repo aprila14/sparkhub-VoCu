@@ -64,7 +64,7 @@ namespace json_parser
         uint32_t currentTimeFromStartupMs;
         char firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];
         char currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
-        uint32_t pressureSensorValue;
+        float pressureSensorValue;
         std::string getFirmwareVersion() const;
         std::string getCurrentLocalTime() const;
     };
