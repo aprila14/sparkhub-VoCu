@@ -16,12 +16,14 @@ services:
   esp32-container-build:
     image: esp32-compile-sparkhub
     volumes:
-      - .:/media/src:rw
+      - .:/home/user/repo:ro
+      - ./build_artifacts:/home/user/build_artifacts:rw
     command:
       - /bin/sh
       - -c
       - |
-        dos2unix /media/src/docker-build/entry_script_build.sh
-        /media/src/docker-build/entry_script_build.sh
+        cp /home/user/repo/docker-build/entry_script_build.sh /home/user
+        dos2unix /home/user/entry_script_build.sh
+        /home/user/entry_script_build.sh
     depends_on:
       - esp32-compile-image
