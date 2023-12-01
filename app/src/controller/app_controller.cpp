@@ -237,20 +237,8 @@ namespace app
         asynchronousEventData.wiFiConnectedToApEvent.dummyByte = 1; // TODO consider sending e.g. IP instead of a dummy byte
         m_pBleController->addAsynchronousEvent(EAsynchronousEventType::WIFI_CONNECTED_TO_AP, &asynchronousEventData);
 
-        LOG_INFO("Checking for Cloud Credentials");
-
-        const prot::cloud_set_credentials::TCloudCredentials &cloudCredentials = pConfig->getCloudCredentials();
-        const prot::cloud_set_credentials::TCloudCertificatePack &cloudCertificatePack = pConfig->getCloudCertificates();
-
-        if (cloudCredentials.isSet())
-        {
-            LOG_INFO("Cloud Credentials set in NVS, initiating connection");
-            m_pCloudController->setReadinessToConnect();
-        }
-        else
-        {
-            LOG_INFO("Credentials not set in NVS, waiting on command from BLE application");
-        }
+        LOG_INFO("Initiating connection");
+        m_pCloudController->setReadinessToConnect();
 
         return true;
     }

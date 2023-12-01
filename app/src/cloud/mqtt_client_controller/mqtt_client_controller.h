@@ -121,7 +121,7 @@ private:
 
     TaskHandle_t m_taskHandle; // handle to runTask
 
-    CloudController *m_pCloudController; // Pointer to CloudController - needed for calling it's functions
+    CloudController *m_pCloudController; // Pointer to CloudController - needed for calling it's functions TODO: change to observer pattern
 };
 
 #endif // MQTTCLIENTCONTROLLER_H

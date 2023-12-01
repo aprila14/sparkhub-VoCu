@@ -96,6 +96,25 @@ namespace prot
                 return false;
             }
 
+            if (::strcmp(cloudDeviceId, rhs.cloudDeviceId) != 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        bool TCloudCredentials::setCloudDeviceId(const std::string &newDeviceId)
+        {
+            if (newDeviceId.size() > CLOUD_DEVICE_ID_LENGTH)
+            {
+                LOG_ERROR("New device id too long");
+                return false;
+            }
+
+            ::bzero(cloudDeviceId, sizeof(cloudDeviceId));
+            ::strcpy(cloudDeviceId, newDeviceId.c_str());
+
             return true;
         }
 
@@ -103,7 +122,7 @@ namespace prot
         {
             if (newAddress.size() > CLOUD_MAX_ADDRESS_LENGTH)
             {
-                LOG_INFO("Cloud Address too long");
+                LOG_ERROR("Cloud Address too long");
                 return false;
             }
 
@@ -112,9 +131,13 @@ namespace prot
 
             return true;
         }
-        bool TCloudCredentials::isSet() const
+        bool TCloudCredentials::isSetCloudAddress() const
         {
             return cloudAddress[0] != 0;
+        }
+        bool TCloudCredentials::isSetCloudDeviceId() const
+        {
+            return cloudDeviceId[0] != 0;
         }
 
         bool TCloudCertificatePack::operator==(const TCloudCertificatePack &rhs) const
@@ -134,11 +157,6 @@ namespace prot
                 return false;
             }
 
-            if (::strcmp(clientUuid, rhs.clientUuid) != 0)
-            {
-                return false;
-            }
-
             return true;
         }
 
@@ -146,7 +164,7 @@ namespace prot
         {
             if (newServerPublicCertificate.size() > CLOUD_MAX_CERT_LENGTH)
             {
-                LOG_INFO("Server Public Certificate too long");
+                LOG_ERROR("Server Public Certificate too long");
                 return false;
             }
 
@@ -165,7 +183,7 @@ namespace prot
         {
             if (newClientPublicCertificate.size() > CLOUD_MAX_CERT_LENGTH)
             {
-                LOG_INFO("Client Public Certificate too long");
+                LOG_ERROR("Client Public Certificate too long");
                 return false;
             }
 
@@ -184,7 +202,7 @@ namespace prot
         {
             if (newClientPrivateKey.size() > CLOUD_MAX_PRIVATE_KEY_LENGTH)
             {
-                LOG_INFO("Client Private Key too long");
+                LOG_ERROR("Client Private Key too long");
                 return false;
             }
 
@@ -197,20 +215,6 @@ namespace prot
         bool TCloudCertificatePack::isSetClientPrivateKey() const
         {
             return clientPrivateKey[0] != 0;
-        }
-
-        bool TCloudCertificatePack::setClientUuid(const std::string &newClientUuid)
-        {
-            if (newClientUuid.size() > CLOUD_UUID_LENGTH)
-            {
-                LOG_INFO("New Client UUID too long");
-                return false;
-            }
-
-            ::bzero(clientUuid, sizeof(clientUuid));
-            ::strcpy(clientUuid, newClientUuid.c_str());
-
-            return true;
         }
 
     } // namespace cloud_set_credentials

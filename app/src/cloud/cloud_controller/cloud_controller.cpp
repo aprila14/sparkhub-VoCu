@@ -36,9 +36,11 @@ CloudController::CloudController()
       m_heartbeatWatchdogCounter(0),
       m_msgCounter(0),
       m_connectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED),
-      m_mqttClientController(this)
+      m_mqttClientController(this),
+      m_deviceProvisioningController(&this->m_mqttClientController, this)
 {
     m_semaphoreCredentialsReady = xSemaphoreCreateBinary();
+    m_semaphoreWifiConnectionReady = xSemaphoreCreateBinary();
 }
 
 void CloudController::runTask()
@@ -106,10 +108,18 @@ void CloudController::run(void *pObject)
 
 void CloudController::_run()
 {
-    xSemaphoreTake(m_semaphoreCredentialsReady, portMAX_DELAY);
-    const prot::cloud_set_credentials::TCloudCredentials &credentials = pConfig->getCloudCredentials();
+    xSemaphoreTake(m_semaphoreWifiConnectionReady, portMAX_DELAY);
 
-    configureCloudConnection(credentials);
+    const prot::cloud_set_credentials::TCloudCredentials &cloudCredentials = pConfig->getCloudCredentials();
+
+    if (!cloudCredentials.isSetCloudAddress())
+    {
+        m_deviceProvisioningController.runTask();
+
+        xSemaphoreTake(m_semaphoreCredentialsReady, portMAX_DELAY);
+    }
+
+    configureCloudConnection(cloudCredentials);
 
     m_deviceStatusTopic = std::string(DEFAULT_TELEMETRY_MQTT_TOPIC);
     if (m_connectionStatus == ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED)
@@ -128,6 +138,8 @@ void CloudController::_run()
     m_heartbeatWatchdogTimer = xTimerCreate("Heartbeat Watchdog Timer", pdMS_TO_TICKS(HEARTBEAT_CHECK_TIMER_PERIOD_MS), true, static_cast<void *>(this), _heartbeatWatchdogTimerCallback);
     xTimerStart(m_heartbeatWatchdogTimer, 0);
     m_mqttClientController.runTask();
+
+    LOG_INFO("Cloud controller initiated!");
 
     while (true)
     {
@@ -177,6 +189,11 @@ void CloudController::configureCloudConnection(const prot::cloud_set_credentials
 }
 
 void CloudController::setReadinessToConnect()
+{
+    xSemaphoreGive(m_semaphoreWifiConnectionReady);
+}
+
+void CloudController::setReadinessAfterDeviceProvisioning()
 {
     xSemaphoreGive(m_semaphoreCredentialsReady);
 }

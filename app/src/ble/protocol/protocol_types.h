@@ -94,6 +94,13 @@ enum class ECloudConnectionStatus : uint8_t
     CLOUD_STATUS_NOT_CONNECTED = 3,
 };
 
+enum class ECloudDeviceProvisioningStatus : uint8_t
+{
+    PROVISIONING_STATUS_INIT = 0,
+    PROVISIONING_STATUS_IN_PROGRESS = 1,
+    PROVISIONING_STATUS_FINISHED = 2,
+};
+
 namespace prot
 {
 
@@ -313,8 +320,9 @@ namespace prot
         constexpr uint8_t CLOUD_MAX_KEY_LENGTH = 100;
         constexpr uint8_t CLOUD_MAX_ADDRESS_LENGTH = 200;
         constexpr uint32_t CLOUD_MAX_CERT_LENGTH = 2000;
+        constexpr uint32_t CLOUD_MAX_FULLCHAIN_CERT_LENGTH = 6000;
         constexpr uint32_t CLOUD_MAX_PRIVATE_KEY_LENGTH = 3500;
-        constexpr uint8_t CLOUD_UUID_LENGTH = 19;
+        constexpr uint8_t CLOUD_DEVICE_ID_LENGTH = 19;
 
         std::string getCloudConnectionStatus(enum ECloudConnectionStatus cloudConnectionStatus);
 
@@ -325,28 +333,28 @@ namespace prot
         struct __attribute__((packed)) TCloudCredentials
         {
             char cloudAddress[CLOUD_MAX_ADDRESS_LENGTH + 1];
+            char cloudDeviceId[CLOUD_DEVICE_ID_LENGTH + 1];
 
             TCloudCredentials();
 
             bool operator==(const TCloudCredentials &rhs) const;
             bool setCloudAddress(const std::string &newAddress);
-            bool isSet() const;
+            bool setCloudDeviceId(const std::string &newDeviceId);
+            bool isSetCloudAddress() const;
+            bool isSetCloudDeviceId() const;
         };
 
         struct __attribute__((packed)) TCloudCertificatePack
         {
             char serverPublicCertificate[CLOUD_MAX_CERT_LENGTH + 1];
-            char clientPublicCertificate[CLOUD_MAX_CERT_LENGTH + 1];
+            char clientPublicCertificate[CLOUD_MAX_FULLCHAIN_CERT_LENGTH + 1];
             char clientPrivateKey[CLOUD_MAX_PRIVATE_KEY_LENGTH + 1];
-
-            char clientUuid[CLOUD_UUID_LENGTH + 1];
 
             bool operator==(const TCloudCertificatePack &rhs) const;
             bool setServerPublicCertificate(const std::string &newServerPublicCertificate);
             bool setClientPublicCertificate(const std::string &newClientPublicCertificate);
             bool setClientPrivateKey(const std::string &newClientPrivateKey);
 
-            bool setClientUuid(const std::string &newClientUuid);
             bool isSetServerPublicCertificate() const;
             bool isSetClientPublicCertificate() const;
             bool isSetClientPrivateKey() const;

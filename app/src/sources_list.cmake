@@ -62,6 +62,9 @@ set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/cloud/parser/json_parser.h
     ${SRC_DIR}/cloud/parser/json_parser.cpp
 
+    ${SRC_DIR}/cloud/device_provisioning/device_provisioning.cpp
+    ${SRC_DIR}/cloud/device_provisioning/device_provisioning.h
+
     ${SRC_DIR}/hardware/light/led_indicator.cpp
     ${SRC_DIR}/hardware/light/led_indicator.h
 
@@ -95,4 +98,5 @@ set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/cloud/mqtt_client_controller/
     ${SRC_DIR}/cloud/ntp_client/
     ${SRC_DIR}/cloud/parser/
+    ${SRC_DIR}/cloud/device_provisioning/
 )

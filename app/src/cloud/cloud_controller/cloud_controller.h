@@ -8,6 +8,7 @@
 #include "esp_event.h"
 #include "json_parser.h"
 #include "protocol_types.h"
+#include "device_provisioning.h"
 
 class MqttClientController;
 
@@ -59,6 +60,7 @@ public:
      * Function giving semaphore informing CloudController task, that CloudConnection is ready to be established
      */
     void setReadinessToConnect();
+    void setReadinessAfterDeviceProvisioning();
 
     /**
      * @brief Function for MqttClientController to let CloudController (and AppController) know that it got connected to a broker
@@ -107,11 +109,13 @@ private:
                                             // is regarded as not connected
     uint32_t m_msgCounter;                  // outgoing messages counter
 
-    SemaphoreHandle_t m_semaphoreCredentialsReady; // sempahore indicating that credentials for cloud connection have already been stored in NVS
+    SemaphoreHandle_t m_semaphoreCredentialsReady;    // sempahore indicating that credentials for cloud connection have already been stored in NVS
+    SemaphoreHandle_t m_semaphoreWifiConnectionReady; // sempahore indicating Wifi connection is established
 
     ECloudConnectionStatus m_connectionStatus;
 
-    MqttClientController m_mqttClientController; // pointer to MqttClientController for calling lower-level functions
+    MqttClientController m_mqttClientController;
+    DeviceProvisioningController m_deviceProvisioningController;
 
     std::string m_deviceStatusTopic;
 };
