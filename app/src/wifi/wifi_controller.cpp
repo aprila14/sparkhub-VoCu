@@ -940,6 +940,11 @@ bool WiFiController::getConnectionStatus() const
     return m_connectionStatus;
 }
 
+void WiFiController::getWifiMacAddress(uint8_t *mac) const
+{
+    esp_wifi_get_mac(WIFI_IF_STA, mac);
+}
+
 void WiFiController::setConnectionStatus(bool status)
 {
     m_connectionStatus = status;
