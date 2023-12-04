@@ -101,6 +101,11 @@ namespace prot
                 return false;
             }
 
+            if (::strcmp(cloudMqttUsername, rhs.cloudMqttUsername) != 0)
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -131,6 +136,21 @@ namespace prot
 
             return true;
         }
+
+        bool TCloudCredentials::setCloudMqttUsername(const std::string &newMqttUsername)
+        {
+            if (newMqttUsername.size() > CLOUD_MQTT_USERNAME_LENGTH)
+            {
+                LOG_ERROR("Mqtt username too long");
+                return false;
+            }
+
+            ::bzero(cloudMqttUsername, sizeof(cloudMqttUsername));
+            ::strcpy(cloudMqttUsername, newMqttUsername.c_str());
+
+            return true;
+        }
+
         bool TCloudCredentials::isSetCloudAddress() const
         {
             return cloudAddress[0] != 0;
@@ -138,6 +158,10 @@ namespace prot
         bool TCloudCredentials::isSetCloudDeviceId() const
         {
             return cloudDeviceId[0] != 0;
+        }
+        bool TCloudCredentials::isSetCloudMqttUsername() const
+        {
+            return cloudMqttUsername[0] != 0;
         }
 
         bool TCloudCertificatePack::operator==(const TCloudCertificatePack &rhs) const

@@ -20,7 +20,6 @@ static const char *LOG_TAG = "Main";
 #include "adc_pressure.h"
 
 #if IS_DEBUG_BUILD
-// TCloudCertificatePack newCloudCertificates;
 
 void temporaryDevelopmentCode()
 {
@@ -38,20 +37,6 @@ void temporaryDevelopmentCode()
         newWifiCredentials.setPassword("1234567890");
         pConfig->setWifiCredentials(newWifiCredentials);
     }
-
-    {
-        LOG_INFO("cloud address: %s", pConfig->getCloudCredentials().cloudAddress);
-        TCloudCredentials newCloudCredentials;
-        newCloudCredentials.setCloudAddress(CLOUD_ADDRESS);
-        pConfig->setCloudCredentials(newCloudCredentials);
-    }
-
-    // {
-    //     LOG_INFO("clientPublicCertificate: %s", pConfig->getCloudCertificates().clientPublicCertificate);
-    //     newCloudCertificates.setServerPublicCertificate(DEFAULT_SERVER_PUBLIC_CERT);
-    //     newCloudCertificates.setClientPublicCertificate(DEFAULT_CLIENT_PUBLIC_CERT);
-    //     newCloudCertificates.setClientPrivateKey(DEFAULT_CLIENT_PRIVATE_KEY);
-    // }
 }
 #endif // IS_DEBUG_BUILD
 

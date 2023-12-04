@@ -1,12 +1,13 @@
 #ifndef DEFAULT_CERTS_H
 #define DEFAULT_CERTS_H
 
-#define CLOUD_DEVICE_PROVISIONING_ADDRESS "mqtts://global.azure-devices-provisioning.net"
-#define CLOUD_ADDRESS "mqtts://sparkhub-LevelSense.azure-devices.net"
+#define DEFAULT_CLOUD_ADDRESS "mqtts://sparkhub-LevelSense.azure-devices.net"
 
 #define DEFAULT_DEVICE_ID "sparkhub-device-02"
+
 #define DEFAULT_MQTT_USERNAME "sparkhub-LevelSense.azure-devices.net/" DEFAULT_DEVICE_ID "/?api-version=2021-04-12"
 
+#define CLOUD_DEVICE_PROVISIONING_ADDRESS "mqtts://global.azure-devices-provisioning.net"
 #define DEVICE_PROVISIONING_ID_SCOPE "0ne00B73235"
 #define DEVICE_PROVISIONING_MQTT_USERNAME DEVICE_PROVISIONING_ID_SCOPE "/registrations/" DEFAULT_DEVICE_ID "/api-version=2019-03-31"
 
@@ -63,9 +64,7 @@
     "Et1Ljckf0R6MFkDMBWEPOOhOnh3mM7Yj+KS4U5AU0KW2n0ebiix5IFBna+fiYTXb\n" \
     "stD6R/UYEvtX/Ykx28aSacwti6nw4ECrWryPz+SMOLmTmixUBmQ7CCQZP+ME6c4t\n" \
     "s9Id0LtPF2Bz\n"                                                     \
-    "-----END CERTIFICATE-----\n"
-
-#define DEFAULT_DEVICE_PROVISIONING_INTERMEDIATE_PUBLIC_CERT             \
+    "-----END CERTIFICATE-----\n"                                        \
     "-----BEGIN CERTIFICATE-----\n"                                      \
     "MIIFTDCCAzSgAwIBAgIRAL0DiNvUgr0KjpHDuYuanAowDQYJKoZIhvcNAQELBQAw\n" \
     "KjEoMCYGA1UEAwwfQXp1cmUgSW9UIEh1YiBDQSBDZXJ0IFRlc3QgT25seTAeFw0y\n" \
@@ -96,9 +95,7 @@
     "hZ8BGXI8QyniOjcoxw2HnPSjPgfNEnSWojIKs6C1FVok3hYQXQRNLG/pkNFQSrCd\n" \
     "E42uviNsSWVWjN9jyG2pnto1oYsPzJ7kJlFf2lDFWrSkJyK76x5XU3qMwRMT/26Q\n" \
     "hUjZpHQajcWC10X36n2/Mg==\n"                                         \
-    "-----END CERTIFICATE-----\n"
-
-#define DEFAULT_DEVICE_PROVISIONING_ROOT_CERT                            \
+    "-----END CERTIFICATE-----\n"                                        \
     "-----BEGIN CERTIFICATE-----\n"                                      \
     "MIIFRTCCAy2gAwIBAgIURUBfERlDnclnmJviS2f0UiIqCFowDQYJKoZIhvcNAQEL\n" \
     "BQAwKjEoMCYGA1UEAwwfQXp1cmUgSW9UIEh1YiBDQSBDZXJ0IFRlc3QgT25seTAe\n" \

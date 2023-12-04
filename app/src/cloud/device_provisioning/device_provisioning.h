@@ -25,9 +25,14 @@ private:
     static void run(void *pObject);
     void _run();
 
+    void initiateCloudConnection();
+    void configureCloudConnection();
+
     TaskHandle_t m_taskHandle; // handle to runTask
 
     ECloudDeviceProvisioningStatus m_provisioningStatus;
+
+    prot::cloud_set_credentials::TCloudCredentials m_cloudCredentials;
 
     MqttClientController *m_pMqttClientController; // pointer to MqttClientController for calling lower-level functions
     CloudController *m_pCloudController;

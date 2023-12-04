@@ -322,7 +322,8 @@ namespace prot
         constexpr uint32_t CLOUD_MAX_CERT_LENGTH = 2000;
         constexpr uint32_t CLOUD_MAX_FULLCHAIN_CERT_LENGTH = 6000;
         constexpr uint32_t CLOUD_MAX_PRIVATE_KEY_LENGTH = 3500;
-        constexpr uint8_t CLOUD_DEVICE_ID_LENGTH = 19;
+        constexpr uint8_t CLOUD_DEVICE_ID_LENGTH = 64;
+        constexpr uint8_t CLOUD_MQTT_USERNAME_LENGTH = 128;
 
         std::string getCloudConnectionStatus(enum ECloudConnectionStatus cloudConnectionStatus);
 
@@ -334,14 +335,17 @@ namespace prot
         {
             char cloudAddress[CLOUD_MAX_ADDRESS_LENGTH + 1];
             char cloudDeviceId[CLOUD_DEVICE_ID_LENGTH + 1];
+            char cloudMqttUsername[CLOUD_MQTT_USERNAME_LENGTH + 1];
 
             TCloudCredentials();
 
             bool operator==(const TCloudCredentials &rhs) const;
             bool setCloudAddress(const std::string &newAddress);
             bool setCloudDeviceId(const std::string &newDeviceId);
+            bool setCloudMqttUsername(const std::string &newMqttUsername);
             bool isSetCloudAddress() const;
             bool isSetCloudDeviceId() const;
+            bool isSetCloudMqttUsername() const;
         };
 
         struct __attribute__((packed)) TCloudCertificatePack

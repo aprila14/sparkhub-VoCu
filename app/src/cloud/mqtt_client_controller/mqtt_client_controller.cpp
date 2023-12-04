@@ -109,21 +109,51 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(const prot
     const prot::cloud_set_credentials::TCloudCertificatePack &cloudCertificatePack = pConfig->getCloudCertificates();
 
     esp_mqtt_client_config_t mqttConfig = {};
-    mqttConfig.uri = credentials.cloudAddress;
+
     mqttConfig.port = 8883;
     mqttConfig.keepalive = 60; // seconds
-    mqttConfig.client_id = DEFAULT_DEVICE_ID;
-    mqttConfig.username = DEFAULT_MQTT_USERNAME;
+    mqttConfig.skip_cert_common_name_check = true;
 
-    if (cloudCertificatePack.isSetServerPublicCertificate())
+    if (credentials.isSetCloudAddress())
     {
-        mqttConfig.cert_pem = cloudCertificatePack.serverPublicCertificate;
+        mqttConfig.uri = credentials.cloudAddress;
     }
     else
     {
-        LOG_WARNING("Default root public cert");
-        mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
+        LOG_WARNING("Default cloud address used");
+        mqttConfig.uri = DEFAULT_CLOUD_ADDRESS;
     }
+
+    if (credentials.isSetCloudDeviceId())
+    {
+        mqttConfig.client_id = credentials.cloudDeviceId;
+    }
+    else
+    {
+        LOG_WARNING("Default cloud device id used");
+        mqttConfig.client_id = DEFAULT_DEVICE_ID;
+    }
+
+    if (credentials.isSetCloudMqttUsername())
+    {
+        mqttConfig.username = credentials.cloudMqttUsername;
+    }
+    else
+    {
+        LOG_WARNING("Default cloud mqtt username used");
+        mqttConfig.username = DEFAULT_MQTT_USERNAME;
+    }
+
+    // TODO: turn on certificate verification after adding proper CA certificate in the Azure Device Provisioning Service
+    // if (cloudCertificatePack.isSetServerPublicCertificate())
+    // {
+    //     mqttConfig.cert_pem = cloudCertificatePack.serverPublicCertificate;
+    // }
+    // else
+    // {
+    //     LOG_WARNING("Default root public cert");
+    //     mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
+    // }
 
     if (cloudCertificatePack.isSetClientPublicCertificate())
     {
