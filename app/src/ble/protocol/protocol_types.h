@@ -114,12 +114,10 @@ namespace prot
         // COMMANDS
         CMD__START = 0x0010, ///< Helper enum - beginning of command
         CMD_TEST = 0x0010,   ///< Communication test command
-
-
+        
+        CMD_get_wifi_mac_address = 0x0020, ///< Get BLE MAC address
 
         CMD_SEND_CERTIFICATES = 0x0050, ///< Send files with certificates from BLE device to ESP
-
-
 
         CMD__END = CMD_SEND_CERTIFICATES, ///< Helper enum - end of command
 
@@ -127,7 +125,7 @@ namespace prot
         RES__START = 0x1010,               ///< Helper enum - beginning of responses
         RES_TEST = CMD_TEST | RESULT_FLAG, ///< Communication test response
 
-
+        RES_get_wifi_mac_address = CMD_get_wifi_mac_address | RESULT_FLAG, ///< Response to get BLE MAC address
 
         RES_SEND_CERTIFICATES = CMD_SEND_CERTIFICATES | RESULT_FLAG,
 
@@ -379,6 +377,21 @@ namespace prot
             uint8_t dummyByte;
         };
     } // namespace send_certificates
+
+    namespace get_wifi_mac_address
+    {
+        constexpr uint8_t WIFI_MAC_ADDRESS_LENGTH = 6;
+
+        struct __attribute__((packed)) TCmd
+        {
+            uint8_t dummyByte;
+        };
+
+        struct __attribute__((packed)) TRes
+        {
+            uint8_t wifiMacAddress[WIFI_MAC_ADDRESS_LENGTH];
+        };
+    } // namespace get_wifi_mac_address
 
     namespace ota_perform
     {

@@ -36,6 +36,13 @@ void handleKeyPress(BleController* pBleController, char key)
             break;
         }
 
+        case 'm':
+        {
+            LOG_INFO("About to send command CMD_get_wifi_mac_address");
+            prot::get_wifi_mac_address::TCmd cmd = {0};
+            result = pBleController->sendPacket(prot::EPacketType::CMD_get_wifi_mac_address, (uint8_t*)&cmd, sizeof(cmd));
+            break;
+        }
         case 'c':
         {
             LOG_INFO("About to send CMD_CLOUD_SEND_CERTIFICATES");
@@ -81,6 +88,7 @@ void handleKeyPress(BleController* pBleController, char key)
             //Print available commands
             LOG_INFO("Available commands:\n\n"
                      "t - send test command\n"
+                     "m - get WIFI MAC Address from device\n"
                      "c - send certificates via BLE"
                      "h - display help\n");
 

@@ -74,6 +74,36 @@ EPacketHandlingResult handleCommand_sendCertificates(BleController *pController,
     return EPacketHandlingResult::HANDLED;
 }
 
+EPacketHandlingResult handleCommand_getWifiMacAddress(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
+{
+    LOG_INFO("Handling command 'Get Wifi MAC Address");
+
+    if (payloadLen != sizeof(prot::get_wifi_mac_address::TCmd))
+    {
+        LOG_WARNING("Invalid 'Get Wifi MAC Address' command. Payload length: %d", payloadLen);
+        return EPacketHandlingResult::SEND_NACK;
+    }
+
+    const prot::get_wifi_mac_address::TCmd *pCmd = reinterpret_cast<const prot::get_wifi_mac_address::TCmd *>(payload); // NOLINT - we need reinterpret cast
+    prot::get_wifi_mac_address::TRes res = {};
+
+    if (esp_read_mac(res.wifiMacAddress, ESP_MAC_WIFI_STA) != ESP_OK)
+    {
+        LOG_ERROR("Failed to read ESP WIFI MAC Address");
+        return EPacketHandlingResult::SEND_NACK;
+    }
+
+    bool result = pController->sendPacket(prot::EPacketType::RES_get_wifi_mac_address, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+
+    if (!result)
+    {
+        LOG_ERROR("Failed to send response for 'Get Wifi MAC Address' command");
+        return EPacketHandlingResult::SEND_NACK;
+    }
+
+    return EPacketHandlingResult::HANDLED;
+}
+
 EPacketHandlingResult handleCommand(BleController *pController, prot::EPacketType packetType, const uint8_t *payload, uint16_t payloadLen)
 {
     switch (packetType)
@@ -82,6 +112,8 @@ EPacketHandlingResult handleCommand(BleController *pController, prot::EPacketTyp
         return handleCommand_test(pController, payload, payloadLen);
     case prot::EPacketType::CMD_SEND_CERTIFICATES:
         return handleCommand_sendCertificates(pController, payload, payloadLen);
+    case prot::EPacketType::CMD_get_wifi_mac_address:
+        return handleCommand_getWifiMacAddress(pController, payload, payloadLen);
     default:
         LOG_ERROR("Unknown command packet type: %d (0x%04X). Length %u", packetType, packetType, payloadLen);
         return EPacketHandlingResult::SEND_NACK;

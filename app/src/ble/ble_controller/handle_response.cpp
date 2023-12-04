@@ -39,6 +39,23 @@ static EPacketHandlingResult handleResponse_test(
     return EPacketHandlingResult::SEND_ACK;
 }
 
+static EPacketHandlingResult handleResponse_getWifiMacAddress(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+{
+    LOG_INFO("Handling response for Get WIFI MAC Address");
+
+    if (payloadLen != sizeof(prot::get_wifi_mac_address::TRes))
+    {
+        LOG_WARNING("Invalid 'Get Wifi MAC Address' response. Payload length: %d", payloadLen);
+        return EPacketHandlingResult::SEND_NACK;
+    }
+
+    prot::get_wifi_mac_address::TRes *pRes = (prot::get_wifi_mac_address::TRes*)payload;
+    LOG_INFO("MAC Address obtained from device");
+    printMacAddress(pRes->wifiMacAddress, "WIFI");
+
+    return EPacketHandlingResult::SEND_ACK;
+}
+
 static EPacketHandlingResult handleResponse_sendCertificates(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling response for Send Certificates command");
@@ -66,6 +83,8 @@ EPacketHandlingResult handleResponse(
     {
         case prot::EPacketType::RES_TEST:
             return handleResponse_test(pController, payload, payloadLen);
+        case prot::EPacketType::RES_get_wifi_mac_address:
+            return handleResponse_getWifiMacAddress(pController, payload, payloadLen);
         case prot::EPacketType::RES_SEND_CERTIFICATES:
             return handleResponse_sendCertificates(pController, payload, payloadLen);
         default:
