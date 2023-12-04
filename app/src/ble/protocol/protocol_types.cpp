@@ -277,4 +277,60 @@ namespace prot
         }
 
     } // namespace ota_perform
+    
+    namespace send_certificates
+    {
+        bool TCertificatePack::operator==(const TCertificatePack &rhs) const
+        {
+            if (::strcmp(fullChainCertificate, rhs.fullChainCertificate) != 0)
+            {
+                return false;
+            }
+
+            if (::strcmp(privateKey, rhs.privateKey) != 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        
+        bool TCertificatePack::setFullChainCertificate(const std::string &newFullChainCertificate)
+        {
+            if (newFullChainCertificate.size() > MAX_FULLCHAIN_CERTIFICATE_LENGTH)
+            {
+                LOG_ERROR("Fullchain certificate too long, length: %d, max length: %d", newFullChainCertificate.size(), MAX_FULLCHAIN_CERTIFICATE_LENGTH);
+                return false;
+            }
+
+            ::bzero(fullChainCertificate, sizeof(fullChainCertificate));
+            ::strcpy(fullChainCertificate, newFullChainCertificate.c_str());
+
+            return true;
+        }
+
+        bool TCertificatePack::setPrivateKey(const std::string &newPrivateKey)
+        {
+            if (newPrivateKey.size() > MAX_PRIVATE_KEY_LENGTH)
+            {
+                LOG_ERROR("Private key too long");
+                return false;
+            }
+
+            ::bzero(privateKey, sizeof(privateKey));
+            ::strcpy(privateKey, newPrivateKey.c_str());
+
+            return true;
+        }
+
+        bool TCertificatePack::isSetFullChainCertificate() const
+        {
+            return fullChainCertificate[0] != 0;
+        }
+        
+        bool TCertificatePack::isSetPrivateKey() const
+        {
+            return privateKey[0] != 0;
+        }
+    }
 } // namespace prot

@@ -51,6 +51,23 @@ void initCommonGlobalModules()
         LOG_ERROR("Failed to open the NVS, but there is nothing we can do about it anyway...");
     }
 
+    const TCertificatePack& certificatePack = pConfig->getCertificatePack();
+
+
+    // If cloud certificates are stored in flash, then the BLE tasks will not start
+    // It's important to keep that in mind, in case of failed provisioning they should be removed
+    // Otherwise it would be possible to brick the device
+    bool isCertificateSet = (certificatePack.isSetFullChainCertificate() && certificatePack.isSetPrivateKey());
+
+    if (isCertificateSet)
+    {
+        LOG_DEBUG("Certificates set in the flash");
+    }
+    else
+    {
+        LOG_WARNING("Certificates not found");
+    }
+
 #if IS_DEBUG_BUILD
     temporaryDevelopmentCode();
 #endif
@@ -89,10 +106,19 @@ void initCommonGlobalModules()
     LOG_ERROR("MAC - %02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
     // run modules which are tasks
-    // TODO bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about
+    if (!isCertificateSet)
+    {
+        bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about
+    }
+
     wifiController.runTask();
     wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
-    // TODO bleController.runTask();
+
+    if (!isCertificateSet)
+    {
+        bleController.runTask();
+    }
+
     ntpClient.runTask();
     cloudController.runTask();
 }

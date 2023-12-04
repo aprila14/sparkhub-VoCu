@@ -121,36 +121,20 @@ namespace prot
         // COMMANDS
         CMD__START = 0x0010, ///< Helper enum - beginning of command
         CMD_TEST = 0x0010,   ///< Communication test command
+        
+        CMD_get_wifi_mac_address = 0x0020, ///< Get BLE MAC address
 
-        CMD_WIFI_SCAN_AP = 0x0020,             ///< Scan available WiFi AP points (available WiFi networks nearby)
-        CMD_WIFI_CONNECT_TO_AP = 0x0021,       ///< Connect to an existing WiFi AP
-        CMD_WIFI_DISCONNECT_FROM_AP = 0x0022,  ///< Disconnect from an existing WiFi AP
-        CMD_WIFI_SAVE_AP_CREDENTIALS = 0x0023, ///< Save AP credentials without connecting
+        CMD_SEND_CERTIFICATES = 0x0050, ///< Send files with certificates from BLE device to ESP
 
-        CMD_GLOBAL_GET_STATUS = 0x0024, ///< Get information regarding all modules
-
-        CMD_OTA_PERFORM = 0x0030, ///< Run OTA firmware update
-
-        CMD_CLOUD_SEND_CREDENTIALS = 0x0040, ///< Send cloud credentials from BLE device to ESP
-
-        CMD_RESET_ESP = 0x00FF, ///< Request ESP32 software reset
-
-        CMD__END = CMD_RESET_ESP, ///< Helper enum - end of command
+        CMD__END = CMD_SEND_CERTIFICATES, ///< Helper enum - end of command
 
         // RESULTS response for commands. If possible: request | 0x1000
         RES__START = 0x1010,               ///< Helper enum - beginning of responses
         RES_TEST = CMD_TEST | RESULT_FLAG, ///< Communication test response
 
-        RES_WIFI_SCAN_AP = CMD_WIFI_SCAN_AP | RESULT_FLAG,                         ///< Result of CMD_WIFI_SCAN_AP
-        RES_WIFI_CONNECT_TO_AP = CMD_WIFI_CONNECT_TO_AP | RESULT_FLAG,             ///< Result of CMD_WIFI_CONNECT_TO_AP
-        RES_WIFI_DISCONNECT_FROM_AP = CMD_WIFI_DISCONNECT_FROM_AP | RESULT_FLAG,   ///< Result of CMD_WIFI_DISCONNECT_FROM_AP
-        RES_WIFI_SAVE_AP_CREDENTIALS = CMD_WIFI_SAVE_AP_CREDENTIALS | RESULT_FLAG, ///< Result of CMD_SAVE_AP_CREDENTIALS
+        RES_get_wifi_mac_address = CMD_get_wifi_mac_address | RESULT_FLAG, ///< Response to get BLE MAC address
 
-        RES_GLOBAL_GET_STATUS = CMD_GLOBAL_GET_STATUS | RESULT_FLAG, ///< Result of CMD_GLOBAL_GET_STATUS
-
-        RES_OTA_PERFORM = CMD_OTA_PERFORM | RESULT_FLAG, ///< Result of CMD_OTA_PERFORM
-
-        RES_CLOUD_SEND_CREDENTIALS = CMD_CLOUD_SEND_CREDENTIALS | RESULT_FLAG, ///< Result of CMD_CLOUD_SEND_CREDENTIALS
+        RES_SEND_CERTIFICATES = CMD_SEND_CERTIFICATES | RESULT_FLAG,
 
         // Special "asynchronous" responses - sent without any request
         RES_ASYNC__WIFI_CONNECTED_TO_AP = 0x10A1,      ///< Sent when we connect to AP
@@ -376,6 +360,50 @@ namespace prot
         };
 
     } // namespace cloud send credentials
+
+    namespace send_certificates
+    {
+        constexpr uint32_t MAX_FULLCHAIN_CERTIFICATE_LENGTH = 6000;
+        constexpr uint32_t MAX_PRIVATE_KEY_LENGTH = 2000;
+
+        struct __attribute__((packed)) TCertificatePack
+        {
+            char fullChainCertificate[MAX_FULLCHAIN_CERTIFICATE_LENGTH + 1];
+            char privateKey[MAX_PRIVATE_KEY_LENGTH + 1];
+
+            bool operator==(const TCertificatePack &rhs) const;
+            bool setFullChainCertificate(const std::string &newFullChainCertificate);
+            bool setPrivateKey(const std::string &newPrivateKey);
+            
+            bool isSetFullChainCertificate() const;
+            bool isSetPrivateKey() const;
+        };
+
+        struct __attribute__((packed)) TCmd
+        {
+            TCertificatePack certificates;
+        };
+
+        struct __attribute__((packed)) TRes
+        {
+            uint8_t dummyByte;
+        };
+    } // namespace send_certificates
+
+    namespace get_wifi_mac_address
+    {
+        constexpr uint8_t WIFI_MAC_ADDRESS_LENGTH = 6;
+
+        struct __attribute__((packed)) TCmd
+        {
+            uint8_t dummyByte;
+        };
+
+        struct __attribute__((packed)) TRes
+        {
+            uint8_t wifiMacAddress[WIFI_MAC_ADDRESS_LENGTH];
+        };
+    } // namespace get_wifi_mac_address
 
     namespace ota_perform
     {
