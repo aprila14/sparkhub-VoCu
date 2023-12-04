@@ -11,7 +11,7 @@ static const char *LOG_TAG = "CloudController";
 #include "protocol_types.h"
 #include "sleep.h"
 #include "cloud_config.h"
-#include "adc_pressure.h"
+#include "adc_VoCu.h"
 
 #include <memory>
 

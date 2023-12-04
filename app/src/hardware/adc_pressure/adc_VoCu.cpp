@@ -1,8 +1,8 @@
 // Please keep these 2 lines at the beginning of each cpp module
-static const char *LOG_TAG = "adcPressure";
+static const char *LOG_TAG = "adcVoCu";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
-#include "adc_pressure.h"
+#include "adc_VoCu.h"
 #include "sleep.h"
 #include "commons.h"
 #include "esp_adc_cal.h"
@@ -12,10 +12,11 @@ namespace
     constexpr adc1_channel_t SENSOR_CHANNEL = ADC1_CHANNEL_4; /*!< ADC1 channel 4 is GPIO32 */
     esp_adc_cal_characteristics_t adcChars = {};
 
-    // Flow sensor
+    // Current sensor
     const float FlowMeasurementOffset = 0.2;
     float TotalSumOfLiters = 0;
-    uint32_t thresholdStartReading = 100;
+    uint32_t resolution = 185; // mV/A
+    uint32_t thresholdStartReading = 0;
 
     uint32_t lastTime;
     uint32_t currentTime;
@@ -46,11 +47,11 @@ void adcInit(void)
     }
 }
 
-static float calculate_flow_from_voltage(uint32_t voltageInMillivolts)
+static float calculate_current_from_voltage(uint32_t voltageInMillivolts)
 {
-    const float voltage = (float)(voltageInMillivolts / 1000.0);
+    const float voltage = (float)(voltageInMillivolts / resolution);
 
-    return (float)(voltage - FlowMeasurementOffset);
+    return (float)(voltage);
 }
 
 void ExecuteUpdateTotalSumOfLiters(void)
@@ -93,7 +94,7 @@ void ExecuteUpdateTotalSumOfLiters(void)
 
             LOG_INFO("ADC voltage: %lu", voltage);
 
-            const float FlowValue = calculate_flow_from_voltage(voltage);
+            const float FlowValue = calculate_current_from_voltage(voltage);
 
             LOG_INFO("Flow value: %.6f", FlowValue);
 

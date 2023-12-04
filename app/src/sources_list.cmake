@@ -65,8 +65,8 @@ set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/hardware/light/led_indicator.cpp
     ${SRC_DIR}/hardware/light/led_indicator.h
 
-    ${SRC_DIR}/hardware/adc_pressure/adc_pressure.cpp
-    ${SRC_DIR}/hardware/adc_pressure/adc_pressure.h
+    ${SRC_DIR}/hardware/adc_pressure/adc_VoCu.cpp
+    ${SRC_DIR}/hardware/adc_pressure/adc_VoCu.h
 )
 
 set(NOT_TESTABLE_APPLICATION_INCLUDE_DIRS

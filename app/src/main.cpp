@@ -17,7 +17,7 @@ static const char *LOG_TAG = "Main";
 #include "reset_button_handler.h"
 #include "wifi_controller.h"
 #include "cloud_config.h"
-#include "adc_pressure.h"
+#include "adc_VoCu.h"
 
 #if IS_DEBUG_BUILD
 // TCloudCertificatePack newCloudCertificates;
