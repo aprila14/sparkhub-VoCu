@@ -6,6 +6,7 @@ static const char *LOG_TAG = "adcVoCu";
 #include "sleep.h"
 #include "commons.h"
 #include "esp_adc_cal.h"
+#include "math.h"
 
 namespace
 {
@@ -17,10 +18,12 @@ namespace
     float TotalSumOfLiters = 0;
     uint32_t resolution = 185; // mV/A
     uint32_t thresholdStartReading = 0;
+    uint32_t zeroVoltageShiftInmV = 725;
 
-    uint32_t lastTime;
-    uint32_t currentTime;
-    uint32_t TimeBetweenTwoMeasurements;
+    uint64_t lastTime;
+    uint64_t currentTime;
+    uint64_t IEndMeasure;
+    uint64_t TimeBetweenTwoMeasurements;
 
     bool firstCall = true;
 }
@@ -47,18 +50,17 @@ void adcInit(void)
     }
 }
 
-static float calculate_current_from_voltage(uint32_t voltageInMillivolts)
+static float calculate_current_from_voltage(uint32_t voltageInmV)
 {
-    const float voltage = (float)(voltageInMillivolts / resolution);
+    
+    const float current = (float)(voltageInmV) / resolution;
 
-    return (float)(voltage);
+    return (float)(current);
 }
 
 void ExecuteUpdateTotalSumOfLiters(void)
 {
 
-
-    float Liters;
 
     while(firstCall == true)
         {
@@ -66,46 +68,56 @@ void ExecuteUpdateTotalSumOfLiters(void)
             TimeBetweenTwoMeasurements = 0;
             lastTime = 0;
             currentTime = 0;
-            lastTime = commons::getCurrentTimestampMs();
+            lastTime = commons::getCurrentTimestampUs();
             firstCall = false;
+            LOG_INFO("Inside firstCall while loop");
 
         }
 
-    currentTime = commons::getCurrentTimestampMs();
+    currentTime = commons::getCurrentTimestampUs();
 
-    LOG_INFO("currentTime: %lu", currentTime);
-    LOG_INFO("lastTime: %lu", lastTime);
+    //LOG_INFO("currentTime: %lu", currentTime);
+    //LOG_INFO("lastTime: %lu", lastTime);
 
     TimeBetweenTwoMeasurements = currentTime - lastTime;
 
-    LOG_INFO("TimeBetweenTwoMeasurements: %lu", TimeBetweenTwoMeasurements);
+    //LOG_INFO("TimeBetweenTwoMeasurements: %lu seconds", TimeBetweenTwoMeasurements);
 
     lastTime = currentTime;
 
     currentTime = 0;
     
-    const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(SENSOR_CHANNEL));
 
-    LOG_INFO("Raw ADC reading: %lu", adcReading);
 
-    if(adcReading > thresholdStartReading)
-        {   
-            const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
+    //LOG_INFO("Raw ADC reading: %lu", adcReading);
 
-            LOG_INFO("ADC voltage: %lu", voltage);
+    float SumCurrentValue2 = 0;
+    float INoSamples = 0;
+    const float gulSamplePeriod_us = 2 * 20000; //sample over 2 period (40ms)
 
-            const float FlowValue = calculate_current_from_voltage(voltage);
+    IEndMeasure = commons::getCurrentTimestampUs() + gulSamplePeriod_us;
 
-            LOG_INFO("Flow value: %.6f", FlowValue);
+    while(commons::getCurrentTimestampUs() < IEndMeasure)
+    {
+        const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(SENSOR_CHANNEL));
+        const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
+        const float CurrentValue = calculate_current_from_voltage(voltage);
+        float CurrentValue2 = CurrentValue * CurrentValue;
+        SumCurrentValue2 = SumCurrentValue2 + CurrentValue2;
+        INoSamples++;
+    }
 
-            Liters = FlowValue * TimeBetweenTwoMeasurements;
 
-            LOG_INFO("Liters value: %.6f", Liters);
+    //const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
 
-            TotalSumOfLiters = TotalSumOfLiters + Liters;        
-                
-            LOG_INFO("TotalSumOfLiters: %.6f", TotalSumOfLiters);
-        }
+    //LOG_INFO("ADC voltage: %lu mV", voltage);
+
+    const float CurrentRMS = sqrt(SumCurrentValue2 / INoSamples);
+    
+    LOG_INFO("INoSamples: %.6f samples", INoSamples);
+    LOG_INFO("Current RMS: %.6f A", CurrentRMS);
+
+        
 
 }
 
