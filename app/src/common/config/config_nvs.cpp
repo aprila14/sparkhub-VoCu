@@ -30,6 +30,7 @@ bool ConfigNvs::init()
     getStruct(m_cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
     getStruct(m_cloudCertificates, ConfigKeyName::CLOUD_CERTIFICATES);
     getStruct(m_otaHttpsServerCertificate, ConfigKeyName::OTA_HTTP_CERTIFICATE);
+    getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
 
     return true;
 }
@@ -126,6 +127,16 @@ void ConfigNvs::setLastLightBrightness(uint8_t value)
 uint8_t ConfigNvs::getLastLightBrightness()
 {
     return m_lastLightBrightness;
+}
+
+void ConfigNvs::setCertificatePack(const TCertificatePack &certificatePack)
+{
+    setStruct(m_certificatePack, certificatePack, ConfigKeyName::CERTIFICATES);
+}
+
+const TCertificatePack& ConfigNvs::getCertificatePack()
+{
+    return m_certificatePack;
 }
 
 bool ConfigNvs::resetConfig()
@@ -293,6 +304,7 @@ void ConfigNvs::resetAllConfigurationFields()
     m_cloudCredentials = TCloudCredentials();
     m_otaHttpsServerCertificate = THttpsServerCertificate();
     m_otaUpdateLink = TOtaUpdateLink();
+    m_certificatePack = TCertificatePack();
 }
 
 

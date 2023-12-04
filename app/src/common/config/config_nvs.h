@@ -18,6 +18,7 @@ namespace ConfigKeyName
     constexpr const char *OTA_HTTP_CERTIFICATE = "ota-cert";
     constexpr const char *OTA_UPDATE_LINK = "ota-link";
     constexpr const char *LAST_LIGHT_BRIGHTNESS = "lastbr";
+    constexpr const char *CERTIFICATES = "cert-pack";
 
 }
 
@@ -65,6 +66,9 @@ public:
     virtual void setLastLightBrightness(uint8_t value);
     virtual uint8_t getLastLightBrightness();
 
+    virtual const TCertificatePack &getCertificatePack();
+    virtual void setCertificatePack(const TCertificatePack &certificatePack);
+
 #if !TESTING
 private:
 #endif
@@ -99,6 +103,7 @@ private:
     TCloudCertificatePack m_cloudCertificates = {};
     THttpsServerCertificate m_otaHttpsServerCertificate = {};
     TOtaUpdateLink m_otaUpdateLink = {};
+    TCertificatePack m_certificatePack = {};
 
     uint8_t m_lastLightBrightness = 0;
 };
