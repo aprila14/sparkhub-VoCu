@@ -24,6 +24,7 @@ static_assert(MAX_NUMBER_OF_SCANNED_ACCESS_POINTS == prot::wifi_scan_ap::MAX_NUM
 using TWiFiCredentials = prot::wifi_connect_to_ap::TWiFiCredentials;
 using TCloudCredentials = prot::cloud_set_credentials::TCloudCredentials;
 using TCloudCertificatePack = prot::cloud_set_credentials::TCloudCertificatePack;
+using TCertificatePack = prot::send_certificates::TCertificatePack;
 using THttpsServerCertificate = prot::ota_perform::THttpsServerCertificate;
 using TConnectToAccessPointCommand = prot::wifi_connect_to_ap::TCmd;
 using TConnectToAccessPointResult = prot::wifi_connect_to_ap::TRes;

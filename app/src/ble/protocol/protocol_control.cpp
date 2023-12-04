@@ -78,7 +78,7 @@ int ProtocolControl::parsePacketToOutBuffer(uint16_t type, uint8_t* payload, uin
     /* Sanity check */
     if (payloadLength > MAX_PAYLOAD_LEN)
     {
-        LOG_DEBUG("Outgoing packet payload too big");
+        LOG_DEBUG("Outgoing packet payload (%d) too big, max length: %d", payloadLength, MAX_PAYLOAD_LEN);
         return NO_PACKET_ASSEMBLED;
     }
 
