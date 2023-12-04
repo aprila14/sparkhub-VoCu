@@ -26,6 +26,7 @@ namespace
     uint64_t TimeBetweenTwoMeasurements;
 
     bool firstCall = true;
+    float gIOffset = 0;
 }
 
 void adcInit(void)
@@ -61,7 +62,6 @@ static float calculate_current_from_voltage(uint32_t voltageInmV)
 void ExecuteUpdateTotalSumOfLiters(void)
 {
 
-
     while(firstCall == true)
         {
 
@@ -71,6 +71,7 @@ void ExecuteUpdateTotalSumOfLiters(void)
             lastTime = commons::getCurrentTimestampUs();
             firstCall = false;
             LOG_INFO("Inside firstCall while loop");
+            gIOffset = 4.0;                      // initial current zero of the esp32 input from ACS712
 
         }
 
@@ -92,6 +93,7 @@ void ExecuteUpdateTotalSumOfLiters(void)
     //LOG_INFO("Raw ADC reading: %lu", adcReading);
 
     float SumCurrentValue2 = 0;
+    float SumCurrentValue = 0;
     float INoSamples = 0;
     const float gulSamplePeriod_us = 2 * 20000; //sample over 2 period (40ms)
 
@@ -101,8 +103,10 @@ void ExecuteUpdateTotalSumOfLiters(void)
     {
         const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(SENSOR_CHANNEL));
         const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
-        const float CurrentValue = calculate_current_from_voltage(voltage);
-        float CurrentValue2 = CurrentValue * CurrentValue;
+        const float CurrentValue = calculate_current_from_voltage(voltage) - gIOffset;
+        const float CurrentValue2 = CurrentValue * CurrentValue;
+
+        SumCurrentValue = SumCurrentValue + CurrentValue;
         SumCurrentValue2 = SumCurrentValue2 + CurrentValue2;
         INoSamples++;
     }
@@ -112,12 +116,29 @@ void ExecuteUpdateTotalSumOfLiters(void)
 
     //LOG_INFO("ADC voltage: %lu mV", voltage);
 
+    float IOffset = SumCurrentValue / INoSamples;
+    
+    // correct quadradic current sum for offset: Sum((i(t)+o)^2) = Sum(i(t)^2) + 2*o*Sum(i(t)) + o^2*NoSamples
+
     const float CurrentRMS = sqrt(SumCurrentValue2 / INoSamples);
+
+    float SumCurrentRMSCorrected = SumCurrentValue2 - 2*IOffset*SumCurrentValue - IOffset*IOffset*INoSamples;
+
+
+    // avoid NaN due to round-off effects
+    if(SumCurrentRMSCorrected<0)
+    {
+        SumCurrentRMSCorrected = 0;
+    }
     
     LOG_INFO("INoSamples: %.6f samples", INoSamples);
+    LOG_INFO("IOffset: %.6f A", IOffset);
     LOG_INFO("Current RMS: %.6f A", CurrentRMS);
+    LOG_INFO("CurrentRMSCorrected: %.6f A", sqrt(SumCurrentRMSCorrected/INoSamples));
 
-        
+    // correct offset for next round
+    gIOffset = (gIOffset+IOffset);
+    LOG_INFO("gIOffset: %.6f A", gIOffset);
 
 }
 
