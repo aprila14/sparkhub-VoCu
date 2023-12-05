@@ -16,7 +16,7 @@ namespace
     // Current sensor
     const float FlowMeasurementOffset = 0.2;
     float TotalSumOfLiters = 0;
-    uint32_t resolution = 68.027211; //125.8503401; // mV/A
+    uint32_t resolution = 125.8503401; // für den 20A Sensor //125.8503401; für den 5A Sensor // mV/A
     uint32_t thresholdStartReading = 0;
 
     uint64_t lastTime;
@@ -73,7 +73,7 @@ void ExecuteUpdateTotalSumOfLiters(void)
             firstCall = false;
             LOG_INFO("Inside firstCall while loop");
             gIOffset = 0;    
-            gVOffset = 0;                  // initial current zero of the esp32 input from ACS712
+            gVOffset = 1600;                  // initial current zero of the esp32 input from ACS712
 
         }
 
