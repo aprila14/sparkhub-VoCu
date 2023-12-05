@@ -24,7 +24,6 @@ bool ConfigNvs::init()
     getStruct(m_wiFiCredentials, ConfigKeyName::WIFI_CREDENTIALS);
     getUint8Var(m_lastLightBrightness, ConfigKeyName::LAST_LIGHT_BRIGHTNESS);
     getStruct(m_cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
-    getStruct(m_otaHttpsServerCertificate, ConfigKeyName::OTA_HTTP_CERTIFICATE);
     getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
 
     return true;
@@ -84,11 +83,6 @@ void ConfigNvs::setCloudCredentials(const TCloudCredentials &cloudCredentials)
     setStruct(m_cloudCredentials, cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
 }
 
-void ConfigNvs::setOtaCertificate(const THttpsServerCertificate &httpsServerCertificate)
-{
-    setStruct(m_otaHttpsServerCertificate, httpsServerCertificate, ConfigKeyName::OTA_HTTP_CERTIFICATE);
-}
-
 void ConfigNvs::setOtaUpdateLink(const TOtaUpdateLink &otaUpdateLink)
 {
     setStruct(m_otaUpdateLink, otaUpdateLink, ConfigKeyName::OTA_UPDATE_LINK);
@@ -97,11 +91,6 @@ void ConfigNvs::setOtaUpdateLink(const TOtaUpdateLink &otaUpdateLink)
 const TOtaUpdateLink &ConfigNvs::getOtaUpdateLink()
 {
     return m_otaUpdateLink;
-}
-
-const THttpsServerCertificate &ConfigNvs::getOtaCertificate()
-{
-    return m_otaHttpsServerCertificate;
 }
 
 void ConfigNvs::setLastLightBrightness(uint8_t value)
@@ -285,7 +274,6 @@ void ConfigNvs::resetAllConfigurationFields()
     m_wiFiCredentials = TWiFiCredentials();
     m_lastLightBrightness = 50;
     m_cloudCredentials = TCloudCredentials();
-    m_otaHttpsServerCertificate = THttpsServerCertificate();
     m_otaUpdateLink = TOtaUpdateLink();
     m_certificatePack = TCertificatePack();
 }
