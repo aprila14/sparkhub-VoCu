@@ -6,8 +6,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include "esp_event.h"
-#include "json_parser.h"
 #include "protocol_types.h"
+
+constexpr uint8_t DEVICE_PROVISIONING_MAX_TOPIC_SIZE = 200;
+constexpr char DEVICE_PROVISIONING_STATUS_ASSIGNING[] = "assigning";
+constexpr char DEVICE_PROVISIONING_STATUS_ASSIGNED[] = "assigned";
 
 class DeviceProvisioningController
 {
@@ -27,12 +30,21 @@ private:
 
     void initiateCloudConnection();
     void configureCloudConnection();
+    void createDeviceRegistrationTopic();
+    void createDeviceRegistrationStatusTopic();
+
+    void setOperationIdIfStatusAssigning(std::string &provisioningStatus, std::string &provisioningOperationId);
 
     TaskHandle_t m_taskHandle; // handle to runTask
 
-    ECloudDeviceProvisioningStatus m_provisioningStatus;
+    ECloudDeviceProvisioningStatus m_provisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
 
     prot::cloud_set_credentials::TCloudCredentials m_cloudCredentials;
+
+    char m_deviceRegistrationTopic[DEVICE_PROVISIONING_MAX_TOPIC_SIZE];
+    char m_deviceRegistrationStatus[DEVICE_PROVISIONING_MAX_TOPIC_SIZE];
+    int32_t m_deviceRegistrationRequestId = 0;
+    std::string m_deviceProvisioningOperationId;
 
     MqttClientController *m_pMqttClientController; // pointer to MqttClientController for calling lower-level functions
     CloudController *m_pCloudController;

@@ -128,6 +128,14 @@ namespace json_parser
         TFrameData frameData;
     };
 
+    struct TDeviceProvisioningInfo
+    {
+        std::string operationId;
+        std::string status;
+        std::string deviceId;
+        std::string assignedHub;
+    };
+
     /**
      * @brief prepareHeartbeatMessage - function preparing std::string with heartbeat message in a JSON format based on provided
      * msgCounter value. Function assumes the ACK value of the heartbeat structure shall be set to true, therefore it does not require
@@ -145,6 +153,16 @@ namespace json_parser
      * @return std::string with a message in a JSON format
      */
     std::string prepareDeviceStatusMessage(const TDeviceStatus &deviceStatus, uint32_t msgCounter);
+
+    /**
+     * @brief prepareDeviceCreateProvisioningMessage
+     */
+    std::string prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH]);
+
+    /**
+     * @brief parseJsonDeviceProvisioning
+     */
+    bool parseJsonDeviceProvisioning(const std::string &inputMessage, TDeviceProvisioningInfo *pDeviceProvisioningInfo);
 
     /**
      * @brief extractMethodAndFillFrame - function that gets the std::string with a message, parses it, interprets it and then fills
@@ -188,6 +206,7 @@ namespace json_parser
     cJSON *preprocessInputMessage(const std::string &inputMessage);
     EMsgMethod extractMsgMethod(const std::string &inputMessage);
     bool getDataJsonAndInitFrame(const std::string &inputMessage, TFrame *frame, cJSON **dataJson);
+    bool getDataJsonDeviceProvisioning(const std::string &inputMessage, TDeviceProvisioningInfo *frame, cJSON **dataJson);
     bool parseJsonRpcCommand(const std::string &inputMessage, TFrame *frame);
     std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus &deviceStatus, uint32_t msgCounter);
     cJSON *deviceStatusToJson(const TDeviceStatus &deviceStatus);

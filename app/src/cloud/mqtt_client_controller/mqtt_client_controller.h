@@ -78,7 +78,7 @@ public:
     /**
      * @brief Function waits until connection with MQTT broker is established with a given timeout
      */
-    bool waitUntilMqttConnected(uint32_t timeoutMs) const;
+    bool waitUntilMqttConnected(int32_t timeoutMs) const;
 
     /**
      * Function returning m_mqttClient - needed for the functions for OTA with AWS

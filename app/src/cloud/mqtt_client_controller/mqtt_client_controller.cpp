@@ -309,14 +309,14 @@ bool MqttClientController::isMqttConnected() const
     return m_connectionStatus;
 }
 
-bool MqttClientController::waitUntilMqttConnected(uint32_t timeoutMs) const
+bool MqttClientController::waitUntilMqttConnected(int32_t timeoutMs) const
 {
-    constexpr uint32_t SLEEP_TIME_BETWEEN_CONNECTION_CHECKS = 100;
-    uint32_t counter = 0;
+    constexpr int32_t SLEEP_TIME_BETWEEN_CONNECTION_CHECKS = 100;
+    int32_t counter = 0;
     while (!isMqttConnected())
     {
         counter += SLEEP_TIME_BETWEEN_CONNECTION_CHECKS;
-        if (counter > timeoutMs && timeoutMs > 0)
+        if (timeoutMs > 0 && counter > timeoutMs)
         {
             LOG_INFO("Could not connect to cloud, timeout occured");
             return false;

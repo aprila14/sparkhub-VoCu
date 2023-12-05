@@ -395,6 +395,40 @@ namespace json_parser
         return true;
     }
 
+    bool getDataJsonDeviceProvisioning(const std::string &inputMessage, TDeviceProvisioningInfo *info, cJSON **dataJson)
+    {
+        cJSON *pDeviceProvisioningJson = preprocessInputMessage(inputMessage);
+
+        if (pDeviceProvisioningJson == nullptr)
+        {
+            LOG_INFO("Could not parse JSON");
+            return false;
+        }
+
+        cJSON *pOperationIdJson = cJSON_GetObjectItemCaseSensitive(pDeviceProvisioningJson, "operationId");
+
+        if (pOperationIdJson == nullptr)
+        {
+            LOG_INFO("Could not parse JSON, no operation id or wrong format");
+            cJSON_Delete(pDeviceProvisioningJson);
+            return false;
+        }
+        cJSON *pStatusJson = cJSON_GetObjectItemCaseSensitive(pDeviceProvisioningJson, "status");
+
+        if (pStatusJson == nullptr)
+        {
+            LOG_INFO("Could not parse JSON, no status or wrong format");
+            cJSON_Delete(pDeviceProvisioningJson);
+            return false;
+        }
+
+        info->operationId = std::string(pOperationIdJson->valuestring);
+        info->status = std::string(pStatusJson->valuestring);
+
+        cJSON_Delete(pDeviceProvisioningJson);
+        return true;
+    }
+
     /**
      * @brief extractMsgMethod - function recognizing message method (e.g. RPC Command, or message from the widget) based on the
      * provided std::string with a message in JSON format
@@ -697,6 +731,55 @@ namespace json_parser
         cJSON_Delete(pDeviceStatusCommandDataJson);
 
         return deviceStatusMessage;
+    }
+
+    std::string prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH])
+    {
+        cJSON *pDeviceProvisioningDataJson = cJSON_CreateObject();
+
+        cJSON *pRegistrationIdJson = cJSON_CreateString(deviceId);
+        if (!(cJSON_AddItemToObject(pDeviceProvisioningDataJson, "registrationId", pRegistrationIdJson)))
+        {
+            LOG_INFO("Cannot add registrationId JSON to pDeviceProvisioningDataJson");
+            cJSON_Delete(pDeviceProvisioningDataJson);
+            return std::string("");
+        }
+
+        if (pDeviceProvisioningDataJson == nullptr)
+        {
+            LOG_INFO("Error while preparing pDeviceProvisioningDataJson");
+            return std::string("");
+        }
+
+        char *pDeviceProvisioningDataJsonCString = cJSON_Print(pDeviceProvisioningDataJson);
+        if (pDeviceProvisioningDataJsonCString == nullptr)
+        {
+            LOG_INFO("Error while printing pDeviceProvisioningDataJson");
+            cJSON_Delete(pDeviceProvisioningDataJson);
+            return std::string("");
+        }
+        std::string deviceCreateProvisioningMessage = std::string(pDeviceProvisioningDataJsonCString);
+        free(pDeviceProvisioningDataJsonCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+        cJSON_Delete(pDeviceProvisioningDataJson);
+
+        return deviceCreateProvisioningMessage;
+    }
+
+    bool parseJsonDeviceProvisioning(const std::string &inputMessage, TDeviceProvisioningInfo *pDeviceProvisioningInfo)
+    {
+        cJSON *pDataJson = nullptr;
+        bool result = getDataJsonDeviceProvisioning(inputMessage, pDeviceProvisioningInfo, &pDataJson);
+        if (!result)
+        {
+            LOG_INFO("Error has occured while extracting frame");
+            if (pDataJson != nullptr)
+            {
+                cJSON_Delete(pDataJson);
+            }
+            return false;
+        }
+
+        return true;
     }
 
     /***** STRUCTURE TO JSON *****/

@@ -7,13 +7,16 @@ static const char *LOG_TAG = "DeviceProvisioning";
 #include "app_controller.h"
 #include "commons.h"
 #include "config_nvs.h"
-#include "protocol_types.h"
 #include "sleep.h"
 #include "cloud_config.h"
+#include "json_parser.h"
 
 namespace
 {
     constexpr int8_t MQTT_CONNECTION_WAIT_TIME_INFINITE = -1;
+    constexpr char DEVICE_PROVISIONING_RESPONSE_TOPIC[] = "$dps/registrations/res/#";
+    constexpr char DEVICE_PROVISIONING_REGISTRATION_TOPIC[] = "$dps/registrations/PUT/iotdps-register/?$rid=";
+    constexpr char DEVICE_PROVISIONING_REGISTRATION_GET_STATUS_TOPIC[] = "$dps/registrations/GET/iotdps-get-operationstatus/?$rid=";
 } // unnamed namespace
 
 DeviceProvisioningController::DeviceProvisioningController(MqttClientController *mqttClientController, CloudController *cloudController)
@@ -68,6 +71,30 @@ void DeviceProvisioningController::configureCloudConnection()
     m_cloudCredentials.setCloudMqttUsername(DEVICE_PROVISIONING_MQTT_USERNAME);
 }
 
+void DeviceProvisioningController::createDeviceRegistrationTopic()
+{
+    m_deviceRegistrationRequestId = rand();
+    memset(m_deviceRegistrationTopic, 0, DEVICE_PROVISIONING_MAX_TOPIC_SIZE);
+    sprintf(m_deviceRegistrationTopic, "%s%d", DEVICE_PROVISIONING_REGISTRATION_TOPIC, m_deviceRegistrationRequestId);
+}
+
+void DeviceProvisioningController::createDeviceRegistrationStatusTopic()
+{
+    memset(m_deviceRegistrationStatus, 0, DEVICE_PROVISIONING_MAX_TOPIC_SIZE);
+    sprintf(m_deviceRegistrationStatus, "%s%d&operationId=%s", DEVICE_PROVISIONING_REGISTRATION_GET_STATUS_TOPIC, m_deviceRegistrationRequestId, m_deviceProvisioningOperationId.c_str());
+}
+
+void DeviceProvisioningController::setOperationIdIfStatusAssigning(std::string &provisioningStatus, std::string &provisioningOperationId)
+{
+    if (!strncmp(DEVICE_PROVISIONING_STATUS_ASSIGNING, provisioningStatus.c_str(), strlen(DEVICE_PROVISIONING_STATUS_ASSIGNING)) && m_provisioningStatus != ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_IN_PROGRESS)
+    {
+        m_deviceProvisioningOperationId = provisioningOperationId;
+        m_provisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_IN_PROGRESS;
+        LOG_INFO("Device provisioning in progress");
+        LOG_INFO("m_deviceProvisioningOperationId: %s", m_deviceProvisioningOperationId.c_str());
+    }
+}
+
 void DeviceProvisioningController::_run()
 {
     LOG_INFO("Start device provisioning procedure");
@@ -81,12 +108,35 @@ void DeviceProvisioningController::_run()
         LOG_ERROR("Could not connect to cloud, timeout occured");
     }
 
-    m_pMqttClientController->subscribeToTopic(std::string("$dps/registrations/res/#"), 1);
+    m_pMqttClientController->subscribeToTopic(std::string(DEVICE_PROVISIONING_RESPONSE_TOPIC), 1);
 
-    m_pMqttClientController->sendMessage(std::string("$dps/registrations/PUT/iotdps-register/?$rid=12345"), std::string("{}"));
+    createDeviceRegistrationTopic();
+
+    m_pMqttClientController->sendMessage(std::string(m_deviceRegistrationTopic), json_parser::prepareDeviceCreateProvisioningMessage(m_cloudCredentials.cloudDeviceId));
 
     while (true)
     {
+        if (!m_pMqttClientController->checkIfMessageBufferIsEmpty())
+        {
+            json_parser::TMessage message = m_pMqttClientController->getNextMessage();
+            json_parser::TDeviceProvisioningInfo provisioningInfo = {};
+            json_parser::parseJsonDeviceProvisioning(message.message, &provisioningInfo);
+
+            LOG_INFO("Provisioning message: operation id: %s, status: %s", provisioningInfo.operationId.c_str(), provisioningInfo.status.c_str());
+
+            setOperationIdIfStatusAssigning(provisioningInfo.status, provisioningInfo.operationId);
+        }
+
+        if (m_provisioningStatus == ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_IN_PROGRESS)
+        {
+            createDeviceRegistrationStatusTopic();
+            if (!(m_pMqttClientController->waitUntilMqttConnected(MQTT_CONNECTION_WAIT_TIME_INFINITE)))
+            {
+                LOG_ERROR("Could not connect to cloud, timeout occured");
+            }
+            m_pMqttClientController->sendMessage(m_deviceRegistrationStatus, std::string("{}"));
+        }
+
         SLEEP_MS(1000);
     }
 }
