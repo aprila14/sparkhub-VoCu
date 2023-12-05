@@ -127,3 +127,13 @@ For devboard ESP32-DevKitC-32E V4 the sensor is connected as follows:
 - IN sensor pin -> 5V0 devboard pin
 - GND sensor pin -> GND devboard pin (the one between 13 and 12 pin)
 - OUT sensor pin -> 32 devboard pin (ADC1 channel 4 is GPIO32)
+
+# 5. Azure Device Provisioning
+
+The diagram for the process is present in the docs directory
+- docs/sparkhub_provisioning_diagram.xml - can be opened in [draw.io](https://app.diagrams.net/)
+- there is also an PDF: [sparkhub_provisioning_diagram](docs/sparkhub_provisioning_diagram.pdf)
+
+Azure Device Provisioning configuration was done by following this tutorial: [Tutorial: Provision multiple X.509 devices using enrollment groups](https://learn.microsoft.com/en-us/azure/iot-dps/tutorial-custom-hsm-enrollment-group-x509?tabs=linux&pivots=programming-language-python)
+
+For testing purposes after device certificate generation the full chain certificate and private key can be placed in app/src/cloud/cloud_controller/cloud_config.h in defines "DEFAULT_CLIENT_PUBLIC_CERT" and "DEFAULT_CLIENT_PRIVATE_KEY"

@@ -3,7 +3,7 @@
 
 #define DEFAULT_CLOUD_ADDRESS "mqtts://sparkhub-LevelSense.azure-devices.net"
 
-#define DEFAULT_DEVICE_ID "sparkhub-device-02"
+#define DEFAULT_DEVICE_ID "sparkhub-device-03"
 
 #define DEFAULT_MQTT_USERNAME "sparkhub-LevelSense.azure-devices.net/" DEFAULT_DEVICE_ID "/?api-version=2021-04-12"
 
@@ -39,31 +39,31 @@
 
 #define DEFAULT_CLIENT_PUBLIC_CERT                                       \
     "-----BEGIN CERTIFICATE-----\n"                                      \
-    "MIIEhTCCAm2gAwIBAgIRAL0DiNvUgr0KjpHDuYuanAwwDQYJKoZIhvcNAQELBQAw\n" \
+    "MIIEhTCCAm2gAwIBAgIRAL0DiNvUgr0KjpHDuYuanA0wDQYJKoZIhvcNAQELBQAw\n" \
     "NDEyMDAGA1UEAwwpQXp1cmUgSW9UIEh1YiBJbnRlcm1lZGlhdGUgQ2VydCBUZXN0\n" \
-    "IE9ubHkwHhcNMjMxMjAxMDkwMTEyWhcNMjMxMjMxMDkwMTEyWjAdMRswGQYDVQQD\n" \
-    "DBJzcGFya2h1Yi1kZXZpY2UtMDIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK\n" \
-    "AoIBAQDD4NYSqGNQuDhj+uBL823GDQ+IhOHGUirVJsOCqgZ2UzWDm90tSqokFPIP\n" \
-    "k+BLBXJIWVcrX6eRSa4u+bFtqGsst5LVXFNskK2ZPss5neZM8MoV9vUkkeQLqPci\n" \
-    "+WmeYr6ouCk4OXmrm3A6ig3h72hpJcP0ghqQ7DM+3wSuNzL/FMmJHAfvio6ct7zm\n" \
-    "pt9U+WzWuLnPGXysvrPUZT9xcScaP2pVl/SUaKx8xiwHUehLNuaXlewc4mHdx6ay\n" \
-    "qNJ17hadt9zrw1SK6hQUkYelDuyCelV6lpZTSRdDlm/zndNJ0yBdnDeJZL8HIdYG\n" \
-    "+raDMCHgoxrFDIu9HnGvQVGoN2srAgMBAAGjgagwgaUwCQYDVR0TBAIwADAzBglg\n" \
+    "IE9ubHkwHhcNMjMxMjA1MTI0MTM4WhcNMjQwMTA0MTI0MTM4WjAdMRswGQYDVQQD\n" \
+    "DBJzcGFya2h1Yi1kZXZpY2UtMDMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK\n" \
+    "AoIBAQDAR4+eVstWRqEOrcRx4P+LcOkNHNpevW2jg7dVrAfs1zMvLyWWMKD2CnvV\n" \
+    "cpJ+ot8nLDybHNgceB5sguva/0qUEO1SSnKrSzhfAleZaEwYFJ/Am5HyUDHgVVDH\n" \
+    "4gY5XgoTdq3j5q9QBIoyiGmkI/tq3Dn506/bIHdpBg0eLmNxnJvUjQSccaTWZKUE\n" \
+    "ZUBauYosF8mPVSgSpbDDWABTMZh+ROlP/Od0vEafmwHOrIZXMCnGhxUbznRmRFVc\n" \
+    "7q8/6irreRJXgPo1c8iOgTf5XNSgWdlzC0pwH3o9j4xTzKf/ESyxDfc5X3S4vVmV\n" \
+    "etdyuzV+7fnBDzOJB7/NDaIKZzElAgMBAAGjgagwgaUwCQYDVR0TBAIwADAzBglg\n" \
     "hkgBhvhCAQ0EJhYkT3BlblNTTCBHZW5lcmF0ZWQgQ2xpZW50IENlcnRpZmljYXRl\n" \
-    "MB0GA1UdDgQWBBQIIsDIW1lQN28siP9N3PcbU6gFEjAfBgNVHSMEGDAWgBRrEbmf\n" \
+    "MB0GA1UdDgQWBBS19ClC23k0iJyeujVKaZ5DoxnbLDAfBgNVHSMEGDAWgBRrEbmf\n" \
     "hFeXWtw7uwnCuuJU8wi68DAOBgNVHQ8BAf8EBAMCBeAwEwYDVR0lBAwwCgYIKwYB\n" \
-    "BQUHAwIwDQYJKoZIhvcNAQELBQADggIBABc7riLOYOkHA65zT3Q7YlqfIJipQiU8\n" \
-    "l5WDsZ87jkjqOP8WNbURerivzi6uquIYe04ErEoWdm69UG7v10/U4N0O6TMxr5Gy\n" \
-    "JlBy3tsp3YfdsVcToVWbJchnl4PExL4SogdhPBLt9Pvn/miraChRUYIjF0FTvCBV\n" \
-    "xqOU7gu0HBVBDQNPzZtXNsaqJ/xSUfOdnVxfft/lHMHtlHgM9fjugkgFTp9YL/pg\n" \
-    "Qb4SlbKmDYAwapgfhpAPIi4UON2TU/pfLX4JVhlTDUIQvPyDG1l+7Z15evOsjLfP\n" \
-    "E2qeT6g3W4hk+9aOlCrq+LiL0H5Kha6IC/8Ls4IqK923GVToyfwt/plB+ppvKwvR\n" \
-    "jdywio8n3XSx7gZ4SqAO7M4cYJtvHMwAaX49s9sChBdwoxy/0IzR+dCCaVB2AbgK\n" \
-    "QB2xKMNxWtz9FJtLGM7dfEg/mQrBF+xHRe0lkXSwFRkkAQEiHXiyk8U4ZB/pYjIh\n" \
-    "Voyi5PIx1AGM4NDNnmzMfRpEJpwh7391MuLvrTpNQbQbvhONZdpDCbdVufmHXpzl\n" \
-    "Et1Ljckf0R6MFkDMBWEPOOhOnh3mM7Yj+KS4U5AU0KW2n0ebiix5IFBna+fiYTXb\n" \
-    "stD6R/UYEvtX/Ykx28aSacwti6nw4ECrWryPz+SMOLmTmixUBmQ7CCQZP+ME6c4t\n" \
-    "s9Id0LtPF2Bz\n"                                                     \
+    "BQUHAwIwDQYJKoZIhvcNAQELBQADggIBADS1ubWw6xfzmOXsdykth89J7K0NSfUq\n" \
+    "2AgMrzHB6UGMG5U1KBdy1gyYR56jcndEXq9f+K8u6f6iR8UiWMuXReyYZR2qhqG+\n" \
+    "2DnsLL89GR/4Vda2AF2HPUTZy8o51J8tVwAat/m/Nv0NZ2D3ZzPy6pyARs4A9/7h\n" \
+    "D+ael9RWlLGtJM2kMIupIM+imOwMn3780yW4naPSzXLC6CLvGAPLTxzfn5UFHW9z\n" \
+    "6eW1fpKPjwqoVteeVQXcM68esoGqQ0IgJ2e9ZkOeOr23Y3mPUWD1r07s3LQhnzz5\n" \
+    "HmACAkonVe4/7Y3vTTU2W76GrQT1wqpKUMBoDsP+h5qcYOuDH7r57PxGVnEOh+dr\n" \
+    "EubseUxk5LZkhJUPwvos1QVrEVPriqagneSjsWbELATsit+hCyDVzyFWBaPLnxSe\n" \
+    "AjSP0XjmwD7HjwExUz6ZGXK6i1h3Od252kqt7t7GBzfrYZGPNi3hIMUQASXPq6se\n" \
+    "UlQ/Bncul7irx9FaY95lh/ZcSDSF40LK/R2zUz1zKuvj7yijogjKhGlEjbmrSHdz\n" \
+    "mjEjQFz4vi2T661uLiC8hxFWCtSd/B737kY5buyBpWtUJCSQiFYx2r6OsWzDPsAo\n" \
+    "EHbL67uiqI2ma4mF3Crdb+TMFuyQ2mAJ0/4cpYioLDMT4Q9fhlQshKTZvcwCPIB7\n" \
+    "V6E3KoZWnZuX\n"                                                     \
     "-----END CERTIFICATE-----\n"                                        \
     "-----BEGIN CERTIFICATE-----\n"                                      \
     "MIIFTDCCAzSgAwIBAgIRAL0DiNvUgr0KjpHDuYuanAowDQYJKoZIhvcNAQELBQAw\n" \
@@ -130,32 +130,32 @@
 
 #define DEFAULT_CLIENT_PRIVATE_KEY                                       \
     "-----BEGIN PRIVATE KEY-----\n"                                      \
-    "MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDD4NYSqGNQuDhj\n" \
-    "+uBL823GDQ+IhOHGUirVJsOCqgZ2UzWDm90tSqokFPIPk+BLBXJIWVcrX6eRSa4u\n" \
-    "+bFtqGsst5LVXFNskK2ZPss5neZM8MoV9vUkkeQLqPci+WmeYr6ouCk4OXmrm3A6\n" \
-    "ig3h72hpJcP0ghqQ7DM+3wSuNzL/FMmJHAfvio6ct7zmpt9U+WzWuLnPGXysvrPU\n" \
-    "ZT9xcScaP2pVl/SUaKx8xiwHUehLNuaXlewc4mHdx6ayqNJ17hadt9zrw1SK6hQU\n" \
-    "kYelDuyCelV6lpZTSRdDlm/zndNJ0yBdnDeJZL8HIdYG+raDMCHgoxrFDIu9HnGv\n" \
-    "QVGoN2srAgMBAAECggEAFe+6mblQ8gvHiO7iKq9W5ly1FiFnlYnDMT7Xm20GLz8v\n" \
-    "WY9djEJ13neYCkWR02UHQPH8cKeUQRGi17Dv/WtkoUvnvkxKLXjgcC6XnNrBnXFD\n" \
-    "+ITBPHi4NNQV5U1QVkQRvRxuxVSuexj7zxqB5oEkzM3Fbb8aUYuaS5q3T/lvlSBg\n" \
-    "y8QOgB/EjJv8JogSsVp92yfu4n3ZMj28GzxfB2PBb+wxrOqlXyyd/bTAkat3a3kR\n" \
-    "n4WjxoXRGXNp4wenmM7QRaCPlUmGejvei1n4xcbUy4WYk250Q2WPdaiaPTkt7Vjz\n" \
-    "1veRF9nhEGkMZT7xDcpolELJjvKSKS0axjnH7i0BcQKBgQD9ojJe0q7SOluzYWLM\n" \
-    "1JsRBDWVsqgTzuaSed2L9/c/CkurJp7TEgYAM5Yg9JzmoG1PIc9dlbVMTdGi1A3O\n" \
-    "ASjwILKXcVZ0Tl+sK+0xSKP9Cag/7E1UjG3bfGpKaO6rQbS1Wx97Oo+5Rk7uplJE\n" \
-    "rS/rVcxq+bV4Dk1kI1Dy9dk3uwKBgQDFtLDm5Vr0KUcQvXeDGIrkkDIdLDNVpQuD\n" \
-    "dDhFR77D4sLFr0jbINO/Vh6ceNnn+vWAfRLhd2hA5CAaa9mEe80v9dUc0FAbu3kz\n" \
-    "Ud+lY88Awo9s8jK8OjW76yqLteumaucKNCjHJBaDHlCraLQVhL/vJ64cQxzb2WVC\n" \
-    "PQn70GtLUQKBgCuL0YIeQg2uH1ho/AGW7xi41EpjZiAggc3cRoFljXmxVtSHyPUM\n" \
-    "PyOBt+DonpeqK5pOf7/dmEcFhVyjc8tOv6yasI730pQdcKeq0wqHIkCri8uN0qkV\n" \
-    "gzcP4V/tLC0TFuecQYdywoJY4+xteep4oaWSEYq8XL/EFN2AgsF0HFtJAoGAfSnB\n" \
-    "fMvi4wRm2zA3wyT8eWrYbyOWdDgCq/wdy656FOUwTZqE00VbCJzq0ECqI3T7i5aj\n" \
-    "J15DACHsOQ3iLT97TUui2ZT/wi7Tsiu5HKmtWVvTFTPX7tYjQo7E5qILR9YR4qHW\n" \
-    "1wv/vI6qn3mv2JesMym5zmamlIBy3JZsBaGS66ECgYBRcH8VaH6woTXmbW1PAgr8\n" \
-    "cDzs6kW98x3/11VwK0eMFd9GCDCa9cNGoeSgZ5agNKwgle2W+I7M1SLqtRGio6JN\n" \
-    "OMFSvext8jRig9q0arJhW+1IR+a7ctx12JQ30NEunFzuu5BQlx/IVj8f2NHSLMpO\n" \
-    "/odz1lT5Op0gZouPb5bTsA==\n"                                         \
+    "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDAR4+eVstWRqEO\n" \
+    "rcRx4P+LcOkNHNpevW2jg7dVrAfs1zMvLyWWMKD2CnvVcpJ+ot8nLDybHNgceB5s\n" \
+    "guva/0qUEO1SSnKrSzhfAleZaEwYFJ/Am5HyUDHgVVDH4gY5XgoTdq3j5q9QBIoy\n" \
+    "iGmkI/tq3Dn506/bIHdpBg0eLmNxnJvUjQSccaTWZKUEZUBauYosF8mPVSgSpbDD\n" \
+    "WABTMZh+ROlP/Od0vEafmwHOrIZXMCnGhxUbznRmRFVc7q8/6irreRJXgPo1c8iO\n" \
+    "gTf5XNSgWdlzC0pwH3o9j4xTzKf/ESyxDfc5X3S4vVmVetdyuzV+7fnBDzOJB7/N\n" \
+    "DaIKZzElAgMBAAECggEAFVe8ItS6hEyZswHpxMQ3SViSndB+kraPFW/Y6UsLpCfs\n" \
+    "+AdRMj8alsTqIvKxPRpCD9ySq5sDiAFzSxMrL+dXdWD9nr1Bxi62xqEBbTdM/v1H\n" \
+    "ED+UbyOkraR6r30wuKxuDOQHAD2KZyTh3CMVKtGNpjpkuwzav8V2S7OOwDNg+Wq5\n" \
+    "50Q/B3E8b/XYi+2ir287wyr80tf/QLblBHVg8XkY1oBAaqSCQpXtlGR/RBRQ/Buq\n" \
+    "0KsTuiFYRnjT/43BmaiYVr15xFX6LR4EZIpewnxvogOmln/T7dOFLq9iUAvy82uk\n" \
+    "tNizzGwNr0o5xEGAB49dS2RyUVKqMagU/LM+7B5oIQKBgQDO0PxMpFDTVH4Qwof0\n" \
+    "Fep5LbEyjix2Yd+WtYDcFYeP88xfOuLpsJcsjTvHWRhY6NA4koyaxx45MHOArCzE\n" \
+    "CohKtZRHHTO8aK4ShMP28d6bBdOCn+2wQXspTXuse/7bfj61sXuhuuPfDXaT76/3\n" \
+    "e5Ts8Qs3NzL/lUDbEbva4B4FVQKBgQDuAZJcupYvnrZm3kiuOL21x/NonE6A/ulE\n" \
+    "dwN8eJK+SJbgli+wsZMoPhy6hKfLX3dCXDk+1Rlwepf/asC3g+w2oPzdUqDEj+bl\n" \
+    "cFkkNmn32aXv/XQxe3dt4CIyhxVKUS/txQ0unuq3JEAH6ennVf6BL5B1Fx6Aw4mR\n" \
+    "P2t7I418kQKBgQCFy9HNS2g2r6y27wLBOARuzM6cJDpDg+IAP//TYeJHkLOg0BnI\n" \
+    "kUPbwKrxtoP30PYUA0sPPs4gtWWj0r9LPH0byAjbUNsNgrNKq7WTZrpalBRXp1s/\n" \
+    "8bzZ5ZSi67zfBvdO2DlhUeTlgnI6FpBCjSK1fuOAnydRDZ/dmcVsPh1t2QKBgQCh\n" \
+    "Aw8xDEluDcD39ojU1C4DPDG/I384ZTsJxjnliuw7LoBjjzbUIk2be+mThQq+2uaj\n" \
+    "TiCsER4UqdsKP/4AKI80pdRrJer9Dxz1OvwTM3yc3/ESWjSxBQXWnzqDVD9i92ml\n" \
+    "QRmZ4IiJPUzUDbrfdZ2nZ7YigHFyStZWHMFpnLOrAQKBgG7e0BGLrmv0Ck0fUXpy\n" \
+    "GJLXlcDGR7fZy2nzc2tQ30yv4REvJFc9D1yC8v1zVI/UDC+L1Zrz9vp7m2lY1WIV\n" \
+    "pcl+3tj5CukvRpFMe5xoD4DeKT/MZJPP8fWZodGcKcrvOsjtQTP2c+5gDsUIIQmR\n" \
+    "RY2qFiCtjOBOcZC2CpkSo9rO\n"                                         \
     "-----END PRIVATE KEY-----\n"
 
 #endif // DEFAULT_CERTS_H
