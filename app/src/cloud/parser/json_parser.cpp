@@ -422,10 +422,32 @@ namespace json_parser
             return false;
         }
 
+        cJSON *pRegistrationStateJson = cJSON_GetObjectItemCaseSensitive(pDeviceProvisioningJson, "registrationState");
+
+        if (pRegistrationStateJson != nullptr)
+        {
+            cJSON *pAssignedHubJson = cJSON_GetObjectItemCaseSensitive(pRegistrationStateJson, "assignedHub");
+
+            if (pAssignedHubJson != nullptr)
+            {
+                LOG_INFO("assignedHub present in JSON");
+                info->assignedHub = std::string(pAssignedHubJson->valuestring);
+            }
+
+            cJSON *pDeviceIdJson = cJSON_GetObjectItemCaseSensitive(pRegistrationStateJson, "deviceId");
+
+            if (pDeviceIdJson != nullptr)
+            {
+                LOG_INFO("deviceId present in JSON");
+                info->deviceId = std::string(pDeviceIdJson->valuestring);
+            }
+        }
+
         info->operationId = std::string(pOperationIdJson->valuestring);
         info->status = std::string(pStatusJson->valuestring);
 
         cJSON_Delete(pDeviceProvisioningJson);
+
         return true;
     }
 

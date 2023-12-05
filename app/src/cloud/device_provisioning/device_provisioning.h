@@ -33,7 +33,14 @@ private:
     void createDeviceRegistrationTopic();
     void createDeviceRegistrationStatusTopic();
 
-    void setOperationIdIfStatusAssigning(std::string &provisioningStatus, std::string &provisioningOperationId);
+    bool isProvisioningStatusAssigning(std::string &provisioningStatus);
+    bool isProvisioningStatusAssigned(std::string &provisioningStatus);
+
+    void setOperationIdIfStatusAssigning(std::string &provisioningOperationId);
+
+    void createMqttUsernameAfterProvisioning(json_parser::TDeviceProvisioningInfo &provisioningInfo, prot::cloud_set_credentials::TCloudCredentials &newCloudCredentials);
+    void createCloudAddressAfterProvisioning(json_parser::TDeviceProvisioningInfo &provisioningInfo, prot::cloud_set_credentials::TCloudCredentials &newCloudCredentials);
+    void saveCredentialsAfterProvisioning(json_parser::TDeviceProvisioningInfo &provisioningInfo);
 
     TaskHandle_t m_taskHandle; // handle to runTask
 

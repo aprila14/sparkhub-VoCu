@@ -304,7 +304,7 @@ namespace prot
         constexpr uint8_t CLOUD_MAX_KEY_LENGTH = 100;
         constexpr uint8_t CLOUD_MAX_ADDRESS_LENGTH = 200;
         constexpr uint8_t CLOUD_DEVICE_ID_LENGTH = 64;
-        constexpr uint8_t CLOUD_MQTT_USERNAME_LENGTH = 128;
+        constexpr uint32_t CLOUD_MQTT_USERNAME_LENGTH = CLOUD_MAX_ADDRESS_LENGTH + CLOUD_DEVICE_ID_LENGTH + 32;
 
         std::string getCloudConnectionStatus(enum ECloudConnectionStatus cloudConnectionStatus);
 

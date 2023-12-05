@@ -13,6 +13,7 @@ static const char *LOG_TAG = "DeviceProvisioning";
 
 namespace
 {
+    constexpr uint32_t DEVICE_PROVISIONING_THREAD_SLEEP_MS = 5000;
     constexpr int8_t MQTT_CONNECTION_WAIT_TIME_INFINITE = -1;
     constexpr char DEVICE_PROVISIONING_RESPONSE_TOPIC[] = "$dps/registrations/res/#";
     constexpr char DEVICE_PROVISIONING_REGISTRATION_TOPIC[] = "$dps/registrations/PUT/iotdps-register/?$rid=";
@@ -71,6 +72,42 @@ void DeviceProvisioningController::configureCloudConnection()
     m_cloudCredentials.setCloudMqttUsername(DEVICE_PROVISIONING_MQTT_USERNAME);
 }
 
+void DeviceProvisioningController::createMqttUsernameAfterProvisioning(json_parser::TDeviceProvisioningInfo &provisioningInfo, prot::cloud_set_credentials::TCloudCredentials &newCloudCredentials)
+{
+    char mqttUsername[prot::cloud_set_credentials::CLOUD_MQTT_USERNAME_LENGTH];
+    memset(mqttUsername, 0, prot::cloud_set_credentials::CLOUD_MQTT_USERNAME_LENGTH);
+
+    sprintf(mqttUsername, "%s/%s/?api-version=2021-04-12", provisioningInfo.assignedHub.c_str(), provisioningInfo.deviceId.c_str());
+    newCloudCredentials.setCloudMqttUsername(mqttUsername);
+}
+
+void DeviceProvisioningController::createCloudAddressAfterProvisioning(json_parser::TDeviceProvisioningInfo &provisioningInfo, prot::cloud_set_credentials::TCloudCredentials &newCloudCredentials)
+{
+    char cloudAddress[prot::cloud_set_credentials::CLOUD_MAX_ADDRESS_LENGTH];
+    memset(cloudAddress, 0, prot::cloud_set_credentials::CLOUD_MAX_ADDRESS_LENGTH);
+
+    sprintf(cloudAddress, "mqtts://%s", provisioningInfo.assignedHub.c_str());
+
+    newCloudCredentials.setCloudAddress(cloudAddress);
+}
+
+void DeviceProvisioningController::saveCredentialsAfterProvisioning(json_parser::TDeviceProvisioningInfo &provisioningInfo)
+{
+    LOG_INFO("cloud address: %s", pConfig->getCloudCredentials().cloudAddress);
+    LOG_INFO("device id: %s", pConfig->getCloudCredentials().cloudDeviceId);
+    LOG_INFO("mqtt username: %s", pConfig->getCloudCredentials().cloudMqttUsername);
+
+    prot::cloud_set_credentials::TCloudCredentials newCloudCredentials;
+
+    newCloudCredentials.setCloudDeviceId(provisioningInfo.deviceId.c_str());
+
+    createMqttUsernameAfterProvisioning(provisioningInfo, newCloudCredentials);
+
+    createCloudAddressAfterProvisioning(provisioningInfo, newCloudCredentials);
+
+    pConfig->setCloudCredentials(newCloudCredentials);
+}
+
 void DeviceProvisioningController::createDeviceRegistrationTopic()
 {
     m_deviceRegistrationRequestId = rand();
@@ -84,9 +121,29 @@ void DeviceProvisioningController::createDeviceRegistrationStatusTopic()
     sprintf(m_deviceRegistrationStatus, "%s%d&operationId=%s", DEVICE_PROVISIONING_REGISTRATION_GET_STATUS_TOPIC, m_deviceRegistrationRequestId, m_deviceProvisioningOperationId.c_str());
 }
 
-void DeviceProvisioningController::setOperationIdIfStatusAssigning(std::string &provisioningStatus, std::string &provisioningOperationId)
+bool DeviceProvisioningController::isProvisioningStatusAssigning(std::string &provisioningStatus)
 {
-    if (!strncmp(DEVICE_PROVISIONING_STATUS_ASSIGNING, provisioningStatus.c_str(), strlen(DEVICE_PROVISIONING_STATUS_ASSIGNING)) && m_provisioningStatus != ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_IN_PROGRESS)
+    if (!strncmp(DEVICE_PROVISIONING_STATUS_ASSIGNING, provisioningStatus.c_str(), strlen(DEVICE_PROVISIONING_STATUS_ASSIGNING)))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool DeviceProvisioningController::isProvisioningStatusAssigned(std::string &provisioningStatus)
+{
+    if (!strncmp(DEVICE_PROVISIONING_STATUS_ASSIGNED, provisioningStatus.c_str(), strlen(DEVICE_PROVISIONING_STATUS_ASSIGNED)))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void DeviceProvisioningController::setOperationIdIfStatusAssigning(std::string &provisioningOperationId)
+{
+    if (m_provisioningStatus != ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_IN_PROGRESS)
     {
         m_deviceProvisioningOperationId = provisioningOperationId;
         m_provisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_IN_PROGRESS;
@@ -114,7 +171,7 @@ void DeviceProvisioningController::_run()
 
     m_pMqttClientController->sendMessage(std::string(m_deviceRegistrationTopic), json_parser::prepareDeviceCreateProvisioningMessage(m_cloudCredentials.cloudDeviceId));
 
-    while (true)
+    while (m_provisioningStatus != ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_FINISHED)
     {
         if (!m_pMqttClientController->checkIfMessageBufferIsEmpty())
         {
@@ -124,7 +181,21 @@ void DeviceProvisioningController::_run()
 
             LOG_INFO("Provisioning message: operation id: %s, status: %s", provisioningInfo.operationId.c_str(), provisioningInfo.status.c_str());
 
-            setOperationIdIfStatusAssigning(provisioningInfo.status, provisioningInfo.operationId);
+            if (isProvisioningStatusAssigning(provisioningInfo.status))
+            {
+                setOperationIdIfStatusAssigning(provisioningInfo.operationId);
+            }
+            else if (isProvisioningStatusAssigned(provisioningInfo.status))
+            {
+                LOG_INFO("Device assigned message: assignedHub: %s, deviceId: %s", provisioningInfo.assignedHub.c_str(), provisioningInfo.deviceId.c_str());
+                saveCredentialsAfterProvisioning(provisioningInfo);
+
+                m_pCloudController->setReadinessAfterDeviceProvisioning();
+
+                m_provisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_FINISHED;
+
+                m_pMqttClientController->stop();
+            }
         }
 
         if (m_provisioningStatus == ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_IN_PROGRESS)
@@ -137,6 +208,6 @@ void DeviceProvisioningController::_run()
             m_pMqttClientController->sendMessage(m_deviceRegistrationStatus, std::string("{}"));
         }
 
-        SLEEP_MS(1000);
+        SLEEP_MS(DEVICE_PROVISIONING_THREAD_SLEEP_MS);
     }
 }
