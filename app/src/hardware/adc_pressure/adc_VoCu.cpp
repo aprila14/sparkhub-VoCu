@@ -16,17 +16,18 @@ namespace
     // Current sensor
     const float FlowMeasurementOffset = 0.2;
     float TotalSumOfLiters = 0;
-    uint32_t resolution = 185; // mV/A
+    uint32_t resolution = 68.027211; //125.8503401; // mV/A
     uint32_t thresholdStartReading = 0;
-    uint32_t zeroVoltageShiftInmV = 725;
 
     uint64_t lastTime;
     uint64_t currentTime;
     uint64_t IEndMeasure;
+    uint64_t IStartMeasure;
     uint64_t TimeBetweenTwoMeasurements;
 
     bool firstCall = true;
     float gIOffset = 0;
+    float gVOffset = 0;
 }
 
 void adcInit(void)
@@ -71,7 +72,8 @@ void ExecuteUpdateTotalSumOfLiters(void)
             lastTime = commons::getCurrentTimestampUs();
             firstCall = false;
             LOG_INFO("Inside firstCall while loop");
-            gIOffset = 4.0;                      // initial current zero of the esp32 input from ACS712
+            gIOffset = 0;    
+            gVOffset = 0;                  // initial current zero of the esp32 input from ACS712
 
         }
 
@@ -94,15 +96,30 @@ void ExecuteUpdateTotalSumOfLiters(void)
 
     float SumCurrentValue2 = 0;
     float SumCurrentValue = 0;
+
+    float SumVoltageValue2 = 0;
+    float SumVoltageValue = 0;
+
     float INoSamples = 0;
-    const float gulSamplePeriod_us = 2 * 20000; //sample over 2 period (40ms)
+    const float gulSamplePeriod_us = 5 * 20 * 1000; //sample over 4 period (20ms pro Periode bei 50 Hz)
 
     IEndMeasure = commons::getCurrentTimestampUs() + gulSamplePeriod_us;
+    IStartMeasure = commons::getCurrentTimestampUs();
 
     while(commons::getCurrentTimestampUs() < IEndMeasure)
     {
         const uint32_t adcReading = static_cast<uint32_t>(adc1_get_raw(SENSOR_CHANNEL));
-        const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
+        //LOG_INFO("adcReading: %zu ", adcReading);
+        const float voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars) - gVOffset;
+        //LOG_INFO("esp_adc_cal_raw_to_voltage(adcReading, &adcChars): %lu mV", esp_adc_cal_raw_to_voltage(adcReading, &adcChars));
+        //LOG_INFO("gVOffset: %.6f V", gVOffset);
+        //LOG_INFO("voltage: %.6f V", voltage);
+
+        const float voltage2 = voltage * voltage;
+
+        SumVoltageValue = SumVoltageValue + voltage;
+        SumVoltageValue2 = SumVoltageValue2 + voltage2;
+
         const float CurrentValue = calculate_current_from_voltage(voltage) - gIOffset;
         const float CurrentValue2 = CurrentValue * CurrentValue;
 
@@ -111,10 +128,19 @@ void ExecuteUpdateTotalSumOfLiters(void)
         INoSamples++;
     }
 
+    IEndMeasure = commons::getCurrentTimestampUs();
+
+    uint64_t timeformeasurement_us = IEndMeasure - IStartMeasure;
+    //LOG_INFO("timeformeasurement_us: %jd ms", timeformeasurement_us/1000);
+    //LOG_INFO("INoSamples: %.6f", INoSamples);
+
+
 
     //const uint32_t voltage = esp_adc_cal_raw_to_voltage(adcReading, &adcChars);
 
     //LOG_INFO("ADC voltage: %lu mV", voltage);
+
+    float VOffset = SumVoltageValue / INoSamples;
 
     float IOffset = SumCurrentValue / INoSamples;
     
@@ -122,23 +148,58 @@ void ExecuteUpdateTotalSumOfLiters(void)
 
     const float CurrentRMS = sqrt(SumCurrentValue2 / INoSamples);
 
-    float SumCurrentRMSCorrected = SumCurrentValue2 - 2*IOffset*SumCurrentValue - IOffset*IOffset*INoSamples;
+    float SumCurrentRMSCorrected2 = SumCurrentValue2 - 2*IOffset*SumCurrentValue - IOffset*IOffset*INoSamples;
+
+
+
+
+    const float VoltageRMS = sqrt(SumVoltageValue2 / INoSamples);
+
+    float SumVoltageRMSCorrected2 = SumVoltageValue2 - 2*VOffset*SumVoltageValue - VOffset*VOffset*INoSamples;
+
+
+    //LOG_INFO("SumVoltageRMSCorrected2: %.6f V", SumVoltageRMSCorrected2);
+    //LOG_INFO("SumVoltageValue: %.6f mV", SumVoltageValue);
+    //LOG_INFO("2*VOffset*SumVoltageValue: %.6f V", 2*VOffset*SumVoltageValue);
+    //LOG_INFO("VOffset*VOffset*INoSamples: %.6f V", VOffset*VOffset*INoSamples);
 
 
     // avoid NaN due to round-off effects
-    if(SumCurrentRMSCorrected<0)
+    if(SumVoltageRMSCorrected2<0)
     {
-        SumCurrentRMSCorrected = 0;
+        SumVoltageRMSCorrected2 = 0;
     }
+
+
+
+    // avoid NaN due to round-off effects
+    if(SumCurrentRMSCorrected2<0)
+    {
+        SumCurrentRMSCorrected2 = 0;
+    }
+
+    float CurrentRMSCorrected = sqrt(SumCurrentRMSCorrected2/INoSamples);
+
+    float VoltageRMSCorrected = sqrt(SumVoltageRMSCorrected2/INoSamples);
+
+    const float Current = calculate_current_from_voltage(VoltageRMSCorrected);
     
-    LOG_INFO("INoSamples: %.6f samples", INoSamples);
-    LOG_INFO("IOffset: %.6f A", IOffset);
-    LOG_INFO("Current RMS: %.6f A", CurrentRMS);
-    LOG_INFO("CurrentRMSCorrected: %.6f A", sqrt(SumCurrentRMSCorrected/INoSamples));
+
+    //LOG_INFO("IOffset: %.6f A", IOffset);
+    //LOG_INFO("gVOffset: %.6f mV", gVOffset);
+    //LOG_INFO("SumCurrentRMSCorrected: %.6f A", SumCurrentRMSCorrected2);
+    //LOG_INFO("CurrentRMSCorrected: %.6f A", CurrentRMSCorrected);
+    //LOG_INFO("SumVoltageValue over 5 cycles: %.6f mV", SumVoltageValue);
+    LOG_INFO("Current: %.6f mA",Current*1000);
+    //LOG_INFO("VoltageRMSCorrected: %.6f mV", VoltageRMSCorrected);
 
     // correct offset for next round
     gIOffset = (gIOffset+IOffset);
-    LOG_INFO("gIOffset: %.6f A", gIOffset);
+    //LOG_INFO("gIOffset: %.6f A", gIOffset);
+
+    gVOffset = (gVOffset+VOffset);
+    //LOG_INFO("gVOffset: %.6f A", gVOffset);
+
 
 }
 
