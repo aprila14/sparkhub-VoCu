@@ -54,9 +54,6 @@ public:
     virtual const TCloudCredentials &getCloudCredentials();
     virtual void setCloudCredentials(const TCloudCredentials &cloudCredentials);
 
-    virtual const TCloudCertificatePack &getCloudCertificates();
-    virtual void setCloudCertificates(const TCloudCertificatePack &cloudCertificates);
-
     virtual const THttpsServerCertificate &getOtaCertificate();
     virtual void setOtaCertificate(const THttpsServerCertificate &httpsServerCertificate);
 
@@ -100,7 +97,6 @@ private:
     bool m_configurationFinishedState = false;
     TWiFiCredentials m_wiFiCredentials = {};
     TCloudCredentials m_cloudCredentials = {};
-    TCloudCertificatePack m_cloudCertificates = {};
     THttpsServerCertificate m_otaHttpsServerCertificate = {};
     TOtaUpdateLink m_otaUpdateLink = {};
     TCertificatePack m_certificatePack = {};

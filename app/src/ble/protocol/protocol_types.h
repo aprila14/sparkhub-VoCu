@@ -121,7 +121,7 @@ namespace prot
         // COMMANDS
         CMD__START = 0x0010, ///< Helper enum - beginning of command
         CMD_TEST = 0x0010,   ///< Communication test command
-        
+
         CMD_get_wifi_mac_address = 0x0020, ///< Get BLE MAC address
 
         CMD_SEND_CERTIFICATES = 0x0050, ///< Send files with certificates from BLE device to ESP
@@ -303,9 +303,6 @@ namespace prot
     {
         constexpr uint8_t CLOUD_MAX_KEY_LENGTH = 100;
         constexpr uint8_t CLOUD_MAX_ADDRESS_LENGTH = 200;
-        constexpr uint32_t CLOUD_MAX_CERT_LENGTH = 2000;
-        constexpr uint32_t CLOUD_MAX_FULLCHAIN_CERT_LENGTH = 6000;
-        constexpr uint32_t CLOUD_MAX_PRIVATE_KEY_LENGTH = 3500;
         constexpr uint8_t CLOUD_DEVICE_ID_LENGTH = 64;
         constexpr uint8_t CLOUD_MQTT_USERNAME_LENGTH = 128;
 
@@ -317,9 +314,9 @@ namespace prot
          */
         struct __attribute__((packed)) TCloudCredentials
         {
-            char cloudAddress[CLOUD_MAX_ADDRESS_LENGTH + 1];
-            char cloudDeviceId[CLOUD_DEVICE_ID_LENGTH + 1];
-            char cloudMqttUsername[CLOUD_MQTT_USERNAME_LENGTH + 1];
+            char cloudAddress[CLOUD_MAX_ADDRESS_LENGTH];
+            char cloudDeviceId[CLOUD_DEVICE_ID_LENGTH];
+            char cloudMqttUsername[CLOUD_MQTT_USERNAME_LENGTH];
 
             TCloudCredentials();
 
@@ -331,27 +328,9 @@ namespace prot
             bool isSetCloudDeviceId() const;
             bool isSetCloudMqttUsername() const;
         };
-
-        struct __attribute__((packed)) TCloudCertificatePack
-        {
-            char serverPublicCertificate[CLOUD_MAX_CERT_LENGTH + 1];
-            char clientPublicCertificate[CLOUD_MAX_FULLCHAIN_CERT_LENGTH + 1];
-            char clientPrivateKey[CLOUD_MAX_PRIVATE_KEY_LENGTH + 1];
-
-            bool operator==(const TCloudCertificatePack &rhs) const;
-            bool setServerPublicCertificate(const std::string &newServerPublicCertificate);
-            bool setClientPublicCertificate(const std::string &newClientPublicCertificate);
-            bool setClientPrivateKey(const std::string &newClientPrivateKey);
-
-            bool isSetServerPublicCertificate() const;
-            bool isSetClientPublicCertificate() const;
-            bool isSetClientPrivateKey() const;
-        };
-
         struct __attribute__((packed)) TCmd
         {
             TCloudCredentials cloudCredentials;
-            TCloudCertificatePack cloudCertificates;
         };
 
         struct __attribute__((packed)) TRes
@@ -374,7 +353,7 @@ namespace prot
             bool operator==(const TCertificatePack &rhs) const;
             bool setFullChainCertificate(const std::string &newFullChainCertificate);
             bool setPrivateKey(const std::string &newPrivateKey);
-            
+
             bool isSetFullChainCertificate() const;
             bool isSetPrivateKey() const;
         };

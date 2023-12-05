@@ -106,7 +106,7 @@ bool MqttClientController::init(const prot::cloud_set_credentials::TCloudCredent
 
 esp_mqtt_client_config_t MqttClientController::getClientConfiguration(const prot::cloud_set_credentials::TCloudCredentials &credentials) // NOLINT - we don't want to make it const
 {
-    const prot::cloud_set_credentials::TCloudCertificatePack &cloudCertificatePack = pConfig->getCloudCertificates();
+    const prot::send_certificates::TCertificatePack &cloudCertificatePack = pConfig->getCertificatePack();
 
     esp_mqtt_client_config_t mqttConfig = {};
 
@@ -145,19 +145,11 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(const prot
     }
 
     // TODO: turn on certificate verification after adding proper CA certificate in the Azure Device Provisioning Service
-    // if (cloudCertificatePack.isSetServerPublicCertificate())
-    // {
-    //     mqttConfig.cert_pem = cloudCertificatePack.serverPublicCertificate;
-    // }
-    // else
-    // {
-    //     LOG_WARNING("Default root public cert");
-    //     mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
-    // }
+    // mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
 
-    if (cloudCertificatePack.isSetClientPublicCertificate())
+    if (cloudCertificatePack.isSetFullChainCertificate())
     {
-        mqttConfig.client_cert_pem = cloudCertificatePack.clientPublicCertificate;
+        mqttConfig.client_cert_pem = cloudCertificatePack.fullChainCertificate;
     }
     else
     {
@@ -165,9 +157,9 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(const prot
         mqttConfig.client_cert_pem = DEFAULT_CLIENT_PUBLIC_CERT;
     }
 
-    if (cloudCertificatePack.isSetClientPrivateKey())
+    if (cloudCertificatePack.isSetPrivateKey())
     {
-        mqttConfig.client_key_pem = cloudCertificatePack.clientPrivateKey;
+        mqttConfig.client_key_pem = cloudCertificatePack.privateKey;
     }
     else
     {
@@ -215,10 +207,10 @@ void MqttClientController::eventHandler(void *handlerArgs, esp_event_base_t base
     {
         LOG_INFO("New data has arrived");
 
-        LOG_DEBUG("Message payload: \n%.*s", event->data_len, event->data);
-        LOG_DEBUG("Message length: %d", event->data_len);
-        LOG_DEBUG("Message topic: %.*s", event->topic_len, event->topic);
-        LOG_DEBUG("Topic length: %d", event->topic_len);
+        LOG_INFO("Message payload: \n%.*s", event->data_len, event->data);
+        LOG_INFO("Message length: %d", event->data_len);
+        LOG_INFO("Message topic: %.*s", event->topic_len, event->topic);
+        LOG_INFO("Topic length: %d", event->topic_len);
 
         if (event->topic_len == 0)
         {

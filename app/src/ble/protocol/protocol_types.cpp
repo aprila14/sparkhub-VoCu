@@ -163,84 +163,6 @@ namespace prot
         {
             return cloudMqttUsername[0] != 0;
         }
-
-        bool TCloudCertificatePack::operator==(const TCloudCertificatePack &rhs) const
-        {
-            if (::strcmp(serverPublicCertificate, rhs.serverPublicCertificate) != 0)
-            {
-                return false;
-            }
-
-            if (::strcmp(clientPublicCertificate, rhs.clientPublicCertificate) != 0)
-            {
-                return false;
-            }
-
-            if (::strcmp(clientPrivateKey, rhs.clientPrivateKey) != 0)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        bool TCloudCertificatePack::setServerPublicCertificate(const std::string &newServerPublicCertificate)
-        {
-            if (newServerPublicCertificate.size() > CLOUD_MAX_CERT_LENGTH)
-            {
-                LOG_ERROR("Server Public Certificate too long");
-                return false;
-            }
-
-            ::bzero(serverPublicCertificate, sizeof(serverPublicCertificate));
-            ::strcpy(serverPublicCertificate, newServerPublicCertificate.c_str());
-
-            return true;
-        }
-
-        bool TCloudCertificatePack::isSetServerPublicCertificate() const
-        {
-            return serverPublicCertificate[0] != 0;
-        }
-
-        bool TCloudCertificatePack::setClientPublicCertificate(const std::string &newClientPublicCertificate)
-        {
-            if (newClientPublicCertificate.size() > CLOUD_MAX_CERT_LENGTH)
-            {
-                LOG_ERROR("Client Public Certificate too long");
-                return false;
-            }
-
-            ::bzero(clientPublicCertificate, sizeof(clientPublicCertificate));
-            ::strcpy(clientPublicCertificate, newClientPublicCertificate.c_str());
-
-            return true;
-        }
-
-        bool TCloudCertificatePack::isSetClientPublicCertificate() const
-        {
-            return clientPublicCertificate[0] != 0;
-        }
-
-        bool TCloudCertificatePack::setClientPrivateKey(const std::string &newClientPrivateKey)
-        {
-            if (newClientPrivateKey.size() > CLOUD_MAX_PRIVATE_KEY_LENGTH)
-            {
-                LOG_ERROR("Client Private Key too long");
-                return false;
-            }
-
-            ::bzero(clientPrivateKey, sizeof(clientPrivateKey));
-            ::strcpy(clientPrivateKey, newClientPrivateKey.c_str());
-
-            return true;
-        }
-
-        bool TCloudCertificatePack::isSetClientPrivateKey() const
-        {
-            return clientPrivateKey[0] != 0;
-        }
-
     } // namespace cloud_set_credentials
 
     namespace ota_perform
@@ -277,7 +199,7 @@ namespace prot
         }
 
     } // namespace ota_perform
-    
+
     namespace send_certificates
     {
         bool TCertificatePack::operator==(const TCertificatePack &rhs) const
@@ -294,7 +216,7 @@ namespace prot
 
             return true;
         }
-        
+
         bool TCertificatePack::setFullChainCertificate(const std::string &newFullChainCertificate)
         {
             if (newFullChainCertificate.size() > MAX_FULLCHAIN_CERTIFICATE_LENGTH)
@@ -327,7 +249,7 @@ namespace prot
         {
             return fullChainCertificate[0] != 0;
         }
-        
+
         bool TCertificatePack::isSetPrivateKey() const
         {
             return privateKey[0] != 0;
