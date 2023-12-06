@@ -14,3 +14,5 @@ build_artifacts
 .peru
 externals
 build
+
+misc/python_ble_client/Program_output
