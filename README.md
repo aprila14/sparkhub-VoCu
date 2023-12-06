@@ -79,7 +79,7 @@ To build the firmware, issue the following commands:
 ```
 mkdir $BUILD_DIR
 cd $BUILD_DIR
-idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=ON build  
+idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=OFF build  
 ```
 
 ## 2.5. Flashing
@@ -87,14 +87,14 @@ To build and flash:
 ```
 mkdir $BUILD_DIR
 cd $BUILD_DIR
-idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=ON build flash  
+idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=OFF build flash  
 ```
 
 One can also start the terminal monitor afterwards:
 ```
 mkdir $BUILD_DIR
 cd $BUILD_DIR
-idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=ON build flash monitor
+idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=OFF build flash monitor
 ```
 
 # 3. Flashing and monitoring without ESP-IDF

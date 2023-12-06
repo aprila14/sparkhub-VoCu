@@ -31,14 +31,6 @@ void temporaryDevelopmentCode()
     pConfig->setConfigurationFinishedState(true);
 
     {
-        LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
-        TWiFiCredentials newWifiCredentials;
-        newWifiCredentials.setSsid("4G UFI-4205");
-        newWifiCredentials.setPassword("1234567890");
-        pConfig->setWifiCredentials(newWifiCredentials);
-    }
-
-    {
         prot::send_certificates::TCmd *pCmdCertificate = new prot::send_certificates::TCmd();
 
         LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
@@ -53,6 +45,15 @@ void temporaryDevelopmentCode()
 }
 #endif // IS_DEBUG_BUILD
 
+static void configureConnectionToLteModem()
+{
+    LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
+    TWiFiCredentials newWifiCredentials;
+    newWifiCredentials.setSsid("lsawicki-laptop");     // newWifiCredentials.setSsid("4G UFI-4205");
+    newWifiCredentials.setPassword("SimpleAndClever"); // newWifiCredentials.setPassword("1234567890");
+    pConfig->setWifiCredentials(newWifiCredentials);
+}
+
 void initCommonGlobalModules()
 {
     hw_misc::initializeNVS();
@@ -63,6 +64,8 @@ void initCommonGlobalModules()
     {
         LOG_ERROR("Failed to open the NVS, but there is nothing we can do about it anyway...");
     }
+
+    configureConnectionToLteModem();
 
 #if IS_DEBUG_BUILD
     temporaryDevelopmentCode();
