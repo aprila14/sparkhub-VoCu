@@ -6,6 +6,10 @@ import time
 import datetime
 from datetime import datetime
 
+from cobs import cobs
+
+from ble_protocol_control import prepare_get_wifi_mac_command
+
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
@@ -65,16 +69,20 @@ def get_device_characteristics(ble_client):
 def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearray):
     global NOTIFY_RECEIVED_DATA
 
-    data_decoded = data.decode('utf-8')
-    print(f'Received data: {data_decoded}')
+    data.remove(0) # message start sign
+    data.remove(0) # message end sign
+
+    decoded_payload = cobs.decode(data)
+
+    print(f'Received data: {decoded_payload.hex()}')
 
     if os.path.isfile(os.path.join(output_directory, ble_log_file_name)):
         with open(os.path.join(output_directory, ble_log_file_name), 'a') as f:
-            f.writelines(data_decoded)
+            f.writelines(decoded_payload.hex())
             f.write('\n')
 
 
-async def connect_to_notifications(ble_client, characteristic_TX_uuid, characteristic_RX_uuid=''):
+async def connect_to_notifications(ble_client, characteristic_TX_uuid, characteristic_RX_uuid):
     global NOTIFY_RECEIVED_DATA
 
     if not os.path.isdir(output_directory):
@@ -91,6 +99,11 @@ async def connect_to_notifications(ble_client, characteristic_TX_uuid, character
     await ble_client.start_notify(characteristic_TX_uuid, notification_handler)
 
     print("Notify started")
+
+    payload = prepare_get_wifi_mac_command()
+
+    await ble_client.write_gatt_char(characteristic_RX_uuid, payload, response=True)
+
     while True:
         print("Waiting for data")
 

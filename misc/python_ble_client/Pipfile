@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 bleak = "*"
+cobs = "*"
+crc = "*"
 
 [dev-packages]
 
