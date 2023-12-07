@@ -10,15 +10,17 @@ sudo apt install libsystemd-dev
 ```
 
 # Building
-- Remember to run export.sh script (described in the main README file) in the terminal you are going to use for PC BLE client build.
 - From now on, $PROJECT_DIR is assumed to be [misc/pc_ble_client](misc/pc_ble_client), $BUILD_DIR should be separate directory for PC BLE client build. 
 - Remember to pull submodules first
 - To build run the following commands:
+
+PROJECT_DIR=`pwd`
+BUILD_DIR=$(realpath $PROJECT_DIR/../../../build-pc-ble-client)
 ```
 cd $BUILD_DIR
 cmake $PROJECT_DIR
 make
-./pc_ble_client "MA:CA:DD:RR:EE:SS"
+./pc_ble_client "3C:61:05:11:BD:52"
 ```
 - one can set MAC address also at the beginning of the main function for convenience
 
@@ -38,7 +40,7 @@ It will disconnect the BLE device first.
 On Ubuntu-based systems, before using the utility do:
 ```
 sudo service bluetooth stop
-sudo /usr/lib/bluetooth/bluetoothd -E &
+sudo /usr/lib/bluetooth/bluetoothd -E
 ```
 
 - The bluetooth daemon caches the characteristics and services of a bluetooth device and doesn't re-read them on new connections.
