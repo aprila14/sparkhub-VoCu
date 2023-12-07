@@ -55,7 +55,10 @@ handleCommand_sendCertificates(BleController* pController, const uint8_t* payloa
 
     if (payloadLen != sizeof(prot::send_certificates::TCmd))
     {
-        LOG_WARNING("Invalid 'Send Certificates' command. Payload length: %d", payloadLen);
+        LOG_WARNING(
+            "Invalid 'Send Certificates' command. Payload length: %d, should be %d",
+            payloadLen,
+            sizeof(prot::send_certificates::TCmd));
         return EPacketHandlingResult::SEND_NACK;
     }
 

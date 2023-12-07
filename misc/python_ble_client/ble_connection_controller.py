@@ -8,7 +8,9 @@ from datetime import datetime
 
 from cobs import cobs
 
-from ble_protocol_control import prepare_get_wifi_mac_command
+from ble_protocol_control import prepare_get_wifi_mac_command, prepare_send_certificates_command
+
+from utils import chunk_byte_array
 
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -100,9 +102,16 @@ async def connect_to_notifications(ble_client, characteristic_TX_uuid, character
 
     print("Notify started")
 
-    payload = prepare_get_wifi_mac_command()
+    certificates = prepare_send_certificates_command()
 
-    await ble_client.write_gatt_char(characteristic_RX_uuid, payload, response=True)
+    chunk_size = 250
+    chunks = chunk_byte_array(certificates, chunk_size)
+
+    # payload = prepare_get_wifi_mac_command()
+
+    for chunk in chunks:
+        print("Sending chunk:", chunk)
+        await ble_client.write_gatt_char(characteristic_RX_uuid, chunk, response=False)
 
     while True:
         print("Waiting for data")

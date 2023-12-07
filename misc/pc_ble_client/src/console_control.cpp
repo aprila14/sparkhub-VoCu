@@ -2,7 +2,6 @@
 static const char* LOG_TAG = "Console";
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBU
 
-
 #include "console_control.h"
 
 #include <fstream>
@@ -11,7 +10,7 @@ static const char* LOG_TAG = "Console";
 #include <string.h>
 
 const char* CERTIFICATE_PRIVATE_KEY_PATH = "device-02.key.pem";
-const char* CERTIFICATE_FULL_CHAIN = "device-02-full-chain.cert.pem";
+const char* CERTIFICATE_FULL_CHAIN       = "device-02-full-chain.cert.pem";
 /**
  * @brief Take appropriate action for a pressed key.
  *
@@ -40,7 +39,8 @@ void handleKeyPress(BleController* pBleController, char key)
         {
             LOG_INFO("About to send command CMD_get_wifi_mac_address");
             prot::get_wifi_mac_address::TCmd cmd = {0};
-            result = pBleController->sendPacket(prot::EPacketType::CMD_get_wifi_mac_address, (uint8_t*)&cmd, sizeof(cmd));
+            result =
+                pBleController->sendPacket(prot::EPacketType::CMD_get_wifi_mac_address, (uint8_t*)&cmd, sizeof(cmd));
             break;
         }
         case 'c':
@@ -68,7 +68,8 @@ void handleKeyPress(BleController* pBleController, char key)
                 break;
             }
 
-            std::stringstream certificateFullChainBuffer;;
+            std::stringstream certificateFullChainBuffer;
+
             certificateFullChainBuffer << certificateFullChainFile.rdbuf();
 
             prot::send_certificates::TCmd cmd = {};
@@ -79,13 +80,14 @@ void handleKeyPress(BleController* pBleController, char key)
             cmd.certificates.setFullChainCertificate(certificateFullChainBuffer.str());
             cmd.certificates.setPrivateKey(certificatePrivateKeyBuffer.str());
 
-            result = pBleController->sendPacket(prot::EPacketType::CMD_SEND_CERTIFICATES, (uint8_t*)(&cmd), sizeof(cmd));
+            result =
+                pBleController->sendPacket(prot::EPacketType::CMD_SEND_CERTIFICATES, (uint8_t*)(&cmd), sizeof(cmd));
             break;
         }
 
         case 'h':
         {
-            //Print available commands
+            // Print available commands
             LOG_INFO("Available commands:\n\n"
                      "t - send test command\n"
                      "m - get WIFI MAC Address from device\n"
