@@ -5,10 +5,10 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
+#include "device_provisioning.h"
 #include "esp_event.h"
 #include "json_parser.h"
 #include "protocol_types.h"
-#include "device_provisioning.h"
 
 class MqttClientController;
 
@@ -23,7 +23,7 @@ public:
     /**
      * Set m_credentials to the values from the given structure
      */
-    bool setCredentials(const prot::cloud_set_credentials::TCloudCredentials &credentials);
+    bool setCredentials(const prot::cloud_set_credentials::TCloudCredentials& credentials);
 
     /**
      * Return current CloudController state
@@ -43,12 +43,12 @@ public:
     /**
      * Function handling OTA update initiated from cloud
      */
-    bool handleOtaUpdateLink(const TOtaUpdateLink &otaUpdateLinkStructure);
+    bool handleOtaUpdateLink(const TOtaUpdateLink& otaUpdateLinkStructure);
 
     /**
      * Function handling message with time slots list for LightScheduler
      */
-    bool handleTimeSlotsList(const json_parser::TTimeSlotsList &timeSlotsListStructure);
+    bool handleTimeSlotsList(const json_parser::TTimeSlotsList& timeSlotsListStructure);
 
     /**
      * Timer callback enabling to change CloudController status if the response for the heeartbeat from the cloud
@@ -63,24 +63,26 @@ public:
     void setReadinessAfterDeviceProvisioning();
 
     /**
-     * @brief Function for MqttClientController to let CloudController (and AppController) know that it got connected to a broker
+     * @brief Function for MqttClientController to let CloudController (and AppController) know that it got connected to
+     * a broker
      */
     void setConnectedStatus();
 
     /**
-     *  Function for MqttClientController to let CloudController (and AppController) know that it got disconnected from the broker
+     *  Function for MqttClientController to let CloudController (and AppController) know that it got disconnected from
+     * the broker
      */
     void setNotConnectedStatus();
 
-    const esp_mqtt_client_handle_t &getMqttClientHandle();
+    const esp_mqtt_client_handle_t& getMqttClientHandle();
 
 #if !TESTING
 private:
 #endif
 
-    static void run(void *pObject);
-    void _run();
-    void perform();
+    static void run(void* pObject);
+    void        _run();
+    void        perform();
 
     /**
      * Function preparing and sending device status information
@@ -95,26 +97,27 @@ private:
     /**
      * Function initializing MqttClientController with the given credentials
      */
-    void configureCloudConnection(const prot::cloud_set_credentials::TCloudCredentials &credentials);
+    void configureCloudConnection(const prot::cloud_set_credentials::TCloudCredentials& credentials);
 
     /**
      * Function starting MqttClientController connection
      */
     void startCloudConnection();
 
-    TaskHandle_t m_taskHandle;              // handle to runTask
-    TimerHandle_t m_heartbeatWatchdogTimer; // handle to timer handling heartbeat checking
-    uint32_t m_heartbeatWatchdogCounter;    // watchdog counter that shall be zeroed everytime when heartbeat message
-                                            // comes in. If it exceedes specified value, CloudController
-                                            // is regarded as not connected
-    uint32_t m_msgCounter;                  // outgoing messages counter
+    TaskHandle_t  m_taskHandle;               // handle to runTask
+    TimerHandle_t m_heartbeatWatchdogTimer;   // handle to timer handling heartbeat checking
+    uint32_t      m_heartbeatWatchdogCounter; // watchdog counter that shall be zeroed everytime when heartbeat message
+                                              // comes in. If it exceedes specified value, CloudController
+                                              // is regarded as not connected
+    uint32_t m_msgCounter;                    // outgoing messages counter
 
-    SemaphoreHandle_t m_semaphoreCredentialsReady;    // sempahore indicating that credentials for cloud connection have already been stored in NVS
+    SemaphoreHandle_t m_semaphoreCredentialsReady;    // sempahore indicating that credentials for cloud connection have
+                                                      // already been stored in NVS
     SemaphoreHandle_t m_semaphoreWifiConnectionReady; // sempahore indicating Wifi connection is established
 
     ECloudConnectionStatus m_connectionStatus;
 
-    MqttClientController m_mqttClientController;
+    MqttClientController         m_mqttClientController;
     DeviceProvisioningController m_deviceProvisioningController;
 
     std::string m_deviceStatusTopic;

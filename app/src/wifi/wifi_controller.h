@@ -1,13 +1,13 @@
 #ifndef WIFI_CONTROLLER_H
 #define WIFI_CONTROLLER_H
 
-#include "defines.h"
 #include "custom_types.h"
+#include "defines.h"
 #include "mutex.h"
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/event_groups.h"
+#include "freertos/task.h"
 
 #include "esp_wifi.h"
 #include "esp_wifi_types.h"
@@ -42,7 +42,7 @@ public:
      * @param eventId   - the ID of the event
      * @param eventData - the data specific to the event occurenc, that gets passed to the handler
      */
-    void wifiEventHandler(void *eventHandlerArg, esp_event_base_t eventBase, int32_t eventId, void *eventData);
+    void wifiEventHandler(void* eventHandlerArg, esp_event_base_t eventBase, int32_t eventId, void* eventData);
 
     /**
      * @brief ... . If already connected to AP, it will disconnect and connect to another.
@@ -50,9 +50,9 @@ public:
      * @return true if internal logic executed properly (even if it didn't connect to the WiFi)
      */
     bool connectToAccessPoint(
-        const TConnectToAccessPointCommand &command,
-        TConnectToAccessPointResult &result,
-        bool shouldReconnect);
+        const TConnectToAccessPointCommand& command,
+        TConnectToAccessPointResult&        result,
+        bool                                shouldReconnect);
 
     /**
      * @brief Disconnect from the AP that we are connected to right now. To distinguish
@@ -69,7 +69,7 @@ public:
      * @param result
      * @return
      */
-    bool scanAvailableAccessPoints(prot::wifi_scan_ap::TRes &result);
+    bool scanAvailableAccessPoints(prot::wifi_scan_ap::TRes& result);
 
     /**
      * @brief Determine if connection to Access Point has been established
@@ -93,9 +93,9 @@ public:
     /**
      * @brief
      */
-    void getWifiMacAddress(uint8_t *mac) const;
+    void getWifiMacAddress(uint8_t* mac) const;
 
-    static void displayScanRecords(prot::wifi_scan_ap::TScanEntry *records, int recordsNumber);
+    static void displayScanRecords(prot::wifi_scan_ap::TScanEntry* records, int recordsNumber);
 
 #if IS_DEBUG_BUILD
     void printConnectionState() const;
@@ -125,9 +125,9 @@ private:
 
     struct TWifiEvent
     {
-        EWifiEvent eventType;
+        EWifiEvent                eventType;
         EConnectToSsidErrorReason reason;
-        TWiFiCredentials credentials;
+        TWiFiCredentials          credentials;
     };
 
     /**
@@ -138,20 +138,20 @@ private:
     /**
      * @brief Main logic of the module
      */
-    static void run(void *pObject);
-    void _run();
+    static void run(void* pObject);
+    void        _run();
 
     bool registerHandlers();
     void processWifiEvents();
-    void processWifiEvent(TWifiEvent &event);
+    void processWifiEvent(TWifiEvent& event);
 
-    static bool wifiConfigModeInit(TWiFiCredentials &credentials);
+    static bool wifiConfigModeInit(TWiFiCredentials& credentials);
 
     static EConnectToSsidErrorReason parseWifiDisconnectReason(uint8_t reason);
 
-    void tryToReconnect();
-    bool initiateDisconnection();
-    bool initiateStop();
+    void         tryToReconnect();
+    bool         initiateDisconnection();
+    bool         initiateStop();
     virtual bool disconnectIfNeeded();
 
     void setConnectionStatus(bool status);
@@ -159,17 +159,17 @@ private:
     void setScanningActive(bool status);
     void setDisconnectionInitiated(bool status);
 
-    static prot::wifi_scan_ap::TScanEntry convertRecordToScanEntry(wifi_ap_record_t &record);
+    static prot::wifi_scan_ap::TScanEntry convertRecordToScanEntry(wifi_ap_record_t& record);
 
-    static void printErrorCode(esp_err_t errorCode, const char *message);
+    static void printErrorCode(esp_err_t errorCode, const char* message);
 
 #if IS_DEBUG_BUILD
     void printConnectionLoop() const;
 #endif
 
-    TaskHandle_t m_taskHandle;                          // handle to runTask
-    mutex_t m_publicAccessMutex = nullptr;              ///< Protects access to all public API functions
-    mutex_t m_lastConnectionErrorReasonMutex = nullptr; ///< Protects access to lastConnectionErrorReason field
+    TaskHandle_t m_taskHandle;                               // handle to runTask
+    mutex_t      m_publicAccessMutex              = nullptr; ///< Protects access to all public API functions
+    mutex_t      m_lastConnectionErrorReasonMutex = nullptr; ///< Protects access to lastConnectionErrorReason field
     EventGroupHandle_t m_eventGroup;
 
     EConnectToSsidErrorReason m_connectionErrorReason; // reason for connection issue, passed from wifi handler
@@ -181,7 +181,7 @@ private:
 
     uint16_t m_maxRecordsFound;   // max records found during last WiFi scan
     uint32_t m_retryNumber;       // amount of times reconnection was attempted so far
-    int32_t m_timeoutMs;          // time after which reconnection is not attempted
+    int32_t  m_timeoutMs;         // time after which reconnection is not attempted
     uint64_t m_disconnectionTime; // time at which disconnection event occured
 
     EConnectToSsidErrorReason m_lastConnectionErrorReason; // error that has occured during last attempt to connect

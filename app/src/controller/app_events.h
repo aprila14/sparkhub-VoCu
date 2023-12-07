@@ -1,8 +1,8 @@
 #ifndef APP_EVENTS_H
 #define APP_EVENTS_H
 
-#include "defines.h"
 #include "custom_types.h"
+#include "defines.h"
 #include "protocol_types.h"
 
 namespace app
@@ -11,17 +11,17 @@ namespace app
 enum class EEventType
 {
     UNKNOWN_EVENT = 0,
-    DUMMY_EVENT,  // dummy event demonstrating the usage, as simple to copy placeholder
+    DUMMY_EVENT, // dummy event demonstrating the usage, as simple to copy placeholder
     PERFORM_CONFIGURATION_RESET_AND_RESTART,
-    LIGHT_CONTROL__SET_POWER,  // to change the light power level percentage
-    WIFI_CONTROLLER__DISCONNECT,    //disconnect from current Access Point
+    LIGHT_CONTROL__SET_POWER,                 // to change the light power level percentage
+    WIFI_CONTROLLER__DISCONNECT,              // disconnect from current Access Point
     WIFI_CONTROLLER__CONNECTION_ESTABLISHED,  // WiFi connection just connected
-    WIFI_CONTROLLER__CONNECTION_LOST,  // WiFi connection just lost
-    WIFI_CONTROLLER__WAIT_UNTIL_CONNECTED,  //wait until device is connected to WiFi
+    WIFI_CONTROLLER__CONNECTION_LOST,         // WiFi connection just lost
+    WIFI_CONTROLLER__WAIT_UNTIL_CONNECTED,    // wait until device is connected to WiFi
     CLOUD_CONTROLLER__CONNECTION_ESTABLISHED, // Connection to cloud just established
-    CLOUD_CONTROLLER__CONNECTION_LOST, // Connection to cloud just lost
-    CLOUD_CONTROLLER__SEND_CREDENTIALS, //sending credentials to cloud
-    OTA__PERFORM //performing OTA based on provided link
+    CLOUD_CONTROLLER__CONNECTION_LOST,        // Connection to cloud just lost
+    CLOUD_CONTROLLER__SEND_CREDENTIALS,       // sending credentials to cloud
+    OTA__PERFORM                              // performing OTA based on provided link
 };
 
 /**
@@ -68,15 +68,15 @@ struct TOtaPerformEventData
  */
 union TEventData
 {
-    TDummyEventData dummy;
-    TLightControlSetPowerEventData lightControlSetPower;
+    TDummyEventData                       dummy;
+    TLightControlSetPowerEventData        lightControlSetPower;
     TCloudControlSendCredentialsEventData cloudControlSendCredentials;
-    TOtaPerformEventData otaPerform;
+    TOtaPerformEventData                  otaPerform;
 
     // add here more events ...
 };
 
 
-}  // namespace app
+} // namespace app
 
 #endif // APP_EVENTS_H

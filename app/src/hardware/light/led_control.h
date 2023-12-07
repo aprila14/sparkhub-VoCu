@@ -6,8 +6,7 @@
 #include "driver/gpio.h"
 
 
-class LedControl
-        : public LightControlInterface
+class LedControl : public LightControlInterface
 {
 public:
     LedControl(gpio_num_t gpioNumber);
@@ -23,8 +22,8 @@ private:
 #endif
     LedControl() = delete;
 
-    gpio_num_t m_gpioNumber;
-    uint8_t m_powerPercentage;
+    gpio_num_t           m_gpioNumber;
+    uint8_t              m_powerPercentage;
     static constexpr int PWM_MAX = 1023;
 
     bool initPWM() const;

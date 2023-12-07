@@ -1,5 +1,6 @@
 /*
- *  File copied from Nimble code, as it is not included in the ESP-IDF build, and adjusted to work with ESP32 instead of mynewt
+ *  File copied from Nimble code, as it is not included in the ESP-IDF build, and adjusted to work with ESP32 instead of
+ mynewt
  *  Copied from: esp-idf/components/bt/host/nimble/nimble/nimble/host/services/bleuart/include/bleuart/bleuart.h"
 
  * Licensed to the Apache Software Foundation (ASF) under one

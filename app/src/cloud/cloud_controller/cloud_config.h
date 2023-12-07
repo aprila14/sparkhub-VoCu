@@ -8,13 +8,14 @@
 #define DEFAULT_MQTT_USERNAME "sparkhub-LevelSense.azure-devices.net/" DEFAULT_DEVICE_ID "/?api-version=2021-04-12"
 
 #define CLOUD_DEVICE_PROVISIONING_ADDRESS "mqtts://global.azure-devices-provisioning.net"
-#define DEVICE_PROVISIONING_ID_SCOPE "0ne00B73235"
-#define DEVICE_PROVISIONING_MQTT_USERNAME DEVICE_PROVISIONING_ID_SCOPE "/registrations/" DEFAULT_DEVICE_ID "/api-version=2019-03-31"
+#define DEVICE_PROVISIONING_ID_SCOPE      "0ne00B73235"
+#define DEVICE_PROVISIONING_MQTT_USERNAME \
+    DEVICE_PROVISIONING_ID_SCOPE "/registrations/" DEFAULT_DEVICE_ID "/api-version=2019-03-31"
 
 #define DEFAULT_TELEMETRY_MQTT_TOPIC "devices/" DEFAULT_DEVICE_ID "/messages/events/"
 
-#define DEFAULT_SERVER_PUBLIC_CERT                                       \
-    "-----BEGIN CERTIFICATE-----\n"                                      \
+#define DEFAULT_SERVER_PUBLIC_CERT \
+    "-----BEGIN CERTIFICATE-----\n" \
     "MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh\n" \
     "MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\n" \
     "d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBH\n" \
@@ -34,11 +35,11 @@
     "Fdtom/DzMNU+MeKNhJ7jitralj41E6Vf8PlwUHBHQRFXGU7Aj64GxJUTFy8bJZ91\n" \
     "8rGOmaFvE7FBcf6IKshPECBV1/MUReXgRPTqh5Uykw7+U0b6LJ3/iyK5S9kJRaTe\n" \
     "pLiaWN0bfVKfjllDiIGknibVb63dDcY3fe0Dkhvld1927jyNxF1WW6LZZm6zNTfl\n" \
-    "MrY=\n"                                                             \
+    "MrY=\n" \
     "-----END CERTIFICATE-----\n"
 
-#define DEFAULT_CLIENT_PUBLIC_CERT                                       \
-    "-----BEGIN CERTIFICATE-----\n"                                      \
+#define DEFAULT_CLIENT_PUBLIC_CERT \
+    "-----BEGIN CERTIFICATE-----\n" \
     "MIIEhTCCAm2gAwIBAgIRAL0DiNvUgr0KjpHDuYuanA0wDQYJKoZIhvcNAQELBQAw\n" \
     "NDEyMDAGA1UEAwwpQXp1cmUgSW9UIEh1YiBJbnRlcm1lZGlhdGUgQ2VydCBUZXN0\n" \
     "IE9ubHkwHhcNMjMxMjA1MTI0MTM4WhcNMjQwMTA0MTI0MTM4WjAdMRswGQYDVQQD\n" \
@@ -63,9 +64,9 @@
     "UlQ/Bncul7irx9FaY95lh/ZcSDSF40LK/R2zUz1zKuvj7yijogjKhGlEjbmrSHdz\n" \
     "mjEjQFz4vi2T661uLiC8hxFWCtSd/B737kY5buyBpWtUJCSQiFYx2r6OsWzDPsAo\n" \
     "EHbL67uiqI2ma4mF3Crdb+TMFuyQ2mAJ0/4cpYioLDMT4Q9fhlQshKTZvcwCPIB7\n" \
-    "V6E3KoZWnZuX\n"                                                     \
-    "-----END CERTIFICATE-----\n"                                        \
-    "-----BEGIN CERTIFICATE-----\n"                                      \
+    "V6E3KoZWnZuX\n" \
+    "-----END CERTIFICATE-----\n" \
+    "-----BEGIN CERTIFICATE-----\n" \
     "MIIFTDCCAzSgAwIBAgIRAL0DiNvUgr0KjpHDuYuanAowDQYJKoZIhvcNAQELBQAw\n" \
     "KjEoMCYGA1UEAwwfQXp1cmUgSW9UIEh1YiBDQSBDZXJ0IFRlc3QgT25seTAeFw0y\n" \
     "MzExMjkwNTI5NDVaFw0yMzEyMjkwNTI5NDVaMDQxMjAwBgNVBAMMKUF6dXJlIElv\n" \
@@ -94,9 +95,9 @@
     "cotGT3RoGTA6vQT1lNAAcT6rjlRohL1ZxQ88aTLbNspoi+49w7IxD6d4onDx8BeO\n" \
     "hZ8BGXI8QyniOjcoxw2HnPSjPgfNEnSWojIKs6C1FVok3hYQXQRNLG/pkNFQSrCd\n" \
     "E42uviNsSWVWjN9jyG2pnto1oYsPzJ7kJlFf2lDFWrSkJyK76x5XU3qMwRMT/26Q\n" \
-    "hUjZpHQajcWC10X36n2/Mg==\n"                                         \
-    "-----END CERTIFICATE-----\n"                                        \
-    "-----BEGIN CERTIFICATE-----\n"                                      \
+    "hUjZpHQajcWC10X36n2/Mg==\n" \
+    "-----END CERTIFICATE-----\n" \
+    "-----BEGIN CERTIFICATE-----\n" \
     "MIIFRTCCAy2gAwIBAgIURUBfERlDnclnmJviS2f0UiIqCFowDQYJKoZIhvcNAQEL\n" \
     "BQAwKjEoMCYGA1UEAwwfQXp1cmUgSW9UIEh1YiBDQSBDZXJ0IFRlc3QgT25seTAe\n" \
     "Fw0yMzExMjkwNTIzMDVaFw0yMzEyMjkwNTIzMDVaMCoxKDAmBgNVBAMMH0F6dXJl\n" \
@@ -125,11 +126,11 @@
     "6TMMrasNqLloToTO7H1mkE2FWYBcN0zum2VHMf264y1hd9jW59r6evX7YBD0uOxA\n" \
     "POgyfvXQByZkXYKj8kKYByEiPeLbKnzR0Y3MmkfvhnauaGtOv+fTTWoeT7mtggEk\n" \
     "47v6NCGLh12zS2ipCd9ny3Mxk+kyx6bQY6p4Yi0b7w3jsLRYrkXxfGqkQFlTXV3E\n" \
-    "SgTqseMBoM7h\n"                                                     \
+    "SgTqseMBoM7h\n" \
     "-----END CERTIFICATE-----\n"
 
-#define DEFAULT_CLIENT_PRIVATE_KEY                                       \
-    "-----BEGIN PRIVATE KEY-----\n"                                      \
+#define DEFAULT_CLIENT_PRIVATE_KEY \
+    "-----BEGIN PRIVATE KEY-----\n" \
     "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDAR4+eVstWRqEO\n" \
     "rcRx4P+LcOkNHNpevW2jg7dVrAfs1zMvLyWWMKD2CnvVcpJ+ot8nLDybHNgceB5s\n" \
     "guva/0qUEO1SSnKrSzhfAleZaEwYFJ/Am5HyUDHgVVDH4gY5XgoTdq3j5q9QBIoy\n" \
@@ -155,7 +156,7 @@
     "QRmZ4IiJPUzUDbrfdZ2nZ7YigHFyStZWHMFpnLOrAQKBgG7e0BGLrmv0Ck0fUXpy\n" \
     "GJLXlcDGR7fZy2nzc2tQ30yv4REvJFc9D1yC8v1zVI/UDC+L1Zrz9vp7m2lY1WIV\n" \
     "pcl+3tj5CukvRpFMe5xoD4DeKT/MZJPP8fWZodGcKcrvOsjtQTP2c+5gDsUIIQmR\n" \
-    "RY2qFiCtjOBOcZC2CpkSo9rO\n"                                         \
+    "RY2qFiCtjOBOcZC2CpkSo9rO\n" \
     "-----END PRIVATE KEY-----\n"
 
 #endif // DEFAULT_CERTS_H

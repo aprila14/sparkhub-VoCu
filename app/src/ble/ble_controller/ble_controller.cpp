@@ -1,5 +1,5 @@
 // Please keep these 2 lines at the beginning of each cpp module - tag and local log level
-static const char *LOG_TAG = "BleController";
+static const char* LOG_TAG = "BleController";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
 #include "ble_controller.h"
@@ -15,8 +15,8 @@ static const char *LOG_TAG = "BleController";
 
 #ifdef IS_PC
 #include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 #else
 #include "console_control.h"
 #include "sleep.h"
@@ -28,17 +28,17 @@ static const char *LOG_TAG = "BleController";
 #define READ_BLOCK_UNTIL_DATA_AVAILABLE true
 #endif
 
-BleController::BleController(BleuartDriver *pBleuartDriver)
-    : m_protocolControl(),
-      m_shouldStop(false),
-      m_receivedPacketsCounter(0),
-      m_pBleuartDriver(pBleuartDriver)
+BleController::BleController(BleuartDriver* pBleuartDriver) :
+    m_protocolControl(),
+    m_shouldStop(false),
+    m_receivedPacketsCounter(0),
+    m_pBleuartDriver(pBleuartDriver)
 #ifdef IS_ESP
-      ,
-      m_asynchronousMessagesControl(),
-      m_asynchronousMessagesTaskHandle(nullptr),
-      m_bleControllerTaskHandle(nullptr),
-      m_protocolControlAccessMutex(nullptr)
+    ,
+    m_asynchronousMessagesControl(),
+    m_asynchronousMessagesTaskHandle(nullptr),
+    m_bleControllerTaskHandle(nullptr),
+    m_protocolControlAccessMutex(nullptr)
 #endif
 {
 #ifdef IS_ESP
@@ -46,7 +46,7 @@ BleController::BleController(BleuartDriver *pBleuartDriver)
 #endif
 }
 
-bool BleController::sendPacket(prot::EPacketType packetType, uint8_t *payload, uint16_t payloadLen)
+bool BleController::sendPacket(prot::EPacketType packetType, uint8_t* payload, uint16_t payloadLen)
 {
 
 // NOTE: m_protocolControl has a shared buffer for output data, therefore we need to protect access to it
@@ -63,9 +63,7 @@ bool BleController::sendPacket(prot::EPacketType packetType, uint8_t *payload, u
 
     LOG_INFO("Bytes to send: %d", bytesToSend);
 
-    bool result = m_pBleuartDriver->writeData(
-        m_protocolControl.getOutEncodedBytes(),
-        (uint32_t)bytesToSend);
+    bool result = m_pBleuartDriver->writeData(m_protocolControl.getOutEncodedBytes(), (uint32_t)bytesToSend);
 
     if (!result)
     {
@@ -76,7 +74,7 @@ bool BleController::sendPacket(prot::EPacketType packetType, uint8_t *payload, u
 }
 
 #if IS_ESP
-void BleController::addAsynchronousEvent(EAsynchronousEventType eventType, TAsynchronousEventData *pEventData)
+void BleController::addAsynchronousEvent(EAsynchronousEventType eventType, TAsynchronousEventData* pEventData)
 {
     m_asynchronousMessagesControl.addNewMessageToQueue(eventType, pEventData);
 }
@@ -87,7 +85,10 @@ bool BleController::isClientConnected()
 }
 #endif // IS_ESP
 
-EPacketHandlingResult BleController::handleGeneralPacket(prot::EPacketType packetType, const uint8_t *payload, uint16_t payloadLen) // NOLINT, ignore static
+EPacketHandlingResult BleController::handleGeneralPacket(
+    prot::EPacketType packetType,
+    const uint8_t*    payload,
+    uint16_t          payloadLen) // NOLINT, ignore static
 {
     UNUSED(payload);
 
@@ -95,19 +96,20 @@ EPacketHandlingResult BleController::handleGeneralPacket(prot::EPacketType packe
 
     switch (packetType)
     {
-    case prot::EPacketType::ACK:
-        LOG_INFO("ACK received");
-        return EPacketHandlingResult::HANDLED;
-    case prot::EPacketType::NACK:
-        LOG_WARNING("NACK received");
-        return EPacketHandlingResult::HANDLED;
-    default:
-        LOG_ERROR("Unknown packet type: %d (0x%04X). Length %u", (int16_t)packetType, (uint16_t)packetType, payloadLen);
-        return EPacketHandlingResult::SEND_NACK;
+        case prot::EPacketType::ACK:
+            LOG_INFO("ACK received");
+            return EPacketHandlingResult::HANDLED;
+        case prot::EPacketType::NACK:
+            LOG_WARNING("NACK received");
+            return EPacketHandlingResult::HANDLED;
+        default:
+            LOG_ERROR(
+                "Unknown packet type: %d (0x%04X). Length %u", (int16_t)packetType, (uint16_t)packetType, payloadLen);
+            return EPacketHandlingResult::SEND_NACK;
     }
 }
 
-bool BleController::handlePacket(prot::EPacketType packetType, const uint8_t *payload, uint16_t payloadLen)
+bool BleController::handlePacket(prot::EPacketType packetType, const uint8_t* payload, uint16_t payloadLen)
 {
     EPacketHandlingResult result = EPacketHandlingResult::SEND_NACK;
 
@@ -136,19 +138,19 @@ bool BleController::handlePacket(prot::EPacketType packetType, const uint8_t *pa
 
     switch (result)
     {
-    case EPacketHandlingResult::SEND_ACK:
-        LOG_INFO("Sending response - ACK...");
-        sendPacket(prot::EPacketType::ACK, NULL, 0);
-        break;
-    case EPacketHandlingResult::SEND_NACK:
-        LOG_INFO("Sending response - NACK...");
-        sendPacket(prot::EPacketType::NACK, NULL, 0);
-        break;
-    case EPacketHandlingResult::HANDLED:
-        break;
-    default:
-        LOG_ERROR("Invalid packet handling result: %d", (int)result);
-        return false;
+        case EPacketHandlingResult::SEND_ACK:
+            LOG_INFO("Sending response - ACK...");
+            sendPacket(prot::EPacketType::ACK, NULL, 0);
+            break;
+        case EPacketHandlingResult::SEND_NACK:
+            LOG_INFO("Sending response - NACK...");
+            sendPacket(prot::EPacketType::NACK, NULL, 0);
+            break;
+        case EPacketHandlingResult::HANDLED:
+            break;
+        default:
+            LOG_ERROR("Invalid packet handling result: %d", (int)result);
+            return false;
     }
 
     return true;
@@ -193,10 +195,11 @@ void BleController::processReceivedData()
             LOG_DEBUG("Total received assembled packets: %u", (uint32_t)m_receivedPacketsCounter);
 #endif
 
-            const uint16_t packetPayloadLen = (uint16_t)ret;
-            const prot::TPacketHeader *packetHeader = reinterpret_cast<const prot::TPacketHeader *>(&m_protocolControl.getInPacket().packet.header); // NOLINT we need reinterpret_cast
+            const uint16_t             packetPayloadLen = (uint16_t)ret;
+            const prot::TPacketHeader* packetHeader     = reinterpret_cast<const prot::TPacketHeader*>(
+                &m_protocolControl.getInPacket().packet.header); // NOLINT we need reinterpret_cast
             prot::EPacketType packetType = static_cast<prot::EPacketType>(packetHeader->type);
-            const uint8_t *payload = m_protocolControl.getInPacket().packet.payload;
+            const uint8_t*    payload    = m_protocolControl.getInPacket().packet.payload;
 
             handlePacket(packetType, payload, packetPayloadLen);
 
@@ -209,17 +212,18 @@ void BleController::processReceivedData()
 
 #ifdef IS_ESP
 
-void BleController::runAsynchoronousMessagesSender(void *userData)
+void BleController::runAsynchoronousMessagesSender(void* userData)
 {
-    BleController *pController = static_cast<BleController *>(userData);
+    BleController* pController = static_cast<BleController*>(userData);
     pController->_runAsynchoronousMessagesSender();
 }
 
 void BleController::_runAsynchoronousMessagesSender()
 {
-    static_assert(static_cast<int>(EAsynchronousEventType::NUMBER_OF_EVENTS) == 5,
-                  "WARNING! Did you forget to update the code above/below after adding a new asynchronous event? "
-                  "This assert makes sure you will not forget!");
+    static_assert(
+        static_cast<int>(EAsynchronousEventType::NUMBER_OF_EVENTS) == 5,
+        "WARNING! Did you forget to update the code above/below after adding a new asynchronous event? "
+        "This assert makes sure you will not forget!");
 
     while (!m_shouldStop)
     {
@@ -228,57 +232,65 @@ void BleController::_runAsynchoronousMessagesSender()
         {
             switch (message.eventType)
             {
-            case EAsynchronousEventType::WIFI_CONNECTED_TO_AP:
-            {
-                LOG_INFO("About to send a WIFI_CONNECTED_TO_AP asynchronous event...");
-                prot::TAsyncEvent_WiFiConnectedToAp &cmd = message.eventData.wiFiConnectedToApEvent;
-                bool result = sendPacket(prot::EPacketType::RES_ASYNC__WIFI_CONNECTED_TO_AP,
-                                         reinterpret_cast<uint8_t *>(&cmd), sizeof(cmd)); // NOLINT we need reinterpret_cast
-                if (!result)
-                    LOG_ERROR("Failed to send a RES_ASYNC__WIFI_CONNECTED_TO_AP!");
-                break;
-            }
-            case EAsynchronousEventType::WIFI_DISCONNECTED_FROM_AP:
-            {
-                LOG_INFO("About to send a WIFI_DISCONNECTED_FROM_AP asynchronous event...");
-                prot::TAsyncEvent_WiFiDisonnectedFromAp &cmd = message.eventData.wiFiDicsonnectedFromApEvent;
-                bool result = sendPacket(prot::EPacketType::RES_ASYNC__WIFI_DISCONNECTED_FROM_AP,
-                                         reinterpret_cast<uint8_t *>(&cmd), sizeof(cmd)); // NOLINT we need reinterpret_cast
-                if (!result)
-                    LOG_ERROR("Failed to send a RES_ASYNC__WIFI_DISCONNECTED_FROM_AP!");
-                break;
-            }
-
-            case EAsynchronousEventType::CLOUD_CONNECTED:
-            {
-                LOG_INFO("About to send a CLOUD_CONNECTED asynchronous event...");
-                prot::TAsyncEvent_CloudConnected &cmd = message.eventData.cloudConnectedEvent;
-                bool result = sendPacket(prot::EPacketType::RES_ASYNC__CLOUD_CONNECTED,
-                                         reinterpret_cast<uint8_t *>(&cmd), sizeof(cmd)); // NOLINT - we need reinterpret_cast
-                if (!result)
+                case EAsynchronousEventType::WIFI_CONNECTED_TO_AP:
                 {
-                    LOG_ERROR("Failed to send a RES_ASYNC__CLOUD_CONNECTED!");
+                    LOG_INFO("About to send a WIFI_CONNECTED_TO_AP asynchronous event...");
+                    prot::TAsyncEvent_WiFiConnectedToAp& cmd    = message.eventData.wiFiConnectedToApEvent;
+                    bool                                 result = sendPacket(
+                        prot::EPacketType::RES_ASYNC__WIFI_CONNECTED_TO_AP,
+                        reinterpret_cast<uint8_t*>(&cmd),
+                        sizeof(cmd)); // NOLINT we need reinterpret_cast
+                    if (!result)
+                        LOG_ERROR("Failed to send a RES_ASYNC__WIFI_CONNECTED_TO_AP!");
+                    break;
                 }
-                break;
-            }
-
-            case EAsynchronousEventType::CLOUD_DISCONNECTED:
-            {
-                LOG_INFO("About to send a CLOUD_DISCONNECTED asynchronous event...");
-                prot::TAsyncEvent_CloudDisconnected &cmd = message.eventData.cloudDisconnectedEvent;
-                bool result = sendPacket(prot::EPacketType::RES_ASYNC__CLOUD_DISCONNECTED,
-                                         reinterpret_cast<uint8_t *>(&cmd), sizeof(cmd)); // NOLINT - we need reinterpret_cast
-                if (!result)
+                case EAsynchronousEventType::WIFI_DISCONNECTED_FROM_AP:
                 {
-                    LOG_ERROR("Failed to send a RES_ASYNC__CLOUD_DISCONNECTED!");
+                    LOG_INFO("About to send a WIFI_DISCONNECTED_FROM_AP asynchronous event...");
+                    prot::TAsyncEvent_WiFiDisonnectedFromAp& cmd    = message.eventData.wiFiDicsonnectedFromApEvent;
+                    bool                                     result = sendPacket(
+                        prot::EPacketType::RES_ASYNC__WIFI_DISCONNECTED_FROM_AP,
+                        reinterpret_cast<uint8_t*>(&cmd),
+                        sizeof(cmd)); // NOLINT we need reinterpret_cast
+                    if (!result)
+                        LOG_ERROR("Failed to send a RES_ASYNC__WIFI_DISCONNECTED_FROM_AP!");
+                    break;
                 }
-                break;
-            }
-            default:
-            {
-                LOG_ERROR("Unknown asynchronous message event!");
-                break;
-            }
+
+                case EAsynchronousEventType::CLOUD_CONNECTED:
+                {
+                    LOG_INFO("About to send a CLOUD_CONNECTED asynchronous event...");
+                    prot::TAsyncEvent_CloudConnected& cmd    = message.eventData.cloudConnectedEvent;
+                    bool                              result = sendPacket(
+                        prot::EPacketType::RES_ASYNC__CLOUD_CONNECTED,
+                        reinterpret_cast<uint8_t*>(&cmd),
+                        sizeof(cmd)); // NOLINT - we need reinterpret_cast
+                    if (!result)
+                    {
+                        LOG_ERROR("Failed to send a RES_ASYNC__CLOUD_CONNECTED!");
+                    }
+                    break;
+                }
+
+                case EAsynchronousEventType::CLOUD_DISCONNECTED:
+                {
+                    LOG_INFO("About to send a CLOUD_DISCONNECTED asynchronous event...");
+                    prot::TAsyncEvent_CloudDisconnected& cmd    = message.eventData.cloudDisconnectedEvent;
+                    bool                                 result = sendPacket(
+                        prot::EPacketType::RES_ASYNC__CLOUD_DISCONNECTED,
+                        reinterpret_cast<uint8_t*>(&cmd),
+                        sizeof(cmd)); // NOLINT - we need reinterpret_cast
+                    if (!result)
+                    {
+                        LOG_ERROR("Failed to send a RES_ASYNC__CLOUD_DISCONNECTED!");
+                    }
+                    break;
+                }
+                default:
+                {
+                    LOG_ERROR("Unknown asynchronous message event!");
+                    break;
+                }
             }
         }
     }
@@ -298,9 +310,9 @@ void BleController::startAsynchronousMessagesSenderTask()
         LOG_ERROR("Failed to create a task: %s", "AMS");
 }
 
-void BleController::run(void *userData)
+void BleController::run(void* userData)
 {
-    BleController *pBleController = static_cast<BleController *>(userData);
+    BleController* pBleController = static_cast<BleController*>(userData);
     pBleController->_run();
 }
 
@@ -322,12 +334,7 @@ void BleController::runTask()
     startAsynchronousMessagesSenderTask();
 
     BaseType_t xReturned = xTaskCreate(
-        BleController::run,
-        LOG_TAG,
-        DEFAULT_HUGE_STACK_SIZE,
-        this,
-        HIGH_TASK_PRIORITY,
-        &m_bleControllerTaskHandle);
+        BleController::run, LOG_TAG, DEFAULT_HUGE_STACK_SIZE, this, HIGH_TASK_PRIORITY, &m_bleControllerTaskHandle);
     if (xReturned != pdPASS)
         LOG_ERROR("Failed to create a task: %s", "AMS");
 #endif // IS_ESP

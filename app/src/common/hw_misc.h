@@ -23,10 +23,10 @@ void initializeNVS();
 
 
 int32_t waitForGpioChange(gpio_num_t gpio, bool desiredState, int32_t timeout);
-bool getGpioState(gpio_num_t);
+bool    getGpioState(gpio_num_t);
 
 bool getStaMacAddressString(char* macAddress, const int32_t len);
 
-}  // namespace hw_misc
+} // namespace hw_misc
 
 #endif

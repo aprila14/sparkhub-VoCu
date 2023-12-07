@@ -5,14 +5,13 @@
 #include "defines.h"
 
 
-
 /**
  * @brief Interface to control light, to be used as a common interface for simulated PWM LED and real hardware
  */
 class LightControlInterface
 {
 public:
-    LightControlInterface() = default;
+    LightControlInterface()          = default;
     virtual ~LightControlInterface() = default;
 
     virtual bool init() = 0;

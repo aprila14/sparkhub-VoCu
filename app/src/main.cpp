@@ -1,10 +1,12 @@
 // Please keep these 2 lines at the beginning of each cpp module
-static const char *LOG_TAG = "Main";
+static const char* LOG_TAG = "Main";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
+#include "adc_pressure.h"
 #include "app_controller.h"
-#include "bleuart_esp.h"
 #include "ble_controller.h"
+#include "bleuart_esp.h"
+#include "cloud_config.h"
 #include "commons.h"
 #include "config_nvs.h"
 #include "console_control.h"
@@ -16,8 +18,6 @@ static const char *LOG_TAG = "Main";
 #include "ntp_client.h"
 #include "reset_button_handler.h"
 #include "wifi_controller.h"
-#include "cloud_config.h"
-#include "adc_pressure.h"
 
 #if IS_DEBUG_BUILD
 
@@ -31,7 +31,7 @@ void temporaryDevelopmentCode()
     pConfig->setConfigurationFinishedState(true);
 
     {
-        prot::send_certificates::TCmd *pCmdCertificate = new prot::send_certificates::TCmd();
+        prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
 
         LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
 
@@ -71,7 +71,7 @@ void initCommonGlobalModules()
     temporaryDevelopmentCode();
 #endif
 
-    const TCertificatePack &certificatePack = pConfig->getCertificatePack();
+    const TCertificatePack& certificatePack = pConfig->getCertificatePack();
 
     // If cloud certificates are stored in flash, then the BLE tasks will not start
     // It's important to keep that in mind, in case of failed provisioning they should be removed
@@ -102,7 +102,8 @@ void initCommonGlobalModules()
     ntpClient.init(); // no return value
 
     static BleuartDriver bleuartDriver = BleuartDriver();
-    g_pBleuartDriver = &bleuartDriver; // we need to have a global singleton for hardware callbacks, see discussion near the variable declaration
+    g_pBleuartDriver = &bleuartDriver; // we need to have a global singleton for hardware callbacks, see discussion near
+                                       // the variable declaration
     static BleController bleController(&bleuartDriver);
 
     static CloudController cloudController;

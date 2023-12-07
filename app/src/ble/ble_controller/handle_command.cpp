@@ -1,5 +1,5 @@
 // Please keep these 2 lines at the beginning of each cpp module - tag and local log level
-static const char *LOG_TAG = "HandleCommand";
+static const char* LOG_TAG = "HandleCommand";
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
 #ifdef IS_ESP
@@ -17,7 +17,7 @@ static const char *LOG_TAG = "HandleCommand";
 
 #include <cstdio>
 
-static EPacketHandlingResult handleCommand_test(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
+static EPacketHandlingResult handleCommand_test(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'test'...");
 
@@ -26,7 +26,8 @@ static EPacketHandlingResult handleCommand_test(BleController *pController, cons
         LOG_WARNING("Invalid 'test' command. Payload length: %d", payloadLen);
         return EPacketHandlingResult::SEND_NACK;
     }
-    const prot::test_command::TCmd *pCmd = reinterpret_cast<const prot::test_command::TCmd *>(payload); // NOLINT - we need reinterpret cast
+    const prot::test_command::TCmd* pCmd =
+        reinterpret_cast<const prot::test_command::TCmd*>(payload); // NOLINT - we need reinterpret cast
 
     LOG_INFO("Command 'test', message %s", pCmd->message);
 
@@ -34,7 +35,10 @@ static EPacketHandlingResult handleCommand_test(BleController *pController, cons
     sprintf(res.message, "HELLO WORLD from ESP!");
 
     LOG_INFO("About to send response RES_TEST...");
-    bool result = pController->sendPacket(prot::EPacketType::RES_TEST, reinterpret_cast<uint8_t *>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(
+        prot::EPacketType::RES_TEST,
+        reinterpret_cast<uint8_t*>(&res),
+        sizeof(res)); // NOLINT - we need reinterpret cast
     if (!result)
     {
         LOG_ERROR("Failed to send response for 'test' command");
@@ -44,7 +48,8 @@ static EPacketHandlingResult handleCommand_test(BleController *pController, cons
     return EPacketHandlingResult::HANDLED;
 }
 
-EPacketHandlingResult handleCommand_sendCertificates(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
+EPacketHandlingResult
+handleCommand_sendCertificates(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command send certificates");
 
@@ -54,7 +59,8 @@ EPacketHandlingResult handleCommand_sendCertificates(BleController *pController,
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    const prot::send_certificates::TCmd *pCmd = reinterpret_cast<const prot::send_certificates::TCmd *>(payload); // NOLINT - we need reinterpret cast
+    const prot::send_certificates::TCmd* pCmd =
+        reinterpret_cast<const prot::send_certificates::TCmd*>(payload); // NOLINT - we need reinterpret cast
     prot::send_certificates::TRes res = {};
 
     pConfig->setCertificatePack(pCmd->certificates);
@@ -63,7 +69,10 @@ EPacketHandlingResult handleCommand_sendCertificates(BleController *pController,
     LOG_INFO("\n\nReceived private key: %s\n\n", pCmd->certificates.privateKey);
     LOG_INFO("About to send response RES_CLOUD_SEND_CERTIFICATES");
 
-    bool result = pController->sendPacket(prot::EPacketType::RES_SEND_CERTIFICATES, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(
+        prot::EPacketType::RES_SEND_CERTIFICATES,
+        reinterpret_cast<uint8_t*>(&res),
+        sizeof(res)); // NOLINT - we need reinterpret cast
 
     if (!result)
     {
@@ -74,7 +83,8 @@ EPacketHandlingResult handleCommand_sendCertificates(BleController *pController,
     return EPacketHandlingResult::HANDLED;
 }
 
-EPacketHandlingResult handleCommand_getWifiMacAddress(BleController *pController, const uint8_t *payload, uint16_t payloadLen)
+EPacketHandlingResult
+handleCommand_getWifiMacAddress(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling command 'Get Wifi MAC Address");
 
@@ -84,7 +94,8 @@ EPacketHandlingResult handleCommand_getWifiMacAddress(BleController *pController
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    const prot::get_wifi_mac_address::TCmd *pCmd = reinterpret_cast<const prot::get_wifi_mac_address::TCmd *>(payload); // NOLINT - we need reinterpret cast
+    const prot::get_wifi_mac_address::TCmd* pCmd =
+        reinterpret_cast<const prot::get_wifi_mac_address::TCmd*>(payload); // NOLINT - we need reinterpret cast
     prot::get_wifi_mac_address::TRes res = {};
 
     if (esp_read_mac(res.wifiMacAddress, ESP_MAC_WIFI_STA) != ESP_OK)
@@ -93,7 +104,10 @@ EPacketHandlingResult handleCommand_getWifiMacAddress(BleController *pController
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    bool result = pController->sendPacket(prot::EPacketType::RES_get_wifi_mac_address, reinterpret_cast<uint8_t*>(&res), sizeof(res)); // NOLINT - we need reinterpret cast
+    bool result = pController->sendPacket(
+        prot::EPacketType::RES_get_wifi_mac_address,
+        reinterpret_cast<uint8_t*>(&res),
+        sizeof(res)); // NOLINT - we need reinterpret cast
 
     if (!result)
     {
@@ -104,19 +118,20 @@ EPacketHandlingResult handleCommand_getWifiMacAddress(BleController *pController
     return EPacketHandlingResult::HANDLED;
 }
 
-EPacketHandlingResult handleCommand(BleController *pController, prot::EPacketType packetType, const uint8_t *payload, uint16_t payloadLen)
+EPacketHandlingResult
+handleCommand(BleController* pController, prot::EPacketType packetType, const uint8_t* payload, uint16_t payloadLen)
 {
     switch (packetType)
     {
-    case prot::EPacketType::CMD_TEST:
-        return handleCommand_test(pController, payload, payloadLen);
-    case prot::EPacketType::CMD_SEND_CERTIFICATES:
-        return handleCommand_sendCertificates(pController, payload, payloadLen);
-    case prot::EPacketType::CMD_get_wifi_mac_address:
-        return handleCommand_getWifiMacAddress(pController, payload, payloadLen);
-    default:
-        LOG_ERROR("Unknown command packet type: %d (0x%04X). Length %u", packetType, packetType, payloadLen);
-        return EPacketHandlingResult::SEND_NACK;
+        case prot::EPacketType::CMD_TEST:
+            return handleCommand_test(pController, payload, payloadLen);
+        case prot::EPacketType::CMD_SEND_CERTIFICATES:
+            return handleCommand_sendCertificates(pController, payload, payloadLen);
+        case prot::EPacketType::CMD_get_wifi_mac_address:
+            return handleCommand_getWifiMacAddress(pController, payload, payloadLen);
+        default:
+            LOG_ERROR("Unknown command packet type: %d (0x%04X). Length %u", packetType, packetType, payloadLen);
+            return EPacketHandlingResult::SEND_NACK;
     }
 }
 

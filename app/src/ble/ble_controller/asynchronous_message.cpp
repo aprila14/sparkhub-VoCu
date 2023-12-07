@@ -10,7 +10,6 @@ static const char* LOG_TAG = "AsyncMsg";
 #define ASYNCHRONOUS_MESSAGES_QUEUE_SIZE (16)
 
 
-
 AsynchronousMessagesControl::AsynchronousMessagesControl()
 {
     LOG_DEBUG("init started...");
@@ -18,10 +17,12 @@ AsynchronousMessagesControl::AsynchronousMessagesControl()
     assert(asynchronousMessagesQueue);
 }
 
-void AsynchronousMessagesControl::addNewMessageToQueue(EAsynchronousEventType eventType, TAsynchronousEventData* pEventData)
+void AsynchronousMessagesControl::addNewMessageToQueue(
+    EAsynchronousEventType  eventType,
+    TAsynchronousEventData* pEventData)
 {
     TAsynchronousMessage message = {};
-    message.eventType = eventType;
+    message.eventType            = eventType;
     if (pEventData != NULL)
     {
         message.eventData = *pEventData;
@@ -48,4 +49,4 @@ bool AsynchronousMessagesControl::receiveFromQueue(TAsynchronousMessage* pMessag
     }
 }
 
-#endif  // IS_ESP
+#endif // IS_ESP

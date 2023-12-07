@@ -4,8 +4,8 @@ static const char* LOG_TAG = "HwMisc";
 
 #include "hw_misc.h"
 
-#include "sleep.h"
 #include "commons.h"
+#include "sleep.h"
 
 #include "nvs_flash.h"
 
@@ -28,7 +28,7 @@ void initializeNVS()
 int32_t waitForGpioChange(gpio_num_t gpio, bool desiredState, int32_t timeout)
 {
     int64_t beginTimestamp = commons::getCurrentTimestampMs();
-    int32_t timeElapsed = 0;
+    int32_t timeElapsed    = 0;
     while (timeElapsed < timeout)
     {
         if (gpio_get_level(gpio) == desiredState)
@@ -49,8 +49,8 @@ bool getStaMacAddressString(char* macAddress, const int32_t len)
 #if USE_CUSTOM_WIFI_MAC_ADDRESS
     uint8_t macBytes[6] = CUSTOM_WIFI_MAC_ADDRESS;
 #else
-    uint8_t macBytes[6] = {0};
-    esp_err_t err = esp_read_mac(macBytes, ESP_MAC_WIFI_STA);
+    uint8_t   macBytes[6] = {0};
+    esp_err_t err         = esp_read_mac(macBytes, ESP_MAC_WIFI_STA);
     if (err != ESP_OK)
     {
         LOG_ERROR("Could not get WiFi MAC. Probably WiFi not initialized!");
@@ -58,11 +58,17 @@ bool getStaMacAddressString(char* macAddress, const int32_t len)
     }
 #endif
 
-    char tempBuffer[32] = {0};
-    int32_t macLen = sprintf(tempBuffer, "%02X:%02X:%02X:%02X:%02X:%02X",
-                         macBytes[0], macBytes[1], macBytes[2],
-                         macBytes[3], macBytes[4], macBytes[5]);
-    if (macLen > len)  // To prevent buffer overflow
+    char    tempBuffer[32] = {0};
+    int32_t macLen         = sprintf(
+        tempBuffer,
+        "%02X:%02X:%02X:%02X:%02X:%02X",
+        macBytes[0],
+        macBytes[1],
+        macBytes[2],
+        macBytes[3],
+        macBytes[4],
+        macBytes[5]);
+    if (macLen > len) // To prevent buffer overflow
     {
         LOG_ERROR("Invalid buffer length!");
         return false;
@@ -74,4 +80,4 @@ bool getStaMacAddressString(char* macAddress, const int32_t len)
     }
 }
 
-}  // namespace hw_misc
+} // namespace hw_misc

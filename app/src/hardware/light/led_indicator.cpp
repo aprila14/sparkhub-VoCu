@@ -6,19 +6,16 @@ static const char* LOG_TAG = "LedIndicator";
 
 namespace
 {
-    constexpr uint32_t TIMER_FREQUENCY = 5000;
-    constexpr uint32_t PWM_INITIAL_DUTY = 0;
-    constexpr uint32_t PWM_MAX = 1023;
+constexpr uint32_t TIMER_FREQUENCY  = 5000;
+constexpr uint32_t PWM_INITIAL_DUTY = 0;
+constexpr uint32_t PWM_MAX          = 1023;
 
-    uint32_t GPIO_LEVEL_HIGH = 1;
-    uint32_t GPIO_LEVEL_LOW = 0;
-}
+uint32_t GPIO_LEVEL_HIGH = 1;
+uint32_t GPIO_LEVEL_LOW  = 0;
+} // namespace
 
-LedIndicator::LedIndicator(gpio_num_t gpioNumber)
-:
-m_gpioNumber(gpioNumber)
+LedIndicator::LedIndicator(gpio_num_t gpioNumber) : m_gpioNumber(gpioNumber)
 {
-
 }
 
 bool LedIndicator::init() // NOLINT - we don't want to make it const

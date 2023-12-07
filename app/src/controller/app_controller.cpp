@@ -1,5 +1,5 @@
 // Please keep these 2 lines at the beginning of each cpp module
-static const char *LOG_TAG = "AppController";
+static const char* LOG_TAG = "AppController";
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
 #include "app_controller.h"
@@ -10,146 +10,148 @@ static const char *LOG_TAG = "AppController";
 namespace
 {
 
-    constexpr uint8_t EVENTS_QUEUE_SIZE = 10;
-    constexpr uint32_t EVENT_QUEUE_ADDING_TIMEOUT_MS = 1000; // some arbitraty value to maintain responsiveness
+constexpr uint8_t  EVENTS_QUEUE_SIZE             = 10;
+constexpr uint32_t EVENT_QUEUE_ADDING_TIMEOUT_MS = 1000; // some arbitraty value to maintain responsiveness
 
-}
+} // namespace
 
 namespace app
 {
 
-    AppController *pAppController = nullptr;
+AppController* pAppController = nullptr;
 
-    AppController::AppController(WiFiController *pwifiController,
-                                 BleController *pBleController,
-                                 CloudController *pCloudController,
-                                 NtpClient *pNtpClient)
-        : m_eventsQueue(nullptr),
-          m_taskHandle(nullptr),
-          m_pWifiController(pwifiController),
-          m_pBleController(pBleController),
-          m_pCloudController(pCloudController),
-          m_pNtpClient(pNtpClient)
+AppController::AppController(
+    WiFiController*  pwifiController,
+    BleController*   pBleController,
+    CloudController* pCloudController,
+    NtpClient*       pNtpClient) :
+    m_eventsQueue(nullptr),
+    m_taskHandle(nullptr),
+    m_pWifiController(pwifiController),
+    m_pBleController(pBleController),
+    m_pCloudController(pCloudController),
+    m_pNtpClient(pNtpClient)
+{
+    m_eventsQueue = xQueueCreate(EVENTS_QUEUE_SIZE, sizeof(TEventControl));
+    assert(m_eventsQueue != nullptr);
+}
+
+void AppController::runTask()
+{
+    LOG_INFO("runTask() started...");
+
+    BaseType_t xReturned =
+        xTaskCreate(AppController::run, LOG_TAG, DEFAULT_HUGE_STACK_SIZE, this, DEFAULT_TASK_PRIORITY, &m_taskHandle);
+    if (xReturned != pdPASS)
+        LOG_ERROR("Failed to create a task: %s", LOG_TAG);
+}
+
+void AppController::run(void* pObject)
+{
+    AppController* pAppController = reinterpret_cast<AppController*>(pObject); // NOLINT
+    pAppController->_run();
+}
+
+void AppController::_run()
+{
+    while (true)
     {
-        m_eventsQueue = xQueueCreate(EVENTS_QUEUE_SIZE, sizeof(TEventControl));
-        assert(m_eventsQueue != nullptr);
-    }
+        TEventControl eventControl = {};
+        eventControl.type          = EEventType::UNKNOWN_EVENT;
 
-    void AppController::runTask()
-    {
-        LOG_INFO("runTask() started...");
-
-        BaseType_t xReturned = xTaskCreate(
-            AppController::run,
-            LOG_TAG,
-            DEFAULT_HUGE_STACK_SIZE,
-            this,
-            DEFAULT_TASK_PRIORITY,
-            &m_taskHandle);
-        if (xReturned != pdPASS)
-            LOG_ERROR("Failed to create a task: %s", LOG_TAG);
-    }
-
-    void AppController::run(void *pObject)
-    {
-        AppController *pAppController = reinterpret_cast<AppController *>(pObject); // NOLINT
-        pAppController->_run();
-    }
-
-    void AppController::_run()
-    {
-        while (true)
+        if (xQueueReceive(m_eventsQueue, &eventControl, portMAX_DELAY) == pdTRUE)
         {
-            TEventControl eventControl = {};
-            eventControl.type = EEventType::UNKNOWN_EVENT;
-
-            if (xQueueReceive(m_eventsQueue, &eventControl, portMAX_DELAY) == pdTRUE)
-            {
-                executeEvent(eventControl);
-            }
-
-            SLEEP_MS(10);
-        }
-    }
-
-    bool AppController::addEvent(EEventType eventType, EEventExecutionType executionType, TEventData *pData)
-    {
-        LOG_DEBUG("About to add event '%d', execution type '%d'",
-                  static_cast<int>(eventType), static_cast<int>(executionType));
-
-        TEventControl eventControl = {
-            .type = eventType,
-            .data = {},
-            .semaphore = nullptr,
-            .pExecutionResult = nullptr,
-        };
-
-        if (pData != nullptr)
-        {
-            eventControl.data = *pData;
+            executeEvent(eventControl);
         }
 
-        bool executionResult = false; // optional execution result - only for synchronous events - TODO - do we need to have it "volatile"?
-        if (executionType == EEventExecutionType::SYNCHRONOUS)
-        {
-            eventControl.semaphore = xSemaphoreCreateBinary();
-            eventControl.pExecutionResult = &executionResult;
-            assert(eventControl.semaphore != nullptr);
-        }
-        // we don't need a synchronization semaphore for an asynchronous event
+        SLEEP_MS(10);
+    }
+}
 
-        // add event to queue - "You do not need a mutex to protect accessing a queue" ~ Internet
-        if (xQueueSend(m_eventsQueue, &eventControl, pdMS_TO_TICKS(EVENT_QUEUE_ADDING_TIMEOUT_MS)) != pdPASS)
-        {
-            LOG_ERROR("Failed to add event '%d', execution type '%d'",
-                      static_cast<int>(eventType), static_cast<int>(executionType));
-            return false;
-        }
+bool AppController::addEvent(EEventType eventType, EEventExecutionType executionType, TEventData* pData)
+{
+    LOG_DEBUG(
+        "About to add event '%d', execution type '%d'", static_cast<int>(eventType), static_cast<int>(executionType));
 
-        LOG_DEBUG("Event succesfully added to queue!");
+    TEventControl eventControl = {
+        .type             = eventType,
+        .data             = {},
+        .semaphore        = nullptr,
+        .pExecutionResult = nullptr,
+    };
 
-        if (executionType == EEventExecutionType::SYNCHRONOUS)
-        {
-            LOG_DEBUG("About to wait for event execution completion...");
-            assert(eventControl.semaphore != nullptr);
-
-            xSemaphoreTake(eventControl.semaphore, portMAX_DELAY);
-            vSemaphoreDelete(eventControl.semaphore);
-
-            LOG_INFO("Finished executing event type '%d', execution type '%d', result '%d'",
-                     static_cast<int>(eventType), static_cast<int>(executionType), executionResult);
-            return executionResult;
-        }
-
-        return true;
+    if (pData != nullptr)
+    {
+        eventControl.data = *pData;
     }
 
-    WiFiController *AppController::getWiFiController() // NOLINT - no need to have it const
+    bool executionResult =
+        false; // optional execution result - only for synchronous events - TODO - do we need to have it "volatile"?
+    if (executionType == EEventExecutionType::SYNCHRONOUS)
     {
-        return m_pWifiController;
+        eventControl.semaphore        = xSemaphoreCreateBinary();
+        eventControl.pExecutionResult = &executionResult;
+        assert(eventControl.semaphore != nullptr);
+    }
+    // we don't need a synchronization semaphore for an asynchronous event
+
+    // add event to queue - "You do not need a mutex to protect accessing a queue" ~ Internet
+    if (xQueueSend(m_eventsQueue, &eventControl, pdMS_TO_TICKS(EVENT_QUEUE_ADDING_TIMEOUT_MS)) != pdPASS)
+    {
+        LOG_ERROR(
+            "Failed to add event '%d', execution type '%d'",
+            static_cast<int>(eventType),
+            static_cast<int>(executionType));
+        return false;
     }
 
-    BleController *AppController::getBleController() // NOLINT - no need to have it const
+    LOG_DEBUG("Event succesfully added to queue!");
+
+    if (executionType == EEventExecutionType::SYNCHRONOUS)
     {
-        return m_pBleController;
+        LOG_DEBUG("About to wait for event execution completion...");
+        assert(eventControl.semaphore != nullptr);
+
+        xSemaphoreTake(eventControl.semaphore, portMAX_DELAY);
+        vSemaphoreDelete(eventControl.semaphore);
+
+        LOG_INFO(
+            "Finished executing event type '%d', execution type '%d', result '%d'",
+            static_cast<int>(eventType),
+            static_cast<int>(executionType),
+            executionResult);
+        return executionResult;
     }
 
-    CloudController *AppController::getCloudController() const
-    {
-        return m_pCloudController;
-    }
+    return true;
+}
 
-    NtpClient *AppController::getNtpClient() const
-    {
-        return m_pNtpClient;
-    }
+WiFiController* AppController::getWiFiController() // NOLINT - no need to have it const
+{
+    return m_pWifiController;
+}
 
-    bool AppController::executeEvent(AppController::TEventControl &eventControl)
-    {
-        bool result = false;
+BleController* AppController::getBleController() // NOLINT - no need to have it const
+{
+    return m_pBleController;
+}
 
-        switch (eventControl.type)
-        {
+CloudController* AppController::getCloudController() const
+{
+    return m_pCloudController;
+}
+
+NtpClient* AppController::getNtpClient() const
+{
+    return m_pNtpClient;
+}
+
+bool AppController::executeEvent(AppController::TEventControl& eventControl)
+{
+    bool result = false;
+
+    switch (eventControl.type)
+    {
         case EEventType::UNKNOWN_EVENT:
             LOG_ERROR("Cannot execute UNKNOWN_EVENT!");
             break;
@@ -190,100 +192,101 @@ namespace app
         default:
             assert(0); // all cases handled above
             break;
-        }
-
-        LOG_DEBUG("Event %d executed with result %d", static_cast<int>(eventControl.type), static_cast<int>(result));
-
-        if (eventControl.pExecutionResult != nullptr)
-        {
-            *eventControl.pExecutionResult = result;
-        }
-
-        if (eventControl.semaphore != nullptr)
-        {
-            xSemaphoreGive(eventControl.semaphore);
-        }
-
-        return result;
     }
 
-    bool AppController::executeEvent_dummy(const TDummyEventData &eventData)
+    LOG_DEBUG("Event %d executed with result %d", static_cast<int>(eventControl.type), static_cast<int>(result));
+
+    if (eventControl.pExecutionResult != nullptr)
     {
-        LOG_INFO("executeEvent_dummy...");
-        LOG_INFO("Dummy event data: %d, %d", eventData.dummyByte1, eventData.dummyByte2);
-        return true;
+        *eventControl.pExecutionResult = result;
     }
 
-    bool AppController::executeEvent_performConfigurationResetAndRestart()
+    if (eventControl.semaphore != nullptr)
     {
-        LOG_WARNING("event_performConfigurationResetAndRestart...");
-        pConfig->resetConfig();
-        SLEEP_MS(200); // give some time for logs to flush...
-        esp_restart();
-
-        return true;
+        xSemaphoreGive(eventControl.semaphore);
     }
 
-    bool AppController::executeEvent_wifiControllerDisconnect() const
-    {
-        return m_pWifiController->disconnectFromAccessPoint();
-    }
+    return result;
+}
 
-    bool AppController::executeEvent_wifiControllerConnectionEstablished() // NOLINT - no need to have it const
-    {
-        LOG_INFO("AppController: Connection established");
+bool AppController::executeEvent_dummy(const TDummyEventData& eventData)
+{
+    LOG_INFO("executeEvent_dummy...");
+    LOG_INFO("Dummy event data: %d, %d", eventData.dummyByte1, eventData.dummyByte2);
+    return true;
+}
 
-        TAsynchronousEventData asynchronousEventData = {};
-        asynchronousEventData.wiFiConnectedToApEvent.dummyByte = 1; // TODO consider sending e.g. IP instead of a dummy byte
-        m_pBleController->addAsynchronousEvent(EAsynchronousEventType::WIFI_CONNECTED_TO_AP, &asynchronousEventData);
+bool AppController::executeEvent_performConfigurationResetAndRestart()
+{
+    LOG_WARNING("event_performConfigurationResetAndRestart...");
+    pConfig->resetConfig();
+    SLEEP_MS(200); // give some time for logs to flush...
+    esp_restart();
 
-        LOG_INFO("Initiating connection");
-        m_pCloudController->setReadinessToConnect();
+    return true;
+}
 
-        return true;
-    }
+bool AppController::executeEvent_wifiControllerDisconnect() const
+{
+    return m_pWifiController->disconnectFromAccessPoint();
+}
 
-    bool AppController::executeEvent_wifiControllerConnectionLost() // NOLINT - no need to have it const
-    {
-        LOG_INFO("AppController: Connection lost");
+bool AppController::executeEvent_wifiControllerConnectionEstablished() // NOLINT - no need to have it const
+{
+    LOG_INFO("AppController: Connection established");
 
-        TAsynchronousEventData asynchronousEventData = {};
-        asynchronousEventData.wiFiDicsonnectedFromApEvent.dummyByte = 1; // TODO consider sending e.g. IP instead of a dummy byte
-        m_pBleController->addAsynchronousEvent(EAsynchronousEventType::WIFI_DISCONNECTED_FROM_AP, &asynchronousEventData);
+    TAsynchronousEventData asynchronousEventData           = {};
+    asynchronousEventData.wiFiConnectedToApEvent.dummyByte = 1; // TODO consider sending e.g. IP instead of a dummy byte
+    m_pBleController->addAsynchronousEvent(EAsynchronousEventType::WIFI_CONNECTED_TO_AP, &asynchronousEventData);
 
-        return true;
-    }
+    LOG_INFO("Initiating connection");
+    m_pCloudController->setReadinessToConnect();
 
-    bool AppController::executeEvent_wifiControllerWaitUntilConnected() const
-    {
-        return m_pWifiController->waitUntilConnectedToWifi();
-    }
+    return true;
+}
 
-    bool AppController::executeEvent_cloudControllerConnectionEstablished() const
-    {
-        LOG_INFO("AppController: Cloud connection established");
+bool AppController::executeEvent_wifiControllerConnectionLost() // NOLINT - no need to have it const
+{
+    LOG_INFO("AppController: Connection lost");
 
-        TAsynchronousEventData asynchronousEventData = {};
-        asynchronousEventData.cloudConnectedEvent.dummyByte = 1;
-        m_pBleController->addAsynchronousEvent(EAsynchronousEventType::CLOUD_CONNECTED, &asynchronousEventData);
-        return true;
-    }
+    TAsynchronousEventData asynchronousEventData = {};
+    asynchronousEventData.wiFiDicsonnectedFromApEvent.dummyByte =
+        1; // TODO consider sending e.g. IP instead of a dummy byte
+    m_pBleController->addAsynchronousEvent(EAsynchronousEventType::WIFI_DISCONNECTED_FROM_AP, &asynchronousEventData);
 
-    bool AppController::executeEvent_cloudControllerConnectionLost() const
-    {
-        LOG_INFO("AppController: Cloud connection lost");
+    return true;
+}
 
-        TAsynchronousEventData asynchronousEventData = {};
-        asynchronousEventData.cloudConnectedEvent.dummyByte = 1;
-        m_pBleController->addAsynchronousEvent(EAsynchronousEventType::CLOUD_DISCONNECTED, &asynchronousEventData);
+bool AppController::executeEvent_wifiControllerWaitUntilConnected() const
+{
+    return m_pWifiController->waitUntilConnectedToWifi();
+}
 
-        return true;
-    }
+bool AppController::executeEvent_cloudControllerConnectionEstablished() const
+{
+    LOG_INFO("AppController: Cloud connection established");
 
-    bool AppController::executeEvent_cloudControllerSetCredentials() const // NOLINT - we don't want to make it static
-    {
-        app::pAppController->getCloudController()->setReadinessToConnect();
-        return true;
-    }
+    TAsynchronousEventData asynchronousEventData        = {};
+    asynchronousEventData.cloudConnectedEvent.dummyByte = 1;
+    m_pBleController->addAsynchronousEvent(EAsynchronousEventType::CLOUD_CONNECTED, &asynchronousEventData);
+    return true;
+}
+
+bool AppController::executeEvent_cloudControllerConnectionLost() const
+{
+    LOG_INFO("AppController: Cloud connection lost");
+
+    TAsynchronousEventData asynchronousEventData        = {};
+    asynchronousEventData.cloudConnectedEvent.dummyByte = 1;
+    m_pBleController->addAsynchronousEvent(EAsynchronousEventType::CLOUD_DISCONNECTED, &asynchronousEventData);
+
+    return true;
+}
+
+bool AppController::executeEvent_cloudControllerSetCredentials() const // NOLINT - we don't want to make it static
+{
+    app::pAppController->getCloudController()->setReadinessToConnect();
+    return true;
+}
 
 } // namespace app

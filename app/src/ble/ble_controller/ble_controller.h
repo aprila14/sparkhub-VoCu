@@ -26,9 +26,9 @@
 enum class EPacketHandlingResult
 {
     UNKNOWN = 1,
-    SEND_NACK,  ///< NACK should be sent after processing is done
+    SEND_NACK, ///< NACK should be sent after processing is done
     SEND_ACK,  ///< ACK should be sent after processing is done
-    HANDLED  ///< no need to send anythinf, response already sent
+    HANDLED    ///< no need to send anythinf, response already sent
 };
 
 
@@ -56,10 +56,7 @@ public:
      * @param payloadLen Size of the payload
      * @return true on success, false otherwise
      */
-    bool sendPacket(
-            prot::EPacketType packetType,
-            uint8_t* payload,
-            uint16_t payloadLen);
+    bool sendPacket(prot::EPacketType packetType, uint8_t* payload, uint16_t payloadLen);
 
     /**
      * @brief Queue an asynchronous event to be sent to mobile app
@@ -84,7 +81,8 @@ private:
      * @param payloadLen Size of the payload
      * @return
      */
-    EPacketHandlingResult handleGeneralPacket(prot::EPacketType packetType, const uint8_t* payload, uint16_t payloadLen);
+    EPacketHandlingResult
+    handleGeneralPacket(prot::EPacketType packetType, const uint8_t* payload, uint16_t payloadLen);
 
     /**
      * @brief Handle received packet
@@ -101,31 +99,31 @@ private:
     void processReceivedData();
 
     static void runAsynchoronousMessagesSender(void* userData);
-    void _runAsynchoronousMessagesSender();
-    void startAsynchronousMessagesSenderTask();
+    void        _runAsynchoronousMessagesSender();
+    void        startAsynchronousMessagesSenderTask();
 
 #ifdef IS_ESP
     static void run(void* userData);
-    void _run();
-#endif  // IS_ESP
+    void        _run();
+#endif // IS_ESP
 
-    prot::ProtocolControl m_protocolControl;  ///< Instance of Protocol control unit (with buffers used during parsing)
+    prot::ProtocolControl m_protocolControl; ///< Instance of Protocol control unit (with buffers used during parsing)
 
     // TODO - protect with mutex? Or make atomic?
-    bool m_shouldStop;  ///< To terminate controller operation
+    bool m_shouldStop; ///< To terminate controller operation
 
-    size_t m_receivedPacketsCounter;  ///< Count received (via BLE) assembled packets. For debugging purposes
+    size_t m_receivedPacketsCounter; ///< Count received (via BLE) assembled packets. For debugging purposes
 
-    BleuartDriver* m_pBleuartDriver;  ///< Handle to the bleuart driver, used for BLE communication
+    BleuartDriver* m_pBleuartDriver; ///< Handle to the bleuart driver, used for BLE communication
 
 #ifdef IS_ESP
     AsynchronousMessagesControl m_asynchronousMessagesControl;
-    TaskHandle_t m_asynchronousMessagesTaskHandle;  ///< Handle to task to send asynchronous messages from ESP (e.g. errors, link-down operation)
-    TaskHandle_t m_bleControllerTaskHandle;  ///< Handle to main task
-    mutex_t m_protocolControlAccessMutex;
+    TaskHandle_t m_asynchronousMessagesTaskHandle; ///< Handle to task to send asynchronous messages from ESP (e.g.
+                                                   ///< errors, link-down operation)
+    TaskHandle_t m_bleControllerTaskHandle;        ///< Handle to main task
+    mutex_t      m_protocolControlAccessMutex;
 #endif
 };
-
 
 
 /******** CHECK BUILD TYPE ******/

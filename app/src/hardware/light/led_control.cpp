@@ -13,17 +13,13 @@ static const char* LOG_TAG = "LedControl";
 
 namespace
 {
-    constexpr uint32_t TIMER_FREQUENCY = 5000;
-    constexpr uint32_t PWM_INITIAL_DUTY = 0;
-    constexpr uint32_t PWM_MAX = 1023;
-}
+constexpr uint32_t TIMER_FREQUENCY  = 5000;
+constexpr uint32_t PWM_INITIAL_DUTY = 0;
+constexpr uint32_t PWM_MAX          = 1023;
+} // namespace
 
-LedControl::LedControl(gpio_num_t gpioNumber)
-:
-m_gpioNumber(gpioNumber),
-m_powerPercentage(PWM_INITIAL_DUTY)
+LedControl::LedControl(gpio_num_t gpioNumber) : m_gpioNumber(gpioNumber), m_powerPercentage(PWM_INITIAL_DUTY)
 {
-
 }
 
 bool LedControl::initPWM() const
@@ -31,11 +27,11 @@ bool LedControl::initPWM() const
     LOG_INFO("Starting PWM initialization");
     ledc_timer_config_t ledControlTimer = {};
 
-    ledControlTimer.speed_mode = LEDC_LOW_SPEED_MODE;
+    ledControlTimer.speed_mode      = LEDC_LOW_SPEED_MODE;
     ledControlTimer.duty_resolution = LEDC_TIMER_10_BIT;
-    ledControlTimer.timer_num = LEDC_TIMER_0;
-    ledControlTimer.freq_hz = TIMER_FREQUENCY;
-    ledControlTimer.clk_cfg = LEDC_AUTO_CLK;
+    ledControlTimer.timer_num       = LEDC_TIMER_0;
+    ledControlTimer.freq_hz         = TIMER_FREQUENCY;
+    ledControlTimer.clk_cfg         = LEDC_AUTO_CLK;
 
 
     if (ledc_timer_config(&ledControlTimer) != ESP_OK)
@@ -46,13 +42,13 @@ bool LedControl::initPWM() const
 
     ledc_channel_config_t ledcControlChannel = {};
 
-    ledcControlChannel.gpio_num = this->m_gpioNumber;
+    ledcControlChannel.gpio_num   = this->m_gpioNumber;
     ledcControlChannel.speed_mode = LEDC_LOW_SPEED_MODE;
-    ledcControlChannel.channel = LEDC_CHANNEL_0;
-    ledcControlChannel.intr_type = LEDC_INTR_DISABLE;
-    ledcControlChannel.timer_sel =LEDC_TIMER_0;
-    ledcControlChannel.duty = percentageToDuty(this->m_powerPercentage);
-    ledcControlChannel.hpoint = 0;
+    ledcControlChannel.channel    = LEDC_CHANNEL_0;
+    ledcControlChannel.intr_type  = LEDC_INTR_DISABLE;
+    ledcControlChannel.timer_sel  = LEDC_TIMER_0;
+    ledcControlChannel.duty       = percentageToDuty(this->m_powerPercentage);
+    ledcControlChannel.hpoint     = 0;
 
 
     if (ledc_channel_config(&ledcControlChannel) != ESP_OK)
@@ -72,7 +68,7 @@ bool LedControl::initPWM() const
 
 int32_t LedControl::percentageToDuty(uint8_t percentage)
 {
-    return percentage/100.0 * PWM_MAX;
+    return percentage / 100.0 * PWM_MAX;
 }
 
 bool LedControl::init()
@@ -94,10 +90,7 @@ bool LedControl::setPower(uint8_t powerPercentage)
     LOG_INFO("Setting power to %d", powerPercentage);
 
     uint32_t duty = percentageToDuty(powerPercentage);
-    if (ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE,
-                             LEDC_CHANNEL_0,
-                             duty,
-                             0) != ESP_OK)
+    if (ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty, 0) != ESP_OK)
     {
         LOG_ERROR("Parameter error while setting PWM duty cycle");
         return false;
