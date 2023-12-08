@@ -16,7 +16,7 @@ namespace
     // Current sensor
     const float FlowMeasurementOffset = 0.2;
     float TotalSumOfLiters = 0;
-    uint32_t resolution = 125.8503401; // für den 20A Sensor //125.8503401; für den 5A Sensor // mV/A
+    uint32_t resolution = 68.027211; // für den 20A Sensor //125.8503401; für den 5A Sensor // mV/A
     uint32_t thresholdStartReading = 0;
 
     uint64_t lastTime;
@@ -60,7 +60,7 @@ static float calculate_current_from_voltage(uint32_t voltageInmV)
     return (float)(current);
 }
 
-void ExecuteUpdateTotalSumOfLiters(void)
+float ExecuteUpdateTotalSumOfLiters(void)
 {
 
     while(firstCall == true)
@@ -190,7 +190,7 @@ void ExecuteUpdateTotalSumOfLiters(void)
     //LOG_INFO("SumCurrentRMSCorrected: %.6f A", SumCurrentRMSCorrected2);
     //LOG_INFO("CurrentRMSCorrected: %.6f A", CurrentRMSCorrected);
     //LOG_INFO("SumVoltageValue over 5 cycles: %.6f mV", SumVoltageValue);
-    LOG_INFO("Current: %.6f mA",Current*1000);
+    //LOG_INFO("%.6f",Current*1000);
     //LOG_INFO("VoltageRMSCorrected: %.6f mV", VoltageRMSCorrected);
 
     // correct offset for next round
@@ -200,11 +200,99 @@ void ExecuteUpdateTotalSumOfLiters(void)
     gVOffset = (gVOffset+VOffset);
     //LOG_INFO("gVOffset: %.6f A", gVOffset);
 
+    return Current;
+
+
 
 }
 
 
-float getTotalSumOfLiters(void)
+float* getAvgCurrent(void)
 {
-    return TotalSumOfLiters;
+    float current = 0;
+    float SumCurrent = 0;
+    int32_t indexCurrent = 0;
+    int32_t indexTime = 1;
+    float avgCurrentmA = 0;
+    static float currentSamplesAndTime[] = {0, 0, 0, 0, 0, 0};
+
+
+    while(indexCurrent<3)
+    {
+        current = ExecuteUpdateTotalSumOfLiters();        
+        avgCurrentmA = current*1000;
+        SumCurrent = SumCurrent + avgCurrentmA;
+
+        currentSamplesAndTime[indexCurrent] = avgCurrentmA;
+        currentSamplesAndTime[indexTime] = float(commons::getCurrentTimestampMs());
+
+        //LOG_INFO("current: %.6f",current*1000);
+        indexCurrent = indexCurrent + 1;
+        indexTime = indexTime + 1;
+    }
+
+    //delete[] currentSamplesAndTime;
+    
+    return currentSamplesAndTime;
+
+
+}
+
+
+
+void SumOfSparklingWater(void)
+{
+    float *currentSamplesAndTime = new float[6];
+    currentSamplesAndTime = getAvgCurrent();
+    float timeBetween3Measurements = 0;
+    float TimeSparklingWater = 0;
+    float TimeCooling = 0;
+    //float* TimeStampAvgCurrent = new float();
+    //float* currentmAtoAnalyse = new float();
+
+
+    LOG_INFO("currentSamplesAndTime[0]: %.6f",(currentSamplesAndTime[0]));
+    LOG_INFO("currentSamplesAndTime[1]: %.6f",(currentSamplesAndTime[1]));
+    LOG_INFO("currentSamplesAndTime[2]: %.6f",(currentSamplesAndTime[2]));
+    LOG_INFO("currentSamplesAndTime[3]: %.6f",(currentSamplesAndTime[3]));
+    LOG_INFO("currentSamplesAndTime[4]: %.6f",(currentSamplesAndTime[4]));
+    LOG_INFO("currentSamplesAndTime[5]: %.6f",(currentSamplesAndTime[5]));
+
+
+    float avgCurrentmA = ((currentSamplesAndTime[0] + currentSamplesAndTime[2] + currentSamplesAndTime[4]) / 3);
+    LOG_INFO("avgCurrentmA: %.6f",(avgCurrentmA));
+
+
+    if(480 < avgCurrentmA && avgCurrentmA < 650)
+    {
+        LOG_INFO("sparkling Water (only pump)");
+        timeBetween3Measurements = currentSamplesAndTime[5] - currentSamplesAndTime[1];
+        TimeSparklingWater = TimeSparklingWater + timeBetween3Measurements;
+
+    }
+
+    if(avgCurrentmA > 2100)
+    {
+        LOG_INFO("sparkling Water (cooling + pump)");
+        timeBetween3Measurements = currentSamplesAndTime[5] - currentSamplesAndTime[1];
+        TimeSparklingWater = TimeSparklingWater + timeBetween3Measurements;
+        TimeCooling = TimeCooling + timeBetween3Measurements;
+    }
+
+    if(1700 < avgCurrentmA && avgCurrentmA < 2000)
+    {
+        LOG_INFO("cooling is running");   
+        timeBetween3Measurements = currentSamplesAndTime[5] - currentSamplesAndTime[1];
+        TimeCooling = TimeCooling + timeBetween3Measurements;
+    }
+
+
+    LOG_INFO("timeBetween3Measurements: %.6f",(timeBetween3Measurements));
+    LOG_INFO("TimeCooling: %.6f",(TimeCooling));
+    LOG_INFO("TimeSparklingWater: %.6f",(TimeSparklingWater));
+
+    //delete[] currentSamplesAndTime;
+
+
+
 }

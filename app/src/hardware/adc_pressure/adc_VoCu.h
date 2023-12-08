@@ -5,6 +5,8 @@
 
 void adcInit(void);
 float getTotalSumOfLiters(void);
-void ExecuteUpdateTotalSumOfLiters(void);
+float ExecuteUpdateTotalSumOfLiters(void);
+float* getAvgCurrent(void);
+void SumOfSparklingWater(void);
 
 #endif // ADC_VOCU_H
