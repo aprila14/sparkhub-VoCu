@@ -268,12 +268,12 @@ void SumOfSparklingWater(void)
 
 
     float avgCurrentmA = ((currentSamplesAndTime[0] + currentSamplesAndTime[2] + currentSamplesAndTime[4]) / 3);
-    LOG_INFO("avgCurrentmA: %.6f",(avgCurrentmA));
+    LOG_INFO("avgCurrentmA: %.6f mA \n",(avgCurrentmA));
 
 
     if(480 < avgCurrentmA && avgCurrentmA < 650)
     {
-        LOG_INFO("sparkling Water (only pump)");
+        //LOG_INFO("sparkling Water (only pump)");
         timeBetween3Measurements = (currentSamplesAndTime[5] - currentSamplesAndTime[1])/1000; // in seconds
         TimeSparklingWater = TimeSparklingWater + timeBetween3Measurements;
 
@@ -281,7 +281,7 @@ void SumOfSparklingWater(void)
 
     if(avgCurrentmA > 2100)
     {
-        LOG_INFO("sparkling Water (cooling + pump)");
+        //LOG_INFO("sparkling Water (cooling + pump)");
         timeBetween3Measurements = (currentSamplesAndTime[5] - currentSamplesAndTime[1])/1000; // in seconds
         TimeSparklingWater = TimeSparklingWater + timeBetween3Measurements;
         TimeCooling = TimeCooling + timeBetween3Measurements;
@@ -289,18 +289,18 @@ void SumOfSparklingWater(void)
 
     if(1700 < avgCurrentmA && avgCurrentmA < 2000)
     {
-        LOG_INFO("cooling is running");   
+        //LOG_INFO("cooling is running");   
         timeBetween3Measurements = (currentSamplesAndTime[5] - currentSamplesAndTime[1])/1000; // in seconds
         TimeCooling = TimeCooling + timeBetween3Measurements;
     }
 
 
     //LOG_INFO("timeBetween3Measurements: %.6f",(timeBetween3Measurements));
-    LOG_INFO("TimeCooling: %.6f",(TimeCooling));
-    LOG_INFO("TimeSparklingWater: %.6f",(TimeSparklingWater));
+    LOG_INFO("TimeCooling: %.6f hours %.6f minutes %.6f seconds \n",(TimeCooling)/3600, (TimeCooling)/60, (TimeCooling));
+    //LOG_INFO("TimeSparklingWater: %.6f Seconds /n",(TimeSparklingWater));
 
     SumSparklingWater = TimeSparklingWater * 0.24/4;
-    LOG_INFO("SumSparklingWater: %.6f",(SumSparklingWater));
+    LOG_INFO("SumSparklingWater: %.6f Liter \n",(SumSparklingWater));
 
     //delete[] currentSamplesAndTime; 
 
