@@ -28,6 +28,11 @@ namespace
     bool firstCall = true;
     float gIOffset = 0;
     float gVOffset = 0;
+
+
+    float TimeSparklingWater = 0;
+    float SumSparklingWater = 0;
+    float TimeCooling = 0;
 }
 
 void adcInit(void)
@@ -213,23 +218,33 @@ float* getAvgCurrent(void)
     float SumCurrent = 0;
     int32_t indexCurrent = 0;
     int32_t indexTime = 1;
-    float avgCurrentmA = 0;
+    float currentmA = 0;
     static float currentSamplesAndTime[] = {0, 0, 0, 0, 0, 0};
 
 
-    while(indexCurrent<3)
+    while(indexCurrent<5)
     {
         current = ExecuteUpdateTotalSumOfLiters();        
-        avgCurrentmA = current*1000;
-        SumCurrent = SumCurrent + avgCurrentmA;
+        currentmA = current*1000;
+        SumCurrent = SumCurrent + currentmA;
 
-        currentSamplesAndTime[indexCurrent] = avgCurrentmA;
+        currentSamplesAndTime[indexCurrent] = currentmA;
         currentSamplesAndTime[indexTime] = float(commons::getCurrentTimestampMs());
 
+        //LOG_INFO("currentSamplesAndTime[indexCurrent]: %.6f",(currentSamplesAndTime[indexCurrent]));
+        //LOG_INFO("currentSamplesAndTime[indexTime]: %.6f",(currentSamplesAndTime[indexTime]));
+
         //LOG_INFO("current: %.6f",current*1000);
-        indexCurrent = indexCurrent + 1;
-        indexTime = indexTime + 1;
+        indexCurrent = indexCurrent + 2;
+        indexTime = indexTime + 2;
     }
+
+    //LOG_INFO("currentSamplesAndTime[0]: %.6f",(currentSamplesAndTime[0]));
+    //LOG_INFO("currentSamplesAndTime[1]: %.6f",(currentSamplesAndTime[1]));
+    //LOG_INFO("currentSamplesAndTime[2]: %.6f",(currentSamplesAndTime[2]));
+    //LOG_INFO("currentSamplesAndTime[3]: %.6f",(currentSamplesAndTime[3]));
+    //LOG_INFO("currentSamplesAndTime[4]: %.6f",(currentSamplesAndTime[4]));
+    //LOG_INFO("currentSamplesAndTime[5]: %.6f",(currentSamplesAndTime[5]));
 
     //delete[] currentSamplesAndTime;
     
@@ -245,18 +260,11 @@ void SumOfSparklingWater(void)
     float *currentSamplesAndTime = new float[6];
     currentSamplesAndTime = getAvgCurrent();
     float timeBetween3Measurements = 0;
-    float TimeSparklingWater = 0;
-    float TimeCooling = 0;
     //float* TimeStampAvgCurrent = new float();
     //float* currentmAtoAnalyse = new float();
 
 
-    LOG_INFO("currentSamplesAndTime[0]: %.6f",(currentSamplesAndTime[0]));
-    LOG_INFO("currentSamplesAndTime[1]: %.6f",(currentSamplesAndTime[1]));
-    LOG_INFO("currentSamplesAndTime[2]: %.6f",(currentSamplesAndTime[2]));
-    LOG_INFO("currentSamplesAndTime[3]: %.6f",(currentSamplesAndTime[3]));
-    LOG_INFO("currentSamplesAndTime[4]: %.6f",(currentSamplesAndTime[4]));
-    LOG_INFO("currentSamplesAndTime[5]: %.6f",(currentSamplesAndTime[5]));
+
 
 
     float avgCurrentmA = ((currentSamplesAndTime[0] + currentSamplesAndTime[2] + currentSamplesAndTime[4]) / 3);
@@ -266,7 +274,7 @@ void SumOfSparklingWater(void)
     if(480 < avgCurrentmA && avgCurrentmA < 650)
     {
         LOG_INFO("sparkling Water (only pump)");
-        timeBetween3Measurements = currentSamplesAndTime[5] - currentSamplesAndTime[1];
+        timeBetween3Measurements = (currentSamplesAndTime[5] - currentSamplesAndTime[1])/1000; // in seconds
         TimeSparklingWater = TimeSparklingWater + timeBetween3Measurements;
 
     }
@@ -274,7 +282,7 @@ void SumOfSparklingWater(void)
     if(avgCurrentmA > 2100)
     {
         LOG_INFO("sparkling Water (cooling + pump)");
-        timeBetween3Measurements = currentSamplesAndTime[5] - currentSamplesAndTime[1];
+        timeBetween3Measurements = (currentSamplesAndTime[5] - currentSamplesAndTime[1])/1000; // in seconds
         TimeSparklingWater = TimeSparklingWater + timeBetween3Measurements;
         TimeCooling = TimeCooling + timeBetween3Measurements;
     }
@@ -282,16 +290,19 @@ void SumOfSparklingWater(void)
     if(1700 < avgCurrentmA && avgCurrentmA < 2000)
     {
         LOG_INFO("cooling is running");   
-        timeBetween3Measurements = currentSamplesAndTime[5] - currentSamplesAndTime[1];
+        timeBetween3Measurements = (currentSamplesAndTime[5] - currentSamplesAndTime[1])/1000; // in seconds
         TimeCooling = TimeCooling + timeBetween3Measurements;
     }
 
 
-    LOG_INFO("timeBetween3Measurements: %.6f",(timeBetween3Measurements));
+    //LOG_INFO("timeBetween3Measurements: %.6f",(timeBetween3Measurements));
     LOG_INFO("TimeCooling: %.6f",(TimeCooling));
     LOG_INFO("TimeSparklingWater: %.6f",(TimeSparklingWater));
 
-    //delete[] currentSamplesAndTime;
+    SumSparklingWater = TimeSparklingWater * 0.24/4;
+    LOG_INFO("SumSparklingWater: %.6f",(SumSparklingWater));
+
+    //delete[] currentSamplesAndTime; 
 
 
 
