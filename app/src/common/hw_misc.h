@@ -27,6 +27,8 @@ bool    getGpioState(gpio_num_t);
 
 bool getStaMacAddressString(char* macAddress, const int32_t len);
 
+void performSafeReset(void);
+
 } // namespace hw_misc
 
 #endif

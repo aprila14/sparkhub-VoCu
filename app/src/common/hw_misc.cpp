@@ -80,4 +80,10 @@ bool getStaMacAddressString(char* macAddress, const int32_t len)
     }
 }
 
+void performSafeReset(void)
+{
+    LOG_WARNING("About to restart the ESP!");
+    esp_restart();
+}
+
 } // namespace hw_misc
