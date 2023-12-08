@@ -81,7 +81,7 @@ std::string getCloudConnectionStatus(enum ECloudConnectionStatus cloudConnection
     }
 }
 
-TCloudCredentials::TCloudCredentials() : cloudAddress{}
+TCloudCredentials::TCloudCredentials() : cloudAddress{}, cloudDeviceId{}, cloudMqttUsername{}
 {
 }
 

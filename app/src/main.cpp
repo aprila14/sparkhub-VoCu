@@ -54,6 +54,34 @@ static void configureConnectionToLteModem()
     pConfig->setWifiCredentials(newWifiCredentials);
 }
 
+static void configureCloudDeviceIdIfNotSet(WiFiController& wifiController)
+{
+    const TCloudCredentials& cloudCredentialsFromConfig = pConfig->getCloudCredentials();
+
+    LOG_INFO("cloudDeviceId: %s", cloudCredentialsFromConfig.cloudDeviceId);
+    LOG_INFO("cloudAddress: %s", cloudCredentialsFromConfig.cloudAddress);
+    LOG_INFO("cloudMqttUsername: %s", cloudCredentialsFromConfig.cloudMqttUsername);
+
+    if (!cloudCredentialsFromConfig.isSetCloudDeviceId())
+    {
+        uint8_t mac[6] = {};
+
+        wifiController.getWifiMacAddress(mac);
+
+        TCloudCredentials newCloudCredentials = {};
+
+        char cloudDeviceId[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH] = {};
+
+        sprintf(cloudDeviceId, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+        newCloudCredentials.setCloudDeviceId(cloudDeviceId);
+
+        pConfig->setCloudCredentials(newCloudCredentials);
+
+        LOG_INFO("new cloudDeviceId: %s", newCloudCredentials.cloudDeviceId);
+    }
+}
+
 void initCommonGlobalModules()
 {
     hw_misc::initializeNVS();
@@ -70,22 +98,6 @@ void initCommonGlobalModules()
 #if IS_DEBUG_BUILD
     temporaryDevelopmentCode();
 #endif
-
-    const TCertificatePack& certificatePack = pConfig->getCertificatePack();
-
-    // If cloud certificates are stored in flash, then the BLE tasks will not start
-    // It's important to keep that in mind, in case of failed provisioning they should be removed
-    // Otherwise it would be possible to brick the device
-    const bool isCertificateSet = (certificatePack.isSetFullChainCertificate() && certificatePack.isSetPrivateKey());
-
-    if (isCertificateSet)
-    {
-        LOG_INFO("Certificates set in the flash");
-    }
-    else
-    {
-        LOG_WARNING("Certificates not found");
-    }
 
     // create modules
     static WiFiController wifiController;
@@ -115,22 +127,24 @@ void initCommonGlobalModules()
     // ADC for pressure sensor
     adcInit();
 
-    {
-        uint8_t mac[6] = {};
+    configureCloudDeviceIdIfNotSet(wifiController);
 
-        wifiController.getWifiMacAddress(mac);
-
-        LOG_INFO("MAC - %02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    }
+    // If cloud certificates are stored in flash, then the BLE tasks will not start
+    // It's important to keep that in mind, in case of failed provisioning they should be removed
+    // Otherwise it would be possible to brick the device
+    const TCertificatePack& certificatePack = pConfig->getCertificatePack();
+    const bool isCertificateSet = (certificatePack.isSetFullChainCertificate() && certificatePack.isSetPrivateKey());
 
     // run modules which are tasks
     if (!isCertificateSet)
     {
+        LOG_WARNING("Certificates not found");
         bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about
         bleController.runTask();
     }
     else
     {
+        LOG_INFO("Certificates set in the flash");
         wifiController.runTask();
         wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
         ntpClient.runTask();

@@ -66,8 +66,8 @@ void DeviceProvisioningController::initiateCloudConnection()
 
 void DeviceProvisioningController::configureCloudConnection()
 {
+    // TODO change mqtt username based on device id from config
     m_cloudCredentials.setCloudAddress(CLOUD_DEVICE_PROVISIONING_ADDRESS);
-    m_cloudCredentials.setCloudDeviceId(DEFAULT_DEVICE_ID);
     m_cloudCredentials.setCloudMqttUsername(DEVICE_PROVISIONING_MQTT_USERNAME);
 }
 
