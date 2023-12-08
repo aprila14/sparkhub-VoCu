@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d5c85b0c2ebec451e6bbab757b489a9cb55f8a3f8cd43bef4c2d3a495b0f8484"
+            "sha256": "368f50bab5f77944843664338bf6d657539a951d910dc8bd2d9f5c789fa0774a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -47,7 +47,7 @@
                 "sha256:a2ae3054d6843ae0cfd3b94c83293a1dfd5804393977dd69bde91cb5099fc47c",
                 "sha256:dd740047a08925bde54bec357391fcee595d7b8ca0c74c87170a5cbc3f97aa0a"
             ],
-            "markers": "python_version < '3.12' and platform_system == 'Windows'",
+            "markers": "sys_platform == 'win32'",
             "version": "==1.2.0"
         },
         "cobs": {
@@ -72,6 +72,46 @@
             "index": "pypi",
             "markers": "python_version >= '3.8' and python_version < '4.0'",
             "version": "==6.0.0"
+        },
+        "dbus-fast": {
+            "hashes": [
+                "sha256:1909addfad23d400d6f77c3665778a96003e32a1cddd1964de605d0ca400d829",
+                "sha256:2ff856cbb1508bcf6735ed1e3c04de1def6c400720765141d2470e39c8fd6f13",
+                "sha256:3f7966f835da1d8a77c55a7336313bd97e7f722b316f760077c55c1e9533b0cd",
+                "sha256:4a13c7856459e849202165fd9e1adda8169107a591b083b95842c15b9e772be4",
+                "sha256:4a5fdebcd8f79d417693536d3ed08bb5842917d373fbc3e9685feecd001accd7",
+                "sha256:562868206d774080c4131b124a407350ffb5d2b89442048350b83b5084f4e0e1",
+                "sha256:707fc61b4f2de83c8f574061fdaf0ac6fc28b402f451951cf0a1ead11bfcac71",
+                "sha256:7a1da4ed9880046403ddedb7b941fd981872fc883dc9925bbf269b551f12120d",
+                "sha256:7a8ab58ef76575e6e00cf1c1f5747b24ce19e35d4966f1c5c3732cea2c3ed5e9",
+                "sha256:8526ff5b27b7c689d97fe8a29e97d3cb7298419b4cb63ed9029331d08d423c55",
+                "sha256:88126343024f280c1fadd6599ac4cd7046ed550ddc942811dc3d290830cffd51",
+                "sha256:88367c2a849234f134b9c98fdb16dc84d5ba9703fe995c67f7306900bfa13896",
+                "sha256:8fd806bf4676a28b2323d8529d51f86fec5a9d32923d53ba522a4c2bc3d55857",
+                "sha256:9084ded47761a43b2252879c6ebaddb7e3cf89377cbdc981de7e8ba87c845239",
+                "sha256:9817bd32d7734766b073bb08525b9560b0b9501c68c43cc91d43684a2829ad86",
+                "sha256:9963180456586d0e1b58075e0439a34ed8e9ee4266b35f76f3db6ffc1af17e27",
+                "sha256:a38e837c5a8d0a1745ec8390f68ff57986ed2167b0aa2e4a79738a51dd6dfcc3",
+                "sha256:b134d40688ca7f27ab38bec99194e2551c82fc01f583f44ae66129c3d15db8a7",
+                "sha256:bb668e2039e15f0e5af14bee7de8c8c082e3b292ed2ce2ceb3168c7068ff2856",
+                "sha256:bed226cccedee0c94b292e27fd1c7d24987d36b5ac1cde021031f9c77a76a423",
+                "sha256:c11a2b4addb965e09a2d8d666265455f4a7e48916b7c6f43629b828de6682425",
+                "sha256:ca1aba69c1dd694399124efbc6ce15930e4697a95d527f16b614100f1f1055a2",
+                "sha256:d317dba76e904f75146ce0c5f219dae44e8060767b3adf78c94557bbcbea2cbe",
+                "sha256:d4b91b98cc1849f7d062d563d320594377b099ea9de53ebb789bf9fd6a0eeab4",
+                "sha256:e40ad43412f92373e4c74bb76d2129a7f0c38a1d883adcfc08f168535f7e7846",
+                "sha256:e591b218d4f327df29a89a922f199bbefb6f892ddc9b96aff21c05c15c0e5dc8",
+                "sha256:e609309d5503a5eab91a7b0cef9dd158c3d8786ac38643a962e99a69d5eb7a66",
+                "sha256:e9cdf34f81320b36ce7f2b8c46169632730d9cdcafc52b55cada95096fce3457",
+                "sha256:eafbf4f0ac86fd959f86bbdf910bf64406b35315781014ef4a1cd2bb43985346",
+                "sha256:ecc07860e3014607a5293e1b87294148f96b1cc508f6496b27e40f64079ebb7a",
+                "sha256:ecf22e22434bdd61bfb8b544eb58f5032b23dda5a7fc233afa1d3c9c3241f0a8",
+                "sha256:ed70f4c1fe23c47a59d81c8fd8830c65307a1f089cc92949004df4c65c69f155",
+                "sha256:f55f75ac3891c161daeabdb37d8a3407098482fe54013342a340cdd58f2be091",
+                "sha256:fdd4ece2c856e44b5fe9dec354ce5d8930f7ae9bb4b96b3a195157621fea6322"
+            ],
+            "markers": "sys_platform == 'linux'",
+            "version": "==2.20.0"
         },
         "typing-extensions": {
             "hashes": [
