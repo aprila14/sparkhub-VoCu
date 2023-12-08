@@ -5,20 +5,23 @@
 * bluez 5.64-0ubuntu1
 * Python 3.10.12
 
+* Windows 10
+* Python 3.10.11
+
 ## Start
-```bash
-pipenv run python3 main.py
+```
+pipenv run python main.py
 ```
 To Stop Ctrl+C
 
 ## Installation
 
-### Prerequisites on Linux
+### Prerequisites
 ```
-pip3 install pipenv==2023.8.28
+pip install pipenv==2023.8.28
 ```
 ### Pipenv and Pipfile
-```bash
+```
 pipenv install
 ```
 

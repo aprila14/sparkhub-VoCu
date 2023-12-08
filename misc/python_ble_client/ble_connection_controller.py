@@ -28,9 +28,7 @@ async def scan_devices():
     devices_list = []
     devices = await BleakScanner.discover()
     for i, d in enumerate(devices):
-        device = {'name': d.name, 'address': d.address,
-                  'address_type': d.details['props']['AddressType'],
-                  'RSSI': d.details['props']['RSSI']}
+        device = {'name': d.name, 'address': d.address}
         devices_list.append(device)
         print(f'{i}. {device}')
     return devices_list
