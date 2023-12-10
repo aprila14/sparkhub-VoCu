@@ -141,8 +141,6 @@ float* get3RMSCurrentDataPoints(void)
     
     return currentDataPointsAndTimestamp;
 
-    //delete[] currentDataPointsAndTimestamp;
-
 }
 
 
