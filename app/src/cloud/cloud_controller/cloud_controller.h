@@ -85,7 +85,7 @@ private:
      * Function preparing and sending device status information
      */
     void updateDeviceStatus();
-    void updateTotalSumOfLiters();
+    void updateSparklingWaterAndCoolingData();
 
     /**
      * Function setting connection status to given value

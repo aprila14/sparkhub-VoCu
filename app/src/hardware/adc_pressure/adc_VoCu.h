@@ -4,9 +4,9 @@
 #include "defines.h"
 
 void adcInit(void);
-float getTotalSumOfLiters(void);
-float ExecuteUpdateTotalSumOfLiters(void);
-float* getAvgCurrent(void);
-void SumOfSparklingWater(void);
+float getRMSCurrent(void);
+float* get3RMSCurrentDataPoints(void);
+float SumOfSparklingWater(void);
+float TimeCoolingIsRunning(void);
 
 #endif // ADC_VOCU_H

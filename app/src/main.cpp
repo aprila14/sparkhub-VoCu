@@ -125,7 +125,8 @@ extern "C"
         adcInit();  
         while(true)
         {
-            SumOfSparklingWater();
+            float SumOfSparklingWatervalue = SumOfSparklingWater();
+            float TotalTimeCoolingIsRunning = TimeCoolingIsRunning();
         }
 
         //app::pAppController->runTask();

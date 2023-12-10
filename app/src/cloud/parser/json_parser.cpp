@@ -752,6 +752,16 @@ namespace json_parser
             return nullptr;
         }
 
+        
+        cJSON *ptotalTimeCoolingIsRunningJson = cJSON_CreateNumber(deviceStatus.totalTimeCoolingIsRunning);
+        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "totalTimeCoolingIsRunning", ptotalTimeCoolingIsRunningJson)))
+        {
+            LOG_INFO("Cannot add totalTimeCoolingIsRunning JSON to deviceStatusJson");
+            cJSON_Delete(pDeviceStatusJson);
+            return nullptr;
+        }
+        
+
         return pDeviceStatusJson;
     }
 

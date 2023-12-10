@@ -167,15 +167,16 @@ void CloudController::perform()
 
 void CloudController::listenToADCInput()
 {
-    updateTotalSumOfLiters();
+    get3RMSCurrentDataPoints();
     //SLEEP_MS(SLEEP_TIME_BETWEEN_READADCVALUE_MESSAGES);
 
 
 }
 
-void CloudController::updateTotalSumOfLiters()
+void CloudController::updateSparklingWaterAndCoolingData()
 {
-    ExecuteUpdateTotalSumOfLiters();
+    SumOfSparklingWater();
+    TimeCoolingIsRunning();
 }
 
 
@@ -186,7 +187,8 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     deviceStatus.isWiFiConnected = app::pAppController->getWiFiController()->getConnectionStatus();
     deviceStatus.isBleConnected = app::pAppController->getBleController()->isClientConnected();
     deviceStatus.currentTimeFromStartupMs = commons::getCurrentTimestampMs();
-    deviceStatus.totalSumOfLiters = getTotalSumOfLiters();
+    deviceStatus.totalSumOfLiters = SumOfSparklingWater();
+    //deviceStatus.totalTimeCoolingIsRunning = TimeCoolingIsRunning();
 
     strcpy(deviceStatus.currentLocalTime, app::pAppController->getNtpClient()->getCurrentLocalTimeString(LOCAL_TIME_OFFSET));
     strcpy(deviceStatus.firmwareVersion, PROJECT_VER);
@@ -196,6 +198,8 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     m_msgCounter++;
     m_mqttClientController.sendMessage(m_deviceStatusTopic, deviceStatusMessage);
 }
+
+
 
 void CloudController::setConnectionStatus(ECloudConnectionStatus status)
 {
