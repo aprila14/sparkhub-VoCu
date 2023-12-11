@@ -27,6 +27,7 @@ class BleuartDriver
 {
 public:
     BleuartDriver();
+    ~BleuartDriver();
 
 
     /**

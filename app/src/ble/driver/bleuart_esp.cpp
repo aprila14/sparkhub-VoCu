@@ -81,8 +81,8 @@ extern "C"
 extern uint16_t g_console_conn_handle;
 extern uint16_t g_bleuart_attr_read_handle;
 
-static uint8_t bleuartRxCircularBuffer[BLEUART_RX_CIRCULAR_BUFFER_SIZE];
-static uint8_t bleuartTxCircularBuffer[BLEUART_TX_CIRCULAR_BUFFER_SIZE];
+uint8_t* bleuartRxCircularBuffer = nullptr;
+uint8_t* bleuartTxCircularBuffer = nullptr;
 
 BleuartDriver* g_pBleuartDriver = nullptr;
 
@@ -104,6 +104,12 @@ BleuartDriver::BleuartDriver() :
     xSemaphoreGive(m_txBufferMutex);
 
     m_clientConnectedSemaphore = xSemaphoreCreateBinary();
+}
+
+BleuartDriver::~BleuartDriver()
+{
+    delete bleuartRxCircularBuffer;
+    delete bleuartTxCircularBuffer;
 }
 
 bool BleuartDriver::writeData(const uint8_t* pData, uint32_t dataLength)
@@ -558,6 +564,18 @@ void BleuartDriver::_performTxLoop()
 bool BleuartDriver::runTask()
 {
     LOG_DEBUG("bleuart_initAndStartThread started...");
+
+    bleuartRxCircularBuffer = new uint8_t[BLEUART_RX_CIRCULAR_BUFFER_SIZE];
+    if (bleuartRxCircularBuffer == nullptr)
+    {
+        LOG_ERROR("Failed to allocate memory for bleuartRxCircularBuffer");
+    }
+
+    bleuartTxCircularBuffer = new uint8_t[BLEUART_TX_CIRCULAR_BUFFER_SIZE];
+    if (bleuartTxCircularBuffer == nullptr)
+    {
+        LOG_ERROR("Failed to allocate memory for bleuartTxCircularBuffer");
+    }
 
     esp_err_t espError = esp_nimble_hci_and_controller_init();
     if (espError != ESP_OK)
