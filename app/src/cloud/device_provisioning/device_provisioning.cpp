@@ -66,9 +66,26 @@ void DeviceProvisioningController::initiateCloudConnection()
 
 void DeviceProvisioningController::configureCloudConnection()
 {
-    // TODO change mqtt username based on device id from config
+    const prot::cloud_set_credentials::TCloudCredentials& cloudCredentialsFromConfig = pConfig->getCloudCredentials();
+
+    char mqttUsername[prot::cloud_set_credentials::CLOUD_MQTT_USERNAME_LENGTH];
+    memset(mqttUsername, 0, prot::cloud_set_credentials::CLOUD_MQTT_USERNAME_LENGTH);
+
+    if (!cloudCredentialsFromConfig.isSetCloudDeviceId())
+    {
+        LOG_ERROR("Cloud device id not provided");
+        return;
+    }
+
+    sprintf(
+        mqttUsername,
+        "%s/registrations/%s/api-version=2019-03-31",
+        DEVICE_PROVISIONING_ID_SCOPE,
+        cloudCredentialsFromConfig.cloudDeviceId);
+
+    m_cloudCredentials.setCloudMqttUsername(mqttUsername);
+    m_cloudCredentials.setCloudDeviceId(cloudCredentialsFromConfig.cloudDeviceId);
     m_cloudCredentials.setCloudAddress(CLOUD_DEVICE_PROVISIONING_ADDRESS);
-    m_cloudCredentials.setCloudMqttUsername(DEVICE_PROVISIONING_MQTT_USERNAME);
 }
 
 void DeviceProvisioningController::createMqttUsernameAfterProvisioning(
@@ -187,6 +204,9 @@ void DeviceProvisioningController::_run()
     m_pMqttClientController->subscribeToTopic(std::string(DEVICE_PROVISIONING_RESPONSE_TOPIC), 1);
 
     createDeviceRegistrationTopic();
+
+    // TODO: It's important to keep that in mind, in case of failed provisioning they should be removed
+    // Otherwise it would be possible to brick the device
 
     m_pMqttClientController->sendMessage(
         std::string(m_deviceRegistrationTopic),

@@ -103,6 +103,12 @@ enum class ECloudDeviceProvisioningStatus : uint8_t
     PROVISIONING_STATUS_FINISHED    = 2,
 };
 
+enum class EBleConfigurationStatus : uint8_t
+{
+    BLE_CONFIGURATION_STATUS_INIT     = 0,
+    BLE_CONFIGURATION_STATUS_FINISHED = 1,
+};
+
 namespace prot
 {
 

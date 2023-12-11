@@ -160,8 +160,8 @@ bool AppController::executeEvent(AppController::TEventControl& eventControl)
             result = executeEvent_dummy(eventControl.data.dummy);
             break;
 
-        case EEventType::PERFORM_CONFIGURATION_RESET_AND_RESTART:
-            result = executeEvent_performConfigurationResetAndRestart();
+        case EEventType::PERFORM_DEVICE_RESTART:
+            result = executeEvent_performDeviceRestart();
             break;
 
         case EEventType::WIFI_CONTROLLER__DISCONNECT:
@@ -216,11 +216,10 @@ bool AppController::executeEvent_dummy(const TDummyEventData& eventData)
     return true;
 }
 
-bool AppController::executeEvent_performConfigurationResetAndRestart()
+bool AppController::executeEvent_performDeviceRestart()
 {
-    LOG_WARNING("event_performConfigurationResetAndRestart...");
-    pConfig->resetConfig();
-    SLEEP_MS(200); // give some time for logs to flush...
+    LOG_WARNING("executeEvent_performDeviceRestart...");
+    SLEEP_MS(5000); // give some time for logs to flush...
     esp_restart();
 
     return true;

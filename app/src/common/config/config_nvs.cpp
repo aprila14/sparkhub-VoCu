@@ -20,9 +20,8 @@ bool ConfigNvs::init()
     assert(m_accessMutex);
 
     // read the initial value for each configuration parameter here
-    getBoolVar(m_configurationFinishedState, ConfigKeyName::CONFIGURATION_FINISHED_STATE);
+    getUint8Var(reinterpret_cast<uint8_t&>(m_bleConfigurationStatus), ConfigKeyName::BLE_CONFIGURATION_STATUS);
     getStruct(m_wiFiCredentials, ConfigKeyName::WIFI_CREDENTIALS);
-    getUint8Var(m_lastLightBrightness, ConfigKeyName::LAST_LIGHT_BRIGHTNESS);
     getStruct(m_cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
     getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
 
@@ -53,14 +52,17 @@ void ConfigNvs::commitToNVS() const
     }
 }
 
-bool ConfigNvs::getConfigurationFinishedState()
+EBleConfigurationStatus ConfigNvs::getBleConfigurationStatus()
 {
-    return m_configurationFinishedState;
+    return m_bleConfigurationStatus;
 }
 
-void ConfigNvs::setConfigurationFinishedState(bool isFinished)
+void ConfigNvs::setBleConfigurationStatus(EBleConfigurationStatus bleStatus)
 {
-    setBoolVar(m_configurationFinishedState, isFinished, ConfigKeyName::CONFIGURATION_FINISHED_STATE);
+    setUint8Var(
+        reinterpret_cast<uint8_t&>(m_bleConfigurationStatus),
+        reinterpret_cast<uint8_t&>(bleStatus),
+        ConfigKeyName::BLE_CONFIGURATION_STATUS);
 }
 
 const TWiFiCredentials& ConfigNvs::getWifiCredentials()
@@ -91,16 +93,6 @@ void ConfigNvs::setOtaUpdateLink(const TOtaUpdateLink& otaUpdateLink)
 const TOtaUpdateLink& ConfigNvs::getOtaUpdateLink()
 {
     return m_otaUpdateLink;
-}
-
-void ConfigNvs::setLastLightBrightness(uint8_t value)
-{
-    setUint8Var(m_lastLightBrightness, value, ConfigKeyName::LAST_LIGHT_BRIGHTNESS);
-}
-
-uint8_t ConfigNvs::getLastLightBrightness()
-{
-    return m_lastLightBrightness;
 }
 
 void ConfigNvs::setCertificatePack(const TCertificatePack& certificatePack)
@@ -270,12 +262,11 @@ void ConfigNvs::resetAllConfigurationFields()
 {
     // default values for the configuration:
 
-    m_configurationFinishedState = false;
-    m_wiFiCredentials            = TWiFiCredentials();
-    m_lastLightBrightness        = 50;
-    m_cloudCredentials           = TCloudCredentials();
-    m_otaUpdateLink              = TOtaUpdateLink();
-    m_certificatePack            = TCertificatePack();
+    m_bleConfigurationStatus = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    m_wiFiCredentials        = TWiFiCredentials();
+    m_cloudCredentials       = TCloudCredentials();
+    m_otaUpdateLink          = TOtaUpdateLink();
+    m_certificatePack        = TCertificatePack();
 }
 
 template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)

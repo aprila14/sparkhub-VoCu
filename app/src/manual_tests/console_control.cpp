@@ -122,14 +122,6 @@ static EShouldQuitConsole executeCommandFromConsole()
             LOG_INFO("%s", app::pAppController->getNtpClient()->getCurrentLocalTimeString(UtcOffset::OFFSET_UTC_2));
             break;
         }
-        case '0' ... '9':
-        {
-            app::TEventData eventData                 = {};
-            eventData.lightControlSetPower.percentage = (key - '0') * 10;
-            app::pAppController->addEvent(
-                app::EEventType::LIGHT_CONTROL__SET_POWER, app::EEventExecutionType::SYNCHRONOUS, &eventData);
-            break;
-        }
 
         case 'd':
         {

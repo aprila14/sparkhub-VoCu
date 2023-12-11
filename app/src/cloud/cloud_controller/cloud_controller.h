@@ -100,6 +100,11 @@ private:
     void configureCloudConnection(const prot::cloud_set_credentials::TCloudCredentials& credentials);
 
     /**
+     * Function to set mqtt topic to send device status based on provided device id
+     */
+    void setDeviceStatusTopic(const prot::cloud_set_credentials::TCloudCredentials& credentials);
+
+    /**
      * Function starting MqttClientController connection
      */
     void startCloudConnection();

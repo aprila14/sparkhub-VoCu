@@ -12,8 +12,7 @@ enum class EEventType
 {
     UNKNOWN_EVENT = 0,
     DUMMY_EVENT, // dummy event demonstrating the usage, as simple to copy placeholder
-    PERFORM_CONFIGURATION_RESET_AND_RESTART,
-    LIGHT_CONTROL__SET_POWER,                 // to change the light power level percentage
+    PERFORM_DEVICE_RESTART,
     WIFI_CONTROLLER__DISCONNECT,              // disconnect from current Access Point
     WIFI_CONTROLLER__CONNECTION_ESTABLISHED,  // WiFi connection just connected
     WIFI_CONTROLLER__CONNECTION_LOST,         // WiFi connection just lost

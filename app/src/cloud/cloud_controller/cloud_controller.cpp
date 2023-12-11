@@ -21,6 +21,7 @@ constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3600 * 1000; // once pe
 constexpr uint16_t LOCAL_TIME_OFFSET                   = UtcOffset::OFFSET_UTC_2;
 constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE  = -1;
 constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS     = 1000;
+constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE        = 200;
 
 void _heartbeatWatchdogTimerCallback(TimerHandle_t timerHandle)
 {
@@ -107,6 +108,22 @@ void CloudController::run(void* pObject)
     pCloudController->_run();
 }
 
+void CloudController::setDeviceStatusTopic(const prot::cloud_set_credentials::TCloudCredentials& credentials)
+{
+    if (!credentials.isSetCloudDeviceId())
+    {
+        LOG_ERROR("Cloud device id not provided");
+        return;
+    }
+
+    char deviceStatusTopic[DEVICE_STATUS_MAX_TOPIC_SIZE];
+    memset(deviceStatusTopic, 0, DEVICE_STATUS_MAX_TOPIC_SIZE);
+
+    sprintf(deviceStatusTopic, "devices/%s/messages/events/", credentials.cloudDeviceId);
+
+    m_deviceStatusTopic = std::string(deviceStatusTopic);
+}
+
 void CloudController::_run()
 {
     xSemaphoreTake(m_semaphoreWifiConnectionReady, portMAX_DELAY);
@@ -122,7 +139,8 @@ void CloudController::_run()
 
     configureCloudConnection(cloudCredentials);
 
-    m_deviceStatusTopic = std::string(DEFAULT_TELEMETRY_MQTT_TOPIC);
+    setDeviceStatusTopic(cloudCredentials);
+
     if (m_connectionStatus == ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED)
     {
         LOG_INFO("Client could not be configured");

@@ -11,14 +11,13 @@ namespace ConfigKeyName
 {
 
 // make sure this names are unique
-constexpr const char* CONFIGURATION_FINISHED_STATE = "conf";
-constexpr const char* WIFI_CREDENTIALS             = "wifi-cr";
-constexpr const char* CLOUD_CERTIFICATES           = "cloud-cert-aws";
-constexpr const char* CLOUD_CREDENTIALS            = "cloud-cr-aws";
-constexpr const char* OTA_HTTP_CERTIFICATE         = "ota-cert";
-constexpr const char* OTA_UPDATE_LINK              = "ota-link";
-constexpr const char* LAST_LIGHT_BRIGHTNESS        = "lastbr";
-constexpr const char* CERTIFICATES                 = "cert-pack";
+constexpr const char* BLE_CONFIGURATION_STATUS = "ble-conf";
+constexpr const char* WIFI_CREDENTIALS         = "wifi-cr";
+constexpr const char* CLOUD_CERTIFICATES       = "cloud-cert";
+constexpr const char* CLOUD_CREDENTIALS        = "cloud-cr";
+constexpr const char* OTA_HTTP_CERTIFICATE     = "ota-cert";
+constexpr const char* OTA_UPDATE_LINK          = "ota-link";
+constexpr const char* CERTIFICATES             = "cert-pack";
 
 } // namespace ConfigKeyName
 
@@ -41,12 +40,12 @@ public:
      * @brief Get whether initial configuration (via BLE) has been finished
      * @return
      */
-    virtual bool getConfigurationFinishedState();
+    virtual EBleConfigurationStatus getBleConfigurationStatus();
     /**
      * @brief Set whether initial configuration (via BLE) has been finished
      * @param isFinished
      */
-    virtual void setConfigurationFinishedState(bool isFinished);
+    virtual void setBleConfigurationStatus(EBleConfigurationStatus bleStatus);
 
     virtual const TWiFiCredentials& getWifiCredentials();
     virtual void                    setWifiCredentials(const TWiFiCredentials& wifiCredentials);
@@ -56,9 +55,6 @@ public:
 
     virtual const TOtaUpdateLink& getOtaUpdateLink();
     virtual void                  setOtaUpdateLink(const TOtaUpdateLink& otaUpdateLink);
-
-    virtual void    setLastLightBrightness(uint8_t value);
-    virtual uint8_t getLastLightBrightness();
 
     virtual const TCertificatePack& getCertificatePack();
     virtual void                    setCertificatePack(const TCertificatePack& certificatePack);
@@ -89,13 +85,11 @@ private:
     nvs_handle_t      m_nvsHandle   = 0;
 
     // just assign whatever value below - the config is reset at startup to assign the default value
-    bool              m_configurationFinishedState = false;
-    TWiFiCredentials  m_wiFiCredentials            = {};
-    TCloudCredentials m_cloudCredentials           = {};
-    TOtaUpdateLink    m_otaUpdateLink              = {};
-    TCertificatePack  m_certificatePack            = {};
-
-    uint8_t m_lastLightBrightness = 0;
+    EBleConfigurationStatus m_bleConfigurationStatus = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    TWiFiCredentials        m_wiFiCredentials        = {};
+    TCloudCredentials       m_cloudCredentials       = {};
+    TOtaUpdateLink          m_otaUpdateLink          = {};
+    TCertificatePack        m_certificatePack        = {};
 };
 
 // We deliberately have a globa pointer,
