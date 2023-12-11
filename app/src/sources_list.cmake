@@ -10,9 +10,6 @@ set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/hardware/hardware_definitions.h
     ${SRC_DIR}/hardware/reset_button_handler.h
     ${SRC_DIR}/hardware/reset_button_handler.cpp
-    ${SRC_DIR}/hardware/light/led_control.cpp
-    ${SRC_DIR}/hardware/light/led_control.h
-    ${SRC_DIR}/hardware/light/light_control_interface.h
     ${SRC_DIR}/wifi/wifi_controller.cpp
     ${SRC_DIR}/wifi/wifi_controller.h
     ${SRC_DIR}/common/hw_misc.cpp
@@ -65,9 +62,6 @@ set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/cloud/device_provisioning/device_provisioning.cpp
     ${SRC_DIR}/cloud/device_provisioning/device_provisioning.h
 
-    ${SRC_DIR}/hardware/light/led_indicator.cpp
-    ${SRC_DIR}/hardware/light/led_indicator.h
-
     ${SRC_DIR}/hardware/adc_pressure/adc_pressure.cpp
     ${SRC_DIR}/hardware/adc_pressure/adc_pressure.h
 )
@@ -86,7 +80,6 @@ set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/common/os
     ${SRC_DIR}/common/config
     ${SRC_DIR}/hardware
-    ${SRC_DIR}/hardware/light
     ${SRC_DIR}/hardware/adc_pressure
     ${SRC_DIR}/wifi/
     ${SRC_DIR}/ble/
