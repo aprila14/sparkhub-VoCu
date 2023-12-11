@@ -219,7 +219,7 @@ bool AppController::executeEvent_dummy(const TDummyEventData& eventData)
 bool AppController::executeEvent_performDeviceRestart()
 {
     LOG_WARNING("executeEvent_performDeviceRestart...");
-    SLEEP_MS(5000); // give some time for logs to flush...
+    SLEEP_MS(3000); // give some time for logs to flush...
     esp_restart();
 
     return true;

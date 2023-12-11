@@ -239,9 +239,10 @@ void DeviceProvisioningController::_run()
 
                 m_pCloudController->setReadinessAfterDeviceProvisioning();
 
+                // TODO: add device provisioning status to config nvs
                 m_provisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_FINISHED;
 
-                m_pMqttClientController->stop();
+                app::pAppController->addEvent(app::EEventType::PERFORM_DEVICE_RESTART);
             }
         }
 
