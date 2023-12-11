@@ -18,6 +18,16 @@ static_assert(
     MAX_NUMBER_OF_SCANNED_ACCESS_POINTS == prot::wifi_scan_ap::MAX_NUMBER_OF_NETWORKS,
     "Inconsistent protocol definition!");
 
+struct TFirmwareInfo
+{
+    uint32_t    version;
+    std::string firmwareUrl;
+
+    bool operator==(const TFirmwareInfo& rhs) const;
+    bool setFirmwareUrl(const std::string& newFirmwareUrl);
+    bool isSetFirmwareUrl() const;
+};
+
 using TWiFiCredentials             = prot::wifi_connect_to_ap::TWiFiCredentials;
 using TCloudCredentials            = prot::cloud_set_credentials::TCloudCredentials;
 using TCertificatePack             = prot::send_certificates::TCertificatePack;

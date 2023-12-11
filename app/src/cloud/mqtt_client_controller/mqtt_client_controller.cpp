@@ -71,10 +71,7 @@ void MqttClientController::perform()
 
 void MqttClientController::handleMessages()
 {
-    while (!(checkIfMessageBufferIsEmpty()))
-    {
-        LOG_ERROR("msg is received but not handled!!!");
-    }
+    // messages are currently being handled in other modules
 }
 
 void MqttClientController::subscribeToRequiredTopics() // NOLINT - we don't want to make it const
@@ -220,6 +217,12 @@ void MqttClientController::eventHandler(void* handlerArgs, esp_event_base_t base
                 LOG_INFO("Not possible to add message to queue, queue size exceeded ");
                 break;
             }
+            if (event->data_len == 0)
+            {
+                LOG_INFO("Empty message received");
+                break;
+            }
+
             std::string newMessage = std::string(event->data, 0, event->data_len);
 
             {
