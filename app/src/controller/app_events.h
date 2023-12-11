@@ -13,7 +13,6 @@ enum class EEventType
     UNKNOWN_EVENT = 0,
     DUMMY_EVENT, // dummy event demonstrating the usage, as simple to copy placeholder
     PERFORM_CONFIGURATION_RESET_AND_RESTART,
-    LIGHT_CONTROL__SET_POWER,                 // to change the light power level percentage
     WIFI_CONTROLLER__DISCONNECT,              // disconnect from current Access Point
     WIFI_CONTROLLER__CONNECTION_ESTABLISHED,  // WiFi connection just connected
     WIFI_CONTROLLER__CONNECTION_LOST,         // WiFi connection just lost
@@ -45,14 +44,6 @@ struct TDummyEventData
     uint8_t dummyByte2;
 };
 
-/**
- * @brief Data for setting light power event
- */
-struct TLightControlSetPowerEventData
-{
-    uint8_t percentage;
-};
-
 struct TCloudControlSendCredentialsEventData
 {
     bool connectionReady;
@@ -69,7 +60,6 @@ struct TOtaPerformEventData
 union TEventData
 {
     TDummyEventData                       dummy;
-    TLightControlSetPowerEventData        lightControlSetPower;
     TCloudControlSendCredentialsEventData cloudControlSendCredentials;
     TOtaPerformEventData                  otaPerform;
 

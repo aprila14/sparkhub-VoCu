@@ -124,10 +124,6 @@ static EShouldQuitConsole executeCommandFromConsole()
         }
         case '0' ... '9':
         {
-            app::TEventData eventData                 = {};
-            eventData.lightControlSetPower.percentage = (key - '0') * 10;
-            app::pAppController->addEvent(
-                app::EEventType::LIGHT_CONTROL__SET_POWER, app::EEventExecutionType::SYNCHRONOUS, &eventData);
             break;
         }
 

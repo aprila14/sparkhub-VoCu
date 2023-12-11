@@ -13,8 +13,6 @@ static const char* LOG_TAG = "Main";
 #include "defines.h"
 #include "hardware_definitions.h"
 #include "hw_misc.h"
-#include "led_control.h"
-#include "led_indicator.h"
 #include "ntp_client.h"
 #include "reset_button_handler.h"
 #include "wifi_controller.h"

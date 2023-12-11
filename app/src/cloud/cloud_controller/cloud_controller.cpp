@@ -20,24 +20,16 @@ namespace
 constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3600 * 1000; // once per hour
 constexpr uint16_t LOCAL_TIME_OFFSET                   = UtcOffset::OFFSET_UTC_2;
 constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE  = -1;
-constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS     = 1000;
 
-void _heartbeatWatchdogTimerCallback(TimerHandle_t timerHandle)
-{
-    CloudController* cloudController = static_cast<CloudController*>(pvTimerGetTimerID(timerHandle));
-    assert(cloudController);
-    cloudController->heartbeatWatchdogTimerCallback();
-}
 } // unnamed namespace
 
 CloudController::CloudController() :
     m_taskHandle(),
-    m_heartbeatWatchdogTimer(),
-    m_heartbeatWatchdogCounter(0),
     m_msgCounter(0),
     m_connectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED),
     m_mqttClientController(this),
-    m_deviceProvisioningController(&this->m_mqttClientController, this)
+    m_deviceProvisioningController(&this->m_mqttClientController, this),
+    m_deviceTwinsController(&this->m_mqttClientController, this)
 {
     m_semaphoreCredentialsReady    = xSemaphoreCreateBinary();
     m_semaphoreWifiConnectionReady = xSemaphoreCreateBinary();
@@ -63,12 +55,6 @@ void CloudController::handleStatusReportResponse(bool ACK)
     LOG_INFO("Status Report ACK received");
 }
 
-void CloudController::handleHeartbeatResponse()
-{
-    LOG_INFO("Heartbeat ACK received");
-    m_heartbeatWatchdogCounter = 0;
-}
-
 bool CloudController::handleOtaUpdateLink(
     const TOtaUpdateLink& otaUpdateLinkStructure) // NOLINT - we don't want to make it static
 {
@@ -88,16 +74,6 @@ bool CloudController::handleOtaUpdateLink(
     // TODO OTA - it might be needed to send some kind of response here - informing the cloud, that ESP32 got the
     // message and is starting the update
     return result;
-}
-
-bool CloudController::handleTimeSlotsList(
-    const json_parser::TTimeSlotsList& timeSlotsListStructure) // NOLINT - we don't want to make it static
-{
-    LOG_INFO("Handling Time Slots List message");
-
-    // TODO add an event informing AppController that TimeSlotsList has been updated
-
-    return true;
 }
 
 void CloudController::run(void* pObject)
@@ -136,15 +112,9 @@ void CloudController::_run()
         LOG_INFO("Could not connect to cloud, timeout occured");
     }
 
-    m_heartbeatWatchdogTimer = xTimerCreate(
-        "Heartbeat Watchdog Timer",
-        pdMS_TO_TICKS(HEARTBEAT_CHECK_TIMER_PERIOD_MS),
-        true,
-        static_cast<void*>(this),
-        _heartbeatWatchdogTimerCallback);
-    xTimerStart(m_heartbeatWatchdogTimer, 0);
     m_mqttClientController.runTask();
-
+    SLEEP_MS(1000);
+    m_deviceTwinsController.runTask();
     LOG_INFO("Cloud controller initiated!");
 
     while (true)
@@ -235,14 +205,5 @@ void CloudController::startCloudConnection()
     {
         LOG_INFO("Error while starting mqttClientController, could not connect to the cloud");
         m_connectionStatus = ECloudConnectionStatus::CLOUD_STATUS_DISABLED;
-    }
-}
-
-void CloudController::heartbeatWatchdogTimerCallback()
-{
-    m_heartbeatWatchdogCounter++;
-    if (m_heartbeatWatchdogCounter >= 180)
-    {
-        setConnectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONNECTED);
     }
 }

@@ -101,14 +101,6 @@ private:
     void        handleMessages();
 
     /**
-     * @brief Function recognizing type of the message and calling appropiate function from the CloudController
-     */
-    bool interpretMessage(
-        const json_parser::TMessage& messageStruct,
-        json_parser::EMsgMethod      msgMethod,
-        json_parser::TFrame*         frame);
-
-    /**
      * @brief Function subscribing to all topics that are required for communication. It shall be called whenever
      * connection with MQTT broker is established
      */

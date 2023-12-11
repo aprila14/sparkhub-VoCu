@@ -22,7 +22,6 @@ bool ConfigNvs::init()
     // read the initial value for each configuration parameter here
     getBoolVar(m_configurationFinishedState, ConfigKeyName::CONFIGURATION_FINISHED_STATE);
     getStruct(m_wiFiCredentials, ConfigKeyName::WIFI_CREDENTIALS);
-    getUint8Var(m_lastLightBrightness, ConfigKeyName::LAST_LIGHT_BRIGHTNESS);
     getStruct(m_cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
     getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
 
@@ -93,16 +92,6 @@ const TOtaUpdateLink& ConfigNvs::getOtaUpdateLink()
     return m_otaUpdateLink;
 }
 
-void ConfigNvs::setLastLightBrightness(uint8_t value)
-{
-    setUint8Var(m_lastLightBrightness, value, ConfigKeyName::LAST_LIGHT_BRIGHTNESS);
-}
-
-uint8_t ConfigNvs::getLastLightBrightness()
-{
-    return m_lastLightBrightness;
-}
-
 void ConfigNvs::setCertificatePack(const TCertificatePack& certificatePack)
 {
     setStruct(m_certificatePack, certificatePack, ConfigKeyName::CERTIFICATES);
@@ -111,6 +100,16 @@ void ConfigNvs::setCertificatePack(const TCertificatePack& certificatePack)
 const TCertificatePack& ConfigNvs::getCertificatePack()
 {
     return m_certificatePack;
+}
+
+void ConfigNvs::setFirmwareInfo(const TFirmwareInfo& firmwareInfo)
+{
+    setStruct(m_firmwareInfo, firmwareInfo, ConfigKeyName::FIRMWARE_INFO_NVS_KEY);
+}
+
+const TFirmwareInfo& ConfigNvs::getFirmwareInfo()
+{
+    return m_firmwareInfo;
 }
 
 bool ConfigNvs::resetConfig()
@@ -272,10 +271,10 @@ void ConfigNvs::resetAllConfigurationFields()
 
     m_configurationFinishedState = false;
     m_wiFiCredentials            = TWiFiCredentials();
-    m_lastLightBrightness        = 50;
     m_cloudCredentials           = TCloudCredentials();
     m_otaUpdateLink              = TOtaUpdateLink();
     m_certificatePack            = TCertificatePack();
+    m_firmwareInfo               = TFirmwareInfo();
 }
 
 template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)

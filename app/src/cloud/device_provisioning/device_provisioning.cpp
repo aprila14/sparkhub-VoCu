@@ -181,7 +181,7 @@ void DeviceProvisioningController::_run()
 
     if (!(m_pMqttClientController->waitUntilMqttConnected(MQTT_CONNECTION_WAIT_TIME_INFINITE)))
     {
-        LOG_ERROR("Could not connect to cloud, timeout occured");
+        LOG_ERROR("Could not connect to cloud, timeout occurred");
     }
 
     m_pMqttClientController->subscribeToTopic(std::string(DEVICE_PROVISIONING_RESPONSE_TOPIC), 1);
@@ -230,7 +230,7 @@ void DeviceProvisioningController::_run()
             createDeviceRegistrationStatusTopic();
             if (!(m_pMqttClientController->waitUntilMqttConnected(MQTT_CONNECTION_WAIT_TIME_INFINITE)))
             {
-                LOG_ERROR("Could not connect to cloud, timeout occured");
+                LOG_ERROR("Could not connect to cloud, timeout occurred");
             }
             m_pMqttClientController->sendMessage(m_deviceRegistrationStatus, std::string("{}"));
         }

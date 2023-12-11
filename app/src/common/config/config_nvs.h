@@ -17,8 +17,8 @@ constexpr const char* CLOUD_CERTIFICATES           = "cloud-cert-aws";
 constexpr const char* CLOUD_CREDENTIALS            = "cloud-cr-aws";
 constexpr const char* OTA_HTTP_CERTIFICATE         = "ota-cert";
 constexpr const char* OTA_UPDATE_LINK              = "ota-link";
-constexpr const char* LAST_LIGHT_BRIGHTNESS        = "lastbr";
 constexpr const char* CERTIFICATES                 = "cert-pack";
+constexpr const char* FIRMWARE_INFO_NVS_KEY        = "firm-info";
 
 } // namespace ConfigKeyName
 
@@ -57,11 +57,11 @@ public:
     virtual const TOtaUpdateLink& getOtaUpdateLink();
     virtual void                  setOtaUpdateLink(const TOtaUpdateLink& otaUpdateLink);
 
-    virtual void    setLastLightBrightness(uint8_t value);
-    virtual uint8_t getLastLightBrightness();
-
     virtual const TCertificatePack& getCertificatePack();
     virtual void                    setCertificatePack(const TCertificatePack& certificatePack);
+
+    virtual const TFirmwareInfo& getFirmwareInfo();
+    virtual void                 setFirmwareInfo(const TFirmwareInfo& firmwareInfo);
 
 #if !TESTING
 private:
@@ -95,7 +95,7 @@ private:
     TOtaUpdateLink    m_otaUpdateLink              = {};
     TCertificatePack  m_certificatePack            = {};
 
-    uint8_t m_lastLightBrightness = 0;
+    TFirmwareInfo m_firmwareInfo = {};
 };
 
 // We deliberately have a globa pointer,

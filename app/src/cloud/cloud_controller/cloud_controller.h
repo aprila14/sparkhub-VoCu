@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include "device_provisioning.h"
+#include "device_twins.h"
 #include "esp_event.h"
 #include "json_parser.h"
 #include "protocol_types.h"
@@ -36,25 +37,9 @@ public:
     static void handleStatusReportResponse(bool ACK);
 
     /**
-     * Function handling response to the Heartbeat message
-     */
-    void handleHeartbeatResponse();
-
-    /**
      * Function handling OTA update initiated from cloud
      */
     bool handleOtaUpdateLink(const TOtaUpdateLink& otaUpdateLinkStructure);
-
-    /**
-     * Function handling message with time slots list for LightScheduler
-     */
-    bool handleTimeSlotsList(const json_parser::TTimeSlotsList& timeSlotsListStructure);
-
-    /**
-     * Timer callback enabling to change CloudController status if the response for the heeartbeat from the cloud
-     * is not coming for a specified time period
-     */
-    void heartbeatWatchdogTimerCallback();
 
     /**
      * Function giving semaphore informing CloudController task, that CloudConnection is ready to be established
@@ -104,12 +89,8 @@ private:
      */
     void startCloudConnection();
 
-    TaskHandle_t  m_taskHandle;               // handle to runTask
-    TimerHandle_t m_heartbeatWatchdogTimer;   // handle to timer handling heartbeat checking
-    uint32_t      m_heartbeatWatchdogCounter; // watchdog counter that shall be zeroed everytime when heartbeat message
-                                              // comes in. If it exceedes specified value, CloudController
-                                              // is regarded as not connected
-    uint32_t m_msgCounter;                    // outgoing messages counter
+    TaskHandle_t m_taskHandle; // handle to runTask
+    uint32_t     m_msgCounter; // outgoing messages counter
 
     SemaphoreHandle_t m_semaphoreCredentialsReady;    // sempahore indicating that credentials for cloud connection have
                                                       // already been stored in NVS
@@ -119,6 +100,7 @@ private:
 
     MqttClientController         m_mqttClientController;
     DeviceProvisioningController m_deviceProvisioningController;
+    DeviceTwinsController        m_deviceTwinsController;
 
     std::string m_deviceStatusTopic;
 };
