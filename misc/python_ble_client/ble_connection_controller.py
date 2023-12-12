@@ -96,7 +96,7 @@ def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearra
             f.write('\n')
 
 
-async def connect_to_notifications(ble_client, characteristic_TX_uuid, characteristic_RX_uuid):
+async def handle_device_communication(ble_client, characteristic_RX_uuid):
     global notify_received_data
 
     if not os.path.isdir(output_directory):
@@ -106,21 +106,15 @@ async def connect_to_notifications(ble_client, characteristic_TX_uuid, character
         with open(os.path.join(output_directory, ble_log_file_name), 'w') as f:
             f.write("LOGGER file!\n")
 
-    print("Connected to device. Connecting for notifications:")
-
-    await ble_client.start_notify(characteristic_TX_uuid, notification_handler)
-
-    print("Notify started")
-
     await send_get_wifi_mac_command(ble_client, characteristic_RX_uuid)
 
     # wait for MAC address from the device
     while notify_received_data == NO_DATA_RECEIVED:
         await asyncio.sleep(0.1)
 
-    print(f"Main loop: {notify_received_data}")
-    
-    # reset status
+    print(f"handle_device_communication - data received: {notify_received_data}")
+
+    # reset receive status
     notify_received_data = NO_DATA_RECEIVED
     
     await send_device_certificates(ble_client, characteristic_RX_uuid)
@@ -161,7 +155,13 @@ async def handle_ble_device(selected_device_address):
         print(f"characteristic_RX_uuid-{characteristic_RX_uuid}")
         print(f"characteristic_TX_uuid-{characteristic_TX_uuid}")
 
-        await connect_to_notifications(ble_client, characteristic_TX_uuid, characteristic_RX_uuid)
+        print("Connected to device. Connecting for notifications:")
+
+        await ble_client.start_notify(characteristic_TX_uuid, notification_handler)
+
+        print("Notify started")
+
+        await handle_device_communication(ble_client, characteristic_RX_uuid)
     except Exception as e:
         print(e)
     finally:
