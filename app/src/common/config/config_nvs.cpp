@@ -21,6 +21,7 @@ bool ConfigNvs::init()
 
     // read the initial value for each configuration parameter here
     getUint8Var(reinterpret_cast<uint8_t&>(m_bleConfigurationStatus), ConfigKeyName::BLE_CONFIGURATION_STATUS);
+    getUint8Var(reinterpret_cast<uint8_t&>(m_deviceProvisioningStatus), ConfigKeyName::DEVICE_PROVISIONING_STATUS);
     getStruct(m_wiFiCredentials, ConfigKeyName::WIFI_CREDENTIALS);
     getStruct(m_cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
     getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
@@ -63,6 +64,19 @@ void ConfigNvs::setBleConfigurationStatus(EBleConfigurationStatus bleStatus)
         reinterpret_cast<uint8_t&>(m_bleConfigurationStatus),
         reinterpret_cast<uint8_t&>(bleStatus),
         ConfigKeyName::BLE_CONFIGURATION_STATUS);
+}
+
+ECloudDeviceProvisioningStatus ConfigNvs::getDeviceProvisioningStatus()
+{
+    return m_deviceProvisioningStatus;
+}
+
+void ConfigNvs::setDeviceProvisioningStatus(ECloudDeviceProvisioningStatus deviceProvisioningStatus)
+{
+    setUint8Var(
+        reinterpret_cast<uint8_t&>(m_deviceProvisioningStatus),
+        reinterpret_cast<uint8_t&>(deviceProvisioningStatus),
+        ConfigKeyName::DEVICE_PROVISIONING_STATUS);
 }
 
 const TWiFiCredentials& ConfigNvs::getWifiCredentials()
@@ -262,11 +276,12 @@ void ConfigNvs::resetAllConfigurationFields()
 {
     // default values for the configuration:
 
-    m_bleConfigurationStatus = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
-    m_wiFiCredentials        = TWiFiCredentials();
-    m_cloudCredentials       = TCloudCredentials();
-    m_otaUpdateLink          = TOtaUpdateLink();
-    m_certificatePack        = TCertificatePack();
+    m_bleConfigurationStatus   = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    m_wiFiCredentials          = TWiFiCredentials();
+    m_cloudCredentials         = TCloudCredentials();
+    m_otaUpdateLink            = TOtaUpdateLink();
+    m_certificatePack          = TCertificatePack();
+    m_deviceProvisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
 }
 
 template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)

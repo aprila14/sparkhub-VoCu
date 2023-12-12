@@ -11,13 +11,14 @@ namespace ConfigKeyName
 {
 
 // make sure this names are unique
-constexpr const char* BLE_CONFIGURATION_STATUS = "ble-conf";
-constexpr const char* WIFI_CREDENTIALS         = "wifi-cr";
-constexpr const char* CLOUD_CERTIFICATES       = "cloud-cert";
-constexpr const char* CLOUD_CREDENTIALS        = "cloud-cr";
-constexpr const char* OTA_HTTP_CERTIFICATE     = "ota-cert";
-constexpr const char* OTA_UPDATE_LINK          = "ota-link";
-constexpr const char* CERTIFICATES             = "cert-pack";
+constexpr const char* BLE_CONFIGURATION_STATUS   = "ble-conf";
+constexpr const char* WIFI_CREDENTIALS           = "wifi-cr";
+constexpr const char* CLOUD_CERTIFICATES         = "cloud-cert";
+constexpr const char* CLOUD_CREDENTIALS          = "cloud-cr";
+constexpr const char* OTA_HTTP_CERTIFICATE       = "ota-cert";
+constexpr const char* OTA_UPDATE_LINK            = "ota-link";
+constexpr const char* CERTIFICATES               = "cert-pack";
+constexpr const char* DEVICE_PROVISIONING_STATUS = "dev-prov";
 
 } // namespace ConfigKeyName
 
@@ -46,6 +47,17 @@ public:
      * @param isFinished
      */
     virtual void setBleConfigurationStatus(EBleConfigurationStatus bleStatus);
+
+    /**
+     * @brief Get whether device provisioning has been finished
+     * @return
+     */
+    virtual ECloudDeviceProvisioningStatus getDeviceProvisioningStatus();
+    /**
+     * @brief Set whether device provisioning has been finished
+     * @return
+     */
+    virtual void setDeviceProvisioningStatus(ECloudDeviceProvisioningStatus deviceProvisioningStatus);
 
     virtual const TWiFiCredentials& getWifiCredentials();
     virtual void                    setWifiCredentials(const TWiFiCredentials& wifiCredentials);
@@ -85,11 +97,13 @@ private:
     nvs_handle_t      m_nvsHandle   = 0;
 
     // just assign whatever value below - the config is reset at startup to assign the default value
-    EBleConfigurationStatus m_bleConfigurationStatus = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
-    TWiFiCredentials        m_wiFiCredentials        = {};
-    TCloudCredentials       m_cloudCredentials       = {};
-    TOtaUpdateLink          m_otaUpdateLink          = {};
-    TCertificatePack        m_certificatePack        = {};
+    EBleConfigurationStatus        m_bleConfigurationStatus = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    TWiFiCredentials               m_wiFiCredentials        = {};
+    TCloudCredentials              m_cloudCredentials       = {};
+    TOtaUpdateLink                 m_otaUpdateLink          = {};
+    TCertificatePack               m_certificatePack        = {};
+    ECloudDeviceProvisioningStatus m_deviceProvisioningStatus =
+        ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
 };
 
 // We deliberately have a globa pointer,

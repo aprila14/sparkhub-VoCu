@@ -38,7 +38,7 @@ CloudController::CloudController() :
     m_msgCounter(0),
     m_connectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED),
     m_mqttClientController(this),
-    m_deviceProvisioningController(&this->m_mqttClientController, this)
+    m_deviceProvisioningController(&this->m_mqttClientController)
 {
     m_semaphoreCredentialsReady    = xSemaphoreCreateBinary();
     m_semaphoreWifiConnectionReady = xSemaphoreCreateBinary();
@@ -118,14 +118,16 @@ void CloudController::_run()
 {
     xSemaphoreTake(m_semaphoreWifiConnectionReady, portMAX_DELAY);
 
-    const prot::cloud_set_credentials::TCloudCredentials& cloudCredentials = pConfig->getCloudCredentials();
+    const ECloudDeviceProvisioningStatus deviceProvisioningStatus = pConfig->getDeviceProvisioningStatus();
 
-    if (!cloudCredentials.isSetCloudAddress())
+    if (deviceProvisioningStatus == ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT)
     {
         m_deviceProvisioningController.runTask();
 
         xSemaphoreTake(m_semaphoreCredentialsReady, portMAX_DELAY);
     }
+
+    const prot::cloud_set_credentials::TCloudCredentials& cloudCredentials = pConfig->getCloudCredentials();
 
     configureCloudConnection(cloudCredentials);
 

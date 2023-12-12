@@ -21,15 +21,12 @@ constexpr char     DEVICE_PROVISIONING_REGISTRATION_GET_STATUS_TOPIC[] =
     "$dps/registrations/GET/iotdps-get-operationstatus/?$rid=";
 } // unnamed namespace
 
-DeviceProvisioningController::DeviceProvisioningController(
-    MqttClientController* mqttClientController,
-    CloudController*      cloudController) :
+DeviceProvisioningController::DeviceProvisioningController(MqttClientController* mqttClientController) :
     m_taskHandle(),
     m_provisioningStatus(ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT),
     m_cloudCredentials()
 {
     m_pMqttClientController = mqttClientController;
-    m_pCloudController      = cloudController;
 }
 
 void DeviceProvisioningController::runTask()
@@ -234,10 +231,8 @@ void DeviceProvisioningController::_run()
                     provisioningInfo.deviceId.c_str());
                 saveCredentialsAfterProvisioning(provisioningInfo);
 
-                m_pCloudController->setReadinessAfterDeviceProvisioning();
-
-                // TODO: add device provisioning status to config nvs
                 m_provisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_FINISHED;
+                pConfig->setDeviceProvisioningStatus(m_provisioningStatus);
 
                 app::pAppController->addEvent(app::EEventType::PERFORM_DEVICE_RESTART);
             }
