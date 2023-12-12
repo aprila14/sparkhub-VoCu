@@ -5,6 +5,7 @@ from utils import calculate_crc16_ccitt_false
 
 ble_commands = {
 "CMD_GET_WIFI_MAC_ADDRESS" : 32,
+"CMD_GET_WIFI_MAC_ADDRESS_RESPONSE" : 8208,
 "CMD_SEND_CERTIFICATES" : 80
 }
 
@@ -87,6 +88,32 @@ def prepare_get_wifi_mac_command() -> bytearray:
     encoded_payload = b'\x00'+encoded_payload+b'\x00'
     
     return encoded_payload
+
+def response_preprocessing(payload: bytearray) -> bytearray:
+    payload.remove(0) # message start sign
+    payload.remove(0) # message end sign
+
+    decoded_payload = cobs.decode(payload)
+
+    return decoded_payload
+
+def handle_get_wifi_mac_response(payload: bytearray) -> str:
+    payload_string = payload.hex()
+    print(f'Received data: {payload_string}')
+
+    header_command_info = payload_string[0:4]
+
+    get_wifi_mac_command_response_header = str(hex(ble_commands['CMD_GET_WIFI_MAC_ADDRESS_RESPONSE']))[2:6]
+
+    if header_command_info in get_wifi_mac_command_response_header:
+        print("Response for get wifi command request")
+        mac_address = payload_string[8:20].upper()
+        print(mac_address)
+
+        return mac_address
+    
+    return ""
+    
 
 def prepare_send_certificates_command() -> bytearray:
     # read certificate files
