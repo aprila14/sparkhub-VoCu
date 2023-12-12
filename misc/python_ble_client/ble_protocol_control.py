@@ -13,8 +13,8 @@ MAX_FULLCHAIN_CERTIFICATE_LENGTH = 6001
 MAX_PRIVATE_KEY_LENGTH           = 2001
 
 # TODO change to proper paths!
-FULLCHAIN_CERTIFICATE_PATH = '/home/lsawicki/Projects/sparkhub/sparkhub-LevelSense/azure_dps/certs/3C610511BD50-full-chain.cert.pem'
-PRIVATE_KEY_PATH = '/home/lsawicki/Projects/sparkhub/sparkhub-LevelSense/azure_dps/private/3C610511BD50.key.pem'
+FULLCHAIN_CERTIFICATE_PATH = '/home/lsawicki/Projects/sparkhub/sparkhub-LevelSense/misc/python_ble_client/certs/3C610511BD50-full-chain.cert.pem'
+PRIVATE_KEY_PATH = '/home/lsawicki/Projects/sparkhub/sparkhub-LevelSense/misc/python_ble_client/private/3C610511BD50.key.pem'
 
 class ble_command_get_wifi_mac(ctypes.Structure):
     _fields_ = [('type', ctypes.c_uint16), ('crc', ctypes.c_uint16), ('dummyByte', ctypes.c_uint8)]

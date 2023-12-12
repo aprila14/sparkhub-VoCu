@@ -138,8 +138,9 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(
         LOG_ERROR("No cloud mqtt username provided");
     }
 
-    // TODO: turn on certificate verification after adding proper CA certificate in the Azure Device Provisioning
-    // Service mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
+    // TODO: turn on certificate verification after adding proper CA certificate in the Azure Device Provisioning in
+    // menuconfig (Allow insecure options)
+    // mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
 
     if (cloudCertificatePack.isSetFullChainCertificate())
     {

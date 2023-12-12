@@ -9,6 +9,7 @@ cobs = "*"
 crc = "*"
 bleak-winrt = {version = "*", markers="sys_platform == 'win32'"}
 dbus-fast = {version = "*", markers="sys_platform == 'linux'"}
+cryptography = "*"
 
 [dev-packages]
 

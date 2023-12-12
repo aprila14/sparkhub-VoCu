@@ -155,7 +155,7 @@ async def handle_ble_device(selected_device_address):
         print(f"characteristic_RX_uuid-{characteristic_RX_uuid}")
         print(f"characteristic_TX_uuid-{characteristic_TX_uuid}")
 
-        print("Connected to device. Connecting for notifications:")
+        print("Connected to device. Connecting for notifications")
 
         await ble_client.start_notify(characteristic_TX_uuid, notification_handler)
 
