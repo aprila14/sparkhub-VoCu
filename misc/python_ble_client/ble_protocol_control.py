@@ -12,10 +12,6 @@ ble_commands = {
 MAX_FULLCHAIN_CERTIFICATE_LENGTH = 6001
 MAX_PRIVATE_KEY_LENGTH           = 2001
 
-# TODO change to proper paths!
-FULLCHAIN_CERTIFICATE_PATH = '/home/lsawicki/Projects/sparkhub/sparkhub-LevelSense/misc/python_ble_client/certs/3C610511BD50-full-chain.cert.pem'
-PRIVATE_KEY_PATH = '/home/lsawicki/Projects/sparkhub/sparkhub-LevelSense/misc/python_ble_client/private/3C610511BD50.key.pem'
-
 class ble_command_get_wifi_mac(ctypes.Structure):
     _fields_ = [('type', ctypes.c_uint16), ('crc', ctypes.c_uint16), ('dummyByte', ctypes.c_uint8)]
     _pack_ = 1
@@ -36,8 +32,8 @@ class ble_command_send_certificates(ctypes.Structure):
     _fields_ = [('type', ctypes.c_uint16), ('crc', ctypes.c_uint16), ('certificates', certificate_pack_structure)]
     _pack_ = 1
 
-def read_full_chain_certificate() -> ctypes.Structure:
-    with open(FULLCHAIN_CERTIFICATE_PATH, 'rb') as file:
+def read_full_chain_certificate(full_chain_cert_path) -> ctypes.Structure:
+    with open(full_chain_cert_path, 'rb') as file:
         full_chain_certificates = full_chain_certificate_structure()
 
         # Get file size
@@ -51,8 +47,8 @@ def read_full_chain_certificate() -> ctypes.Structure:
        
         return full_chain_certificates
     
-def read_private_key() -> ctypes.Structure:
-    with open(PRIVATE_KEY_PATH, 'rb') as file:
+def read_private_key(private_key_path) -> ctypes.Structure:
+    with open(private_key_path, 'rb') as file:
         private_key = private_key_structure()
 
         # Get file size
@@ -115,10 +111,10 @@ def handle_get_wifi_mac_response(payload: bytearray) -> str:
     return ""
     
 
-def prepare_send_certificates_command() -> bytearray:
+def prepare_send_certificates_command(full_chain_cert_path, private_key_path) -> bytearray:
     # read certificate files
-    full_chain_certificates = read_full_chain_certificate()
-    private_key = read_private_key()
+    full_chain_certificates = read_full_chain_certificate(full_chain_cert_path)
+    private_key = read_private_key(private_key_path)
 
     certificates = certificate_pack_structure(full_chain_certificates, private_key)
 

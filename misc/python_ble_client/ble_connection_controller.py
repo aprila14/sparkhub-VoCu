@@ -5,8 +5,10 @@ import asyncio
 from datetime import datetime
 
 from ble_protocol_control import prepare_get_wifi_mac_command, handle_get_wifi_mac_response, response_preprocessing, prepare_send_certificates_command
-
+from cryptography_handler import generate_device_certificates
 from utils import chunk_byte_array
+
+from defines import OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME, CERTS_PRIVATE_DIRECTORY, CERTS_DIRECTORY
 
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -15,11 +17,6 @@ NO_DATA_RECEIVED = ''
 
 # Program global variables
 notify_received_data = NO_DATA_RECEIVED
-
-output_directory = 'Program_output'
-
-ble_log_file_name = 'log_data.txt'
-
 
 async def scan_devices():
     print("Scanning available devices")
@@ -44,8 +41,8 @@ async def send_get_wifi_mac_command(ble_client, characteristic_RX_uuid):
 
     await ble_client.write_gatt_char(characteristic_RX_uuid, payload, response=True)
 
-async def send_device_certificates(ble_client, characteristic_RX_uuid):
-    certificates = prepare_send_certificates_command()
+async def send_device_certificates(ble_client, characteristic_RX_uuid, full_chain_cert_path, private_key_path):
+    certificates = prepare_send_certificates_command(full_chain_cert_path, private_key_path)
 
     chunk_size = 250
     chunks = chunk_byte_array(certificates, chunk_size)
@@ -88,8 +85,8 @@ def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearra
 
     notify_received_data = mac_address
 
-    if os.path.isfile(os.path.join(output_directory, ble_log_file_name)):
-        with open(os.path.join(output_directory, ble_log_file_name), 'a') as f:
+    if os.path.isfile(os.path.join(OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME)):
+        with open(os.path.join(OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME), 'a') as f:
             f.writelines(str(datetime.now()))
             f.writelines(' - ')
             f.writelines(decoded_payload.hex())
@@ -99,11 +96,11 @@ def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearra
 async def handle_device_communication(ble_client, characteristic_RX_uuid):
     global notify_received_data
 
-    if not os.path.isdir(output_directory):
-        os.mkdir(output_directory)
+    if not os.path.isdir(OUTPUT_DIRECTORY):
+        os.mkdir(OUTPUT_DIRECTORY)
 
-    if not os.path.isfile(os.path.join(output_directory, ble_log_file_name)):
-        with open(os.path.join(output_directory, ble_log_file_name), 'w') as f:
+    if not os.path.isfile(os.path.join(OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME)):
+        with open(os.path.join(OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME), 'w') as f:
             f.write("LOGGER file!\n")
 
     await send_get_wifi_mac_command(ble_client, characteristic_RX_uuid)
@@ -114,10 +111,15 @@ async def handle_device_communication(ble_client, characteristic_RX_uuid):
 
     print(f"handle_device_communication - data received: {notify_received_data}")
 
+    generate_device_certificates(notify_received_data)
+
+    FULLCHAIN_CERTIFICATE_PATH = f"{CERTS_DIRECTORY}/{notify_received_data}-full-chain.cert.pem"
+    PRIVATE_KEY_PATH = f"{CERTS_PRIVATE_DIRECTORY}/{notify_received_data}.key.pem"
+
     # reset receive status
     notify_received_data = NO_DATA_RECEIVED
     
-    await send_device_certificates(ble_client, characteristic_RX_uuid)
+    await send_device_certificates(ble_client, characteristic_RX_uuid, FULLCHAIN_CERTIFICATE_PATH, PRIVATE_KEY_PATH)
 
     while True:
         print("Waiting for data")

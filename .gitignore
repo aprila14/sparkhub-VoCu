@@ -16,3 +16,6 @@ externals
 build
 
 misc/python_ble_client/Program_output
+misc/python_ble_client/private
+misc/python_ble_client/csr
+misc/python_ble_client/certs
