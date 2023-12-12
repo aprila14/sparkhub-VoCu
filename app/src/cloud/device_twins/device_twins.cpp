@@ -107,6 +107,10 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
     }
 
     // Add handling new fields here, under separate ifs
+
+    cJSON_Delete(pInputJson);
+
+    LOG_INFO("handleDeviceTwinMessage, end");
 }
 
 void DeviceTwinsController::handleDeviceTwinResponse()
