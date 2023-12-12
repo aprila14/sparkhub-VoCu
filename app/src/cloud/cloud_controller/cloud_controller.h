@@ -46,11 +46,6 @@ public:
     bool handleOtaUpdateLink(const TOtaUpdateLink& otaUpdateLinkStructure);
 
     /**
-     * Function handling message with time slots list for LightScheduler
-     */
-    bool handleTimeSlotsList(const json_parser::TTimeSlotsList& timeSlotsListStructure);
-
-    /**
      * Timer callback enabling to change CloudController status if the response for the heeartbeat from the cloud
      * is not coming for a specified time period
      */

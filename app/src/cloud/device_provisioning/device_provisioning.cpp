@@ -205,9 +205,6 @@ void DeviceProvisioningController::_run()
 
     createDeviceRegistrationTopic();
 
-    // TODO: It's important to keep that in mind, in case of failed provisioning they should be removed
-    // Otherwise it would be possible to brick the device
-
     m_pMqttClientController->sendMessage(
         std::string(m_deviceRegistrationTopic),
         json_parser::prepareDeviceCreateProvisioningMessage(m_cloudCredentials.cloudDeviceId));

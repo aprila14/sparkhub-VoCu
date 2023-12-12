@@ -91,16 +91,6 @@ bool CloudController::handleOtaUpdateLink(
     return result;
 }
 
-bool CloudController::handleTimeSlotsList(
-    const json_parser::TTimeSlotsList& timeSlotsListStructure) // NOLINT - we don't want to make it static
-{
-    LOG_INFO("Handling Time Slots List message");
-
-    // TODO add an event informing AppController that TimeSlotsList has been updated
-
-    return true;
-}
-
 void CloudController::run(void* pObject)
 {
     CloudController* pCloudController =

@@ -17,24 +17,16 @@ static bool        parseJsonRpcCommand(const std::string& inputMessage, TFrame* 
 static cJSON*      dataJsonToRpcCommandJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
 static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus);
 static cJSON*      heartbeatToJson(const THeartbeat& heartbeatStruct);
-static bool        processSetLightIntensityLevel(cJSON* pDataJson, TSetLightLevel* pOutput);
-static bool        parseWidgetSetLightIntensityLevelCommand(std::string inputMessage, TSetLightLevel* pOutput);
 static bool        processHeartbeat(cJSON* pDataJson, THeartbeat* pOutput);
-static bool        processGetLightIntensityLevel(cJSON* pDataJson, TSetLightLevel* pOutput);
 static bool        processResponse(cJSON* pDataJson, TResponse* pOutput);
 static bool        processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
-static bool        processTimeSlotsList(cJSON* pDataJson, TTimeSlotsList* pOutput);
-static bool        processTimeSlotsListResponse(cJSON* pDataJson, TTimeSlotsListResponse* pOutput);
 static bool        getDataJsonAndInitFrame(const std::string& inputMessage, TFrame* pFrame, cJSON** ppDataJson);
 static EMsgMethod  extractMsgMethod(const std::string& inputMessage);
 static cJSON*      preprocessInputMessage(const std::string& inputMessage);
 static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus);
 static cJSON*      heartbeatToJson(const THeartbeat& heartbeatStruct);
-static cJSON*      widgetGetLightLevelToJson(const TSetLightLevel& lightLevelStruct);
-static cJSON*      widgetSetLightLevelToJson(const TSetLightLevel& lightLevelStruct);
 static cJSON*      dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
 static cJSON*      dataJsonToRpcCommandJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
-static std::string getLightIntensityString(const TSetLightLevel& setLightLevelData);
 static std::string getStatusReportString(const TDeviceStatus& deviceStatus);
 static std::string getHeartbeatString(const THeartbeat& heartbeatData);
 static std::string getResponseString(const TResponse& responseData);
@@ -42,7 +34,6 @@ static std::string getMsgCodeString(EMsgCode msgCode);
 static std::string getConnectionString(bool status);
 static std::string getBooleanString(bool status);
 static std::string getOtaUpdateLinkString(const TOtaUpdateLink& otaUpdateLink);
-// static std::string getTimeSlotsListString(const TTimeSlotsList& timeSlotsList);
 
 int32_t extractTimeInMinutesFromString(const std::string timeString);
 #endif
@@ -53,60 +44,6 @@ static std::string getConnectionString(bool status);
 static std::string getBooleanString(bool status);
 
 /***** JSON TO STRUCTURE *****/
-
-/**
- * @brief processSetLightIntensityLevel - function parsing setLightIntensityLevel message in cJSON format into the
- * TSetLightLevel structure
- * @param pDataJson - input cJSON object with a data JSON containing the payload of the message
- * @param pOutput - TSetLightLevel structure with the extracted data
- * @return boolean value representing success of the operation
- */
-bool processSetLightIntensityLevel(cJSON* pDataJson, TSetLightLevel* pOutput)
-{
-    cJSON* pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
-
-    if (pLightIntensityLevelJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no lightIntensityLevel data");
-        return false;
-    }
-
-    pOutput->lightIntensityLevel = (uint8_t)pLightIntensityLevelJson->valueint;
-
-    return true;
-}
-
-/**
- * @brief parseWidgetSetLightIntensityLevelCommand - function parsing the input SetLightLevel message from the widget
- * directly into TSetLightLevel structure
- * @param inputMessage - std::string containing message to parse and analyze
- * @param pOutput - TSetLighLevelStructure with the extracted data
- * @return boolean value representing success of the operation
- */
-
-bool parseWidgetSetLightIntensityLevelCommand(std::string inputMessage, TSetLightLevel* pOutput)
-{
-    cJSON* pMessageJson = preprocessInputMessage(inputMessage);
-
-    if (pMessageJson == nullptr)
-    {
-        LOG_INFO("Could not preproccess Widget SetLightIntensityLevel command, wrong format or an error occured during "
-                 "parsing");
-        return false;
-    }
-
-    cJSON* pParamsJson = cJSON_GetObjectItemCaseSensitive(pMessageJson, "params");
-    if (pParamsJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no params data or wrong format");
-        cJSON_Delete(pMessageJson);
-        return false;
-    }
-    pOutput->lightIntensityLevel = pParamsJson->valueint;
-
-    cJSON_Delete(pMessageJson);
-    return true;
-}
 
 /**
  * @brief processStatusReport - function parsing StatusReport message in a cJSON format into TDeviceStatus structure
@@ -157,7 +94,6 @@ bool processStatusReport(cJSON* pDataJson, TDeviceStatus* pOutput)
 
     pOutput->isWiFiConnected          = cJSON_IsTrue(pWifiConnectionStateJson);
     pOutput->isBleConnected           = cJSON_IsTrue(pBleConnectionStateJson);
-    pOutput->lightIntensityLevel      = static_cast<uint8_t>(pLightIntensityLevelJson->valueint);
     pOutput->currentTimeFromStartupMs = static_cast<uint32_t>(pCurrentTimeMsJson->valueint);
     strcpy(pOutput->firmwareVersion, firmware.c_str());
 
@@ -182,29 +118,6 @@ bool processHeartbeat(cJSON* pDataJson, THeartbeat* pOutput)
     }
 
     pOutput->heartbeat = cJSON_IsTrue(pHeartbeatJson);
-
-    return true;
-}
-
-/**
- * @brief processGetLightIntensityLevel - function parsing getLightIntensityLevel message in cJSON format into the
- * TSetLightLevel structure. Note: This function was planned only to standardize the data flow in the program, the
- * message content is not relevant in that case
- * @param pDataJson - cJSON* object containing the payload of the message
- * @param pOutput - pointer to TSetLightLevel structure containing extracted payload
- * @return success of the operation
- */
-bool processGetLightIntensityLevel(cJSON* pDataJson, TSetLightLevel* pOutput)
-{
-    cJSON* pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
-
-    if (pLightIntensityLevelJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no lightIntensityLevel or wrong GetLightIntensityLevel frame format");
-        return false;
-    }
-
-    pOutput->lightIntensityLevel = pLightIntensityLevelJson->valueint;
 
     return true;
 }
@@ -254,87 +167,6 @@ static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput)
     return true;
 }
 
-static bool processTimeSlotsList(cJSON* pDataJson, TTimeSlotsList* pOutput)
-{
-    LOG_INFO("Processing TimeSlotsList message"); // TODO add parsing the incoming TimeSlotsList message here
-
-    cJSON* timeSlotJson      = nullptr;
-    cJSON* timeSlotsListJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "timeSlots");
-
-    if (timeSlotsListJson == nullptr)
-    {
-        LOG_INFO("Could not parse Json, no timeSlots or wrong format");
-        return false;
-    }
-
-    TTimeSlotsList timeSlotsList = {};
-
-    cJSON_ArrayForEach(timeSlotJson, timeSlotsListJson)
-    {
-        cJSON* idJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "id");
-        if (idJson == nullptr)
-        {
-            LOG_INFO("Could not parse Json, no id in timeslot or wrong format");
-            return false;
-        }
-
-        cJSON* fromJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "from");
-        if (fromJson == nullptr)
-        {
-            LOG_INFO("Could not parse Json, 'from' time not specified or wrong format");
-            return false;
-        }
-
-        cJSON* toJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "to");
-        if (toJson == nullptr)
-        {
-            LOG_INFO("Could not parse Json, 'to' time not specified or wrong format");
-            return false;
-        }
-
-        cJSON* lightLvlJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "lightLvl");
-        if (lightLvlJson == nullptr)
-        {
-            LOG_INFO("Could not parse Json, light level not specified or wrong format");
-            return false;
-        }
-
-        cJSON* daysowJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "daysow");
-        if (daysowJson == nullptr)
-        {
-            LOG_INFO("Could not parse Json, days of week not specified or wrong format");
-            return false;
-        }
-
-        cJSON* dayOfWeekJson = nullptr;
-
-        TSingleTimer singleTimer = {};
-
-        cJSON_ArrayForEach(dayOfWeekJson, daysowJson)
-        {
-            if (dayOfWeekJson == nullptr)
-            {
-                LOG_INFO("Unexpected nullptr found while iterating through daysOfWeek array");
-                return false;
-            }
-            // singleTimer.days |= (1 << dayOfWeekJson->valueint);
-        }
-
-        singleTimer.lightLevel       = lightLvlJson->valueint;
-        singleTimer.startMinuteOfDay = extractTimeInMinutesFromString(std::string(fromJson->valuestring));
-        singleTimer.endMinuteOfDay   = extractTimeInMinutesFromString(std::string(toJson->valuestring));
-        pOutput->timersList.timers[idJson->valueint] = singleTimer;
-    }
-
-    return true;
-}
-
-static bool processTimeSlotsListResponse(cJSON* pDataJson, TTimeSlotsListResponse* pOutput)
-{
-    LOG_INFO("Processing TimeSlotsList response"); // TODO add processing of TimeSlotsList response here
-
-    return true;
-}
 /***** FRAME INTERPRETATION *****/
 
 /**
@@ -520,18 +352,6 @@ EMsgMethod extractMethodAndFillFrame(std::string newMessage, TFrame* pFrame)
             break;
         }
 
-        case EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY:
-        {
-            bool success =
-                parseWidgetSetLightIntensityLevelCommand(newMessage, &(pFrame->frameData.setLightLevelStruct));
-            if (!success)
-            {
-                LOG_INFO("Could not parse message or wrong format");
-                return EMsgMethod::MSG_METHOD_FAILED;
-            }
-            break;
-        }
-
         default:
         {
             break;
@@ -589,18 +409,6 @@ bool parseJsonRpcCommand(const std::string& inputMessage, TFrame* pFrame)
 
     switch (pFrame->msgCode)
     {
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL:
-        {
-            bool result = processSetLightIntensityLevel(pDataJson, &(pFrame->frameData.setLightLevelStruct));
-            cJSON_Delete(pDataJson);
-            if (!result)
-            {
-                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
-                return false;
-            }
-            break;
-        }
-
         case EMsgCode::MSG_STATUS_REPORT:
         {
             bool result = processStatusReport(pDataJson, &(pFrame->frameData.deviceStatusStruct));
@@ -625,19 +433,6 @@ bool parseJsonRpcCommand(const std::string& inputMessage, TFrame* pFrame)
             break;
         }
 
-        case EMsgCode::MSG_GET_LIGHT_INTENSITY_LEVEL:
-        {
-            bool result = processGetLightIntensityLevel(pDataJson, &(pFrame->frameData.setLightLevelStruct));
-            cJSON_Delete(pDataJson);
-            if (!result)
-            {
-                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
-                return false;
-            }
-            break;
-        }
-
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE:
         case EMsgCode::MSG_HEARTBEAT_RESPONSE:
         case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
         {
@@ -664,20 +459,6 @@ bool parseJsonRpcCommand(const std::string& inputMessage, TFrame* pFrame)
             break;
         }
 
-        case EMsgCode::MSG_TIME_SLOTS_LIST:
-        {
-            LOG_INFO("About to process TIME_SLOTS_LIST");
-            bool result = processTimeSlotsList(pDataJson, &(pFrame->frameData.timeSlotsList));
-            cJSON_Delete(pDataJson);
-            break;
-        }
-
-        case EMsgCode::MSG_TIME_SLOTS_LIST_RESPONSE:
-        {
-            LOG_INFO("About to process TIME_SLOTS_LIST_RESPONSE");
-            cJSON_Delete(pDataJson);
-            break;
-        }
         default:
         {
             cJSON_Delete(pDataJson);
@@ -888,65 +669,6 @@ cJSON* heartbeatToJson(const THeartbeat& heartbeatStruct)
     return pDataJson;
 }
 
-cJSON* widgetGetLightLevelToJson(const TSetLightLevel& lightLevelStruct)
-{
-    cJSON* pLightIntensityJson = cJSON_CreateObject();
-
-    if (pLightIntensityJson == nullptr)
-    {
-        LOG_INFO("Error while creating lightIntensityJson - widgetGetLightLevelToJson()");
-        return nullptr;
-    }
-
-    cJSON* pParamsJson = cJSON_CreateNumber(lightLevelStruct.lightIntensityLevel);
-    cJSON* pMethodJson = cJSON_CreateString("getLightIntensity");
-
-    if (!(cJSON_AddItemToObject(pLightIntensityJson, "params", pParamsJson)))
-    {
-        LOG_INFO("Cannot add paramsJson to lightIntensityJson");
-        cJSON_Delete(pLightIntensityJson);
-        return nullptr;
-    }
-    if (!(cJSON_AddItemToObject(pLightIntensityJson, "method", pMethodJson)))
-    {
-        LOG_INFO("Cannot add methodJson to lightIntesnityJson");
-        cJSON_Delete(pLightIntensityJson);
-        return nullptr;
-    }
-
-    return pLightIntensityJson;
-}
-
-cJSON* widgetSetLightLevelToJson(const TSetLightLevel& lightLevelStruct)
-{
-    cJSON* pLightIntensityJson = cJSON_CreateObject();
-
-    if (pLightIntensityJson == nullptr)
-    {
-        LOG_INFO("Error while creating lightIntensity Json - widgetSetLightLevelToJson()");
-        return nullptr;
-    }
-
-    cJSON* pParamsJson = cJSON_CreateNumber(lightLevelStruct.lightIntensityLevel);
-    cJSON* pMethodJson = cJSON_CreateString("setLightIntensity");
-
-    if (!(cJSON_AddItemToObject(pLightIntensityJson, "params", pParamsJson)))
-    {
-        LOG_INFO("Cannot add paramsJson to lightIntensityJson");
-        cJSON_Delete(pLightIntensityJson);
-        return nullptr;
-    }
-
-    if (!(cJSON_AddItemToObject(pLightIntensityJson, "method", pMethodJson)))
-    {
-        LOG_INFO("Cannot add methodJson to lightIntensityJson");
-        cJSON_Delete(pLightIntensityJson);
-        return nullptr;
-    }
-
-    return pLightIntensityJson;
-}
-
 /**
  * @brief dataJsonToParamsJson - function preparing paramsJSON based on provided dataJson, msgCode and msgCounter
  * (see cloud communication protocol description for reference).
@@ -1029,19 +751,11 @@ cJSON* dataJsonToRpcCommandJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msg
 
 /***** STRING GET FUNCTIONS FOR FRAME PRINTING *****/
 
-std::string getLightIntensityString(const TSetLightLevel& setLightLevelData)
-{
-    std::string output =
-        "lightIntensityLevel: " + std::to_string(setLightLevelData.lightIntensityLevel) + "\n******************\n";
-    return output;
-}
-
 std::string getStatusReportString(const TDeviceStatus& deviceStatus)
 {
     std::string statusReportString =
         "wifiConnectionState: " + getBooleanString(deviceStatus.isWiFiConnected) + "\n" +
         "bleConnectionState: " + getBooleanString(deviceStatus.isBleConnected) + "\n" +
-        "lightIntensityLevel: " + std::to_string(deviceStatus.lightIntensityLevel) + "\n" +
         "currentTimeFromStartupMs: " + std::to_string(deviceStatus.currentTimeFromStartupMs) + "\n" +
         "currentLocalTime: " + deviceStatus.currentLocalTime + "\n" +
         "firmwareVersion: " + deviceStatus.firmwareVersion + "\n";
@@ -1070,33 +784,6 @@ std::string getOtaUpdateLinkString(const TOtaUpdateLink& otaUpdateLink)
     return output;
 }
 
-// std::string getTimeSlotsListString(const TTimeSlotsList& timeSlotsList)
-// {
-//     constexpr int8_t MAX_NUM_OF_TIMERS = 42;
-//     std::string result("");
-
-//     for (int i=0; i < MAX_NUM_OF_TIMERS; i++)
-//     {
-//         if (timeSlotsList.timersList.timers[i].lightLevel != 200)
-//         {
-
-//             result += std::string("Id: %d: \n"
-//                                   "startMinuteOfDay: %d\n"
-//                                   "endMinuteOfDay: %d\n"
-//                                   "days: 0x%x\n"
-//                                   "lightLevel: %d",
-//                                   i,
-//                                   timeSlotsList.timersList.timers[i].startMinuteOfDay,
-//                                   timeSlotsList.timersList.timers[i].endMinuteOfDay,
-//                                   timeSlotsList.timersList.timers[i].days,
-//                                   timeSlotsList.timersList.timers[i].lightLevel);
-//         }
-//     }
-//     LOG_INFO("Printing Time Slots List");
-//     // TODO - decide if json_parser should get access to NVS to print the message
-//     return result;
-// }
-
 std::string TDeviceStatus::getFirmwareVersion() const
 {
     std::string output(firmwareVersion);
@@ -1119,10 +806,6 @@ void printFrame(const TFrame& frame)
 
     switch (frame.msgCode)
     {
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL:
-            dataString = getLightIntensityString(frame.frameData.setLightLevelStruct);
-            break;
-
         case EMsgCode::MSG_STATUS_REPORT:
             dataString = getStatusReportString(frame.frameData.deviceStatusStruct);
             break;
@@ -1131,7 +814,6 @@ void printFrame(const TFrame& frame)
             dataString = getHeartbeatString(frame.frameData.heartbeatStruct);
             break;
 
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE:
         case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
         case EMsgCode::MSG_HEARTBEAT_RESPONSE:
 
@@ -1140,9 +822,6 @@ void printFrame(const TFrame& frame)
 
         case EMsgCode::MSG_OTA_UPDATE_LINK:
             dataString = getOtaUpdateLinkString(frame.frameData.otaUpdateLinkStruct);
-            break;
-        case EMsgCode::MSG_TIME_SLOTS_LIST:
-            // dataString = getTimeSlotsListString(frame.frameData.timeSlotsList);
             break;
         default:
             LOG_INFO("Unknown message code, could not print the frame");
@@ -1188,26 +867,14 @@ std::string getMsgCodeString(EMsgCode msgCode)
             return std::string("MSG_HEARTBEAT");
         case EMsgCode::MSG_HEARTBEAT_RESPONSE:
             return std::string("MSG_HEARTBEAT_RESPONSE");
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL:
-            return std::string("MSG_SET_LIGHT_INTENSITY_LEVEL");
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE:
-            return std::string("MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE");
         case EMsgCode::MSG_STATUS_REPORT:
             return std::string("MSG_STATUS_REPORT");
         case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
             return std::string("MSG_STATUS_REPORT_RESPONSE");
-        case EMsgCode::MSG_GET_LIGHT_INTENSITY_LEVEL:
-            return std::string("MSG_GET_LIGHT_INTENSITY_LEVEL");
-        case EMsgCode::MSG_GET_LIGHT_INTENSITY_LEVEL_RESPONSE:
-            return std::string("MSG_GET_LIGHT_INTENSITY_LEVEL_RESPONSE");
         case EMsgCode::MSG_OTA_UPDATE_LINK:
             return std::string("MSG_OTA_UPDATE_LINK");
         case EMsgCode::MSG_OTA_UPDATE_LINK_RESPONSE:
             return std::string("MSG_OTA_UPDATE_LINK_RESPONSE");
-        case EMsgCode::MSG_TIME_SLOTS_LIST:
-            return std::string("MSG_TIME_SLOTS_LIST");
-        case EMsgCode::MSG_TIME_SLOTS_LIST_RESPONSE:
-            return std::string("MSG_TIME_SLOTS_LIST_RESPONSE");
         default:
             return std::string("MSG_UNKNOWN_MESSAGE");
     }

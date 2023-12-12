@@ -18,18 +18,12 @@ namespace json_parser
 
 enum class EMsgCode : uint8_t
 {
-    MSG_SET_LIGHT_INTENSITY_LEVEL          = 1,
-    MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE = 2,
-    MSG_STATUS_REPORT                      = 3,
-    MSG_STATUS_REPORT_RESPONSE             = 4,
-    MSG_HEARTBEAT                          = 5,
-    MSG_HEARTBEAT_RESPONSE                 = 6,
-    MSG_GET_LIGHT_INTENSITY_LEVEL          = 7,
-    MSG_GET_LIGHT_INTENSITY_LEVEL_RESPONSE = 8,
-    MSG_OTA_UPDATE_LINK                    = 9,
-    MSG_OTA_UPDATE_LINK_RESPONSE           = 10,
-    MSG_TIME_SLOTS_LIST                    = 11,
-    MSG_TIME_SLOTS_LIST_RESPONSE           = 12
+    MSG_STATUS_REPORT            = 1,
+    MSG_STATUS_REPORT_RESPONSE   = 2,
+    MSG_HEARTBEAT                = 3,
+    MSG_HEARTBEAT_RESPONSE       = 4,
+    MSG_OTA_UPDATE_LINK          = 5,
+    MSG_OTA_UPDATE_LINK_RESPONSE = 6
 };
 
 enum class EMsgMethod : uint8_t
@@ -39,11 +33,6 @@ enum class EMsgMethod : uint8_t
     MSG_METHOD_SET_LIGHT_INTENSITY = 3,
     MSG_METHOD_UNKNOWN             = 4,
     MSG_METHOD_FAILED              = 5
-};
-
-struct TSetLightLevel
-{
-    uint8_t lightIntensityLevel;
 };
 
 struct THeartbeat
@@ -60,7 +49,6 @@ struct TDeviceStatus
 {
     bool        isWiFiConnected;
     bool        isBleConnected;
-    uint8_t     lightIntensityLevel;
     uint32_t    currentTimeFromStartupMs;
     char        firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];
     char        currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
@@ -69,50 +57,12 @@ struct TDeviceStatus
     std::string getCurrentLocalTime() const;
 };
 
-struct TRepeatDaysOfWeek
-{
-    uint8_t monday : 1;
-    uint8_t tuesday : 1;
-    uint8_t wednesday : 1;
-    uint8_t thursday : 1;
-    uint8_t friday : 1;
-    uint8_t saturday : 1;
-    uint8_t sunday : 1;
-};
-
-struct TSingleTimer
-{
-    uint16_t          startMinuteOfDay;
-    uint16_t          endMinuteOfDay;
-    TRepeatDaysOfWeek days;
-    uint8_t           lightLevel;
-};
-
-struct TAllTimers
-{
-    TSingleTimer timers[42];
-};
-
-struct TTimeSlotsList
-{
-    bool       timeSlotListUpdated;
-    TAllTimers timersList;
-};
-
-struct TTimeSlotsListResponse
-{
-    bool     ACK;
-    uint32_t id;
-};
-
 union TFrameData
 {
-    TSetLightLevel                    setLightLevelStruct;
     TDeviceStatus                     deviceStatusStruct;
     THeartbeat                        heartbeatStruct;
     TResponse                         responseStruct;
     prot::ota_perform::TOtaUpdateLink otaUpdateLinkStruct;
-    TTimeSlotsList                    timeSlotsList;
 };
 
 struct TMessage
@@ -203,8 +153,6 @@ bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);
 bool        processGetLightIntensityLevel(cJSON* dataJson, TSetLightLevel* output);
 bool        processResponse(cJSON* dataJson, TResponse* output);
 static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
-static bool processTimeSlotsList(cJSON* pDataJson, TTimeSlotsList* pOutput);
-static bool processTimeSlotsListResponse(cJSON* pDataJson, TTimeSlotsListResponse* pOutput);
 cJSON*      preprocessInputMessage(const std::string& inputMessage);
 EMsgMethod  extractMsgMethod(const std::string& inputMessage);
 bool        getDataJsonAndInitFrame(const std::string& inputMessage, TFrame* frame, cJSON** dataJson);
