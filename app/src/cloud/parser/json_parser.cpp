@@ -22,8 +22,21 @@ namespace json_parser
 const char* FIRMWARE_INFO_KEY = "firmware_info";
 
 #if !TESTING // directive added to avoid double declaration of function
-static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
+static cJSON*      preprocessInputMessage(const std::string& inputMessage);
+static bool        parseJsonRpcCommand(const std::string& inputMessage, TFrame* pFrame);
+static cJSON*      dataJsonToRpcCommandJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
+static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus);
+static cJSON*      heartbeatToJson(const THeartbeat& heartbeatStruct);
+static bool        processHeartbeat(cJSON* pDataJson, THeartbeat* pOutput);
+static bool        processResponse(cJSON* pDataJson, TResponse* pOutput);
 static bool        processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
+static bool        getDataJsonAndInitFrame(const std::string& inputMessage, TFrame* pFrame, cJSON** ppDataJson);
+static EMsgMethod  extractMsgMethod(const std::string& inputMessage);
+static cJSON*      preprocessInputMessage(const std::string& inputMessage);
+static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus);
+static cJSON*      heartbeatToJson(const THeartbeat& heartbeatStruct);
+static cJSON*      dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
+static cJSON*      dataJsonToRpcCommandJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
 static std::string getStatusReportString(const TDeviceStatus& deviceStatus);
 static std::string getResponseString(const TResponse& responseData);
 static std::string getConnectionString(bool status);
@@ -98,6 +111,52 @@ bool processStatusReport(cJSON* pDataJson, TDeviceStatus* pOutput)
 }
 
 /**
+ * @brief processHeartbeat - function responsible for processing heartbeat message. Function added to enable handling of
+ * full protocol, it should not be needed in ESP32 (since cloud should not send that message)
+ * @param pDataJson - cJSON* object containing payload of the message
+ * @param pOutput - pointer to THeartbeat structure containing extracted payload
+ * @return boolean value - true if JSON was parsed correctly
+ */
+bool processHeartbeat(cJSON* pDataJson, THeartbeat* pOutput)
+{
+    cJSON* pHeartbeatJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "heartbeat");
+
+    if (pHeartbeatJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no heartbeat or wrong format");
+        return false;
+    }
+
+    pOutput->heartbeat = cJSON_IsTrue(pHeartbeatJson);
+
+    return true;
+}
+
+/**
+ * @brief processResponse - function parsing any of the response messages (e.g. response to Heartbeat message) into
+ * TResponse structure All response messages have the same structure, therefore they do not need separate functions for
+ * parsing
+ * @param pDataJson - cJSON* object containing the payload of the message
+ * @param pOutput - pointer to TReponse structure containing extracted payload
+ * @return boolean value representing succes of the operation
+ */
+
+bool processResponse(cJSON* pDataJson, TResponse* pOutput)
+{
+    cJSON* pAckJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "ACK");
+
+    if (pAckJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no ACK or wrong format");
+        return false;
+    }
+
+    pOutput->ACK = cJSON_IsTrue(pAckJson);
+
+    return true;
+}
+
+/**
  * @brief processOtaUpdateLink - function parsing message with a link from which OTA shall be performed
  * @param pDataJson - cJSON* object containing the payload of the message
  * @param pOutput - pointer to TOtaUpdateLink structure containing extracted payload
@@ -115,6 +174,69 @@ static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput)
 
     strcpy(pOutput->firmwareLink, pOtaUpdateLinkJson->valuestring);
 
+    return true;
+}
+
+/***** FRAME INTERPRETATION *****/
+
+/**
+ * @brief getDataJsonAndInitFrame - function extracting the dataJson - payload of the message with the
+ * message-type-specific data and initializing the generic fields of the frame - msgCode and msgCounter NOTE: after
+ * executing this function, it is it's user responsibility to free the memory allocated for dataJson object after it
+ * will no longer be used - remember to call cJSON_Delete(dataJson)
+ * @param inputMessage - std::string with the message to be parsed
+ * @param pFrame - pointer to TFrame structure to store extracted data
+ * @param ppDataJson - pointer to cJSON* object to store extracted dataJson object
+ * @return boolean value representing success of the operation
+ */
+
+bool getDataJsonAndInitFrame(const std::string& inputMessage, TFrame* pFrame, cJSON** ppDataJson)
+{
+    cJSON* pRpcJson = preprocessInputMessage(inputMessage);
+
+    if (pRpcJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON");
+        return false;
+    }
+
+    cJSON* pFrameJson = cJSON_GetObjectItemCaseSensitive(pRpcJson, "params");
+
+    if (pFrameJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no params or wrong format");
+        cJSON_Delete(pRpcJson);
+        return false;
+    }
+    cJSON* pMsgCodeJson = cJSON_GetObjectItemCaseSensitive(pFrameJson, "msgCode");
+
+    if (pMsgCodeJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no msgCode or wrong format");
+        cJSON_Delete(pRpcJson);
+        return false;
+    }
+    cJSON* pMsgCounterJson = cJSON_GetObjectItemCaseSensitive(pFrameJson, "msgCounter");
+
+    if (pMsgCounterJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no msgCounter or wrong format");
+        cJSON_Delete(pRpcJson);
+        return false;
+    }
+    *ppDataJson = cJSON_DetachItemFromObjectCaseSensitive(pFrameJson, "data");
+
+    if (*ppDataJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no dataJson or wrong format");
+        cJSON_Delete(pRpcJson);
+        return false;
+    }
+
+    pFrame->msgCode    = static_cast<EMsgCode>(pMsgCodeJson->valueint);
+    pFrame->msgCounter = pMsgCounterJson->valueint;
+
+    cJSON_Delete(pRpcJson);
     return true;
 }
 
@@ -175,6 +297,81 @@ bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvi
 }
 
 /**
+ * @brief extractMsgMethod - function recognizing message method (e.g. RPC Command, or message from the widget) based on
+ * the provided std::string with a message in JSON format
+ * @param inputMessage - std::string containing message to identify
+ * @return EMsgMethod with the method recognized by the function
+ */
+
+EMsgMethod extractMsgMethod(const std::string& inputMessage)
+{
+    cJSON* pMessageJson = preprocessInputMessage(inputMessage);
+
+    if (pMessageJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON");
+        return EMsgMethod::MSG_METHOD_FAILED;
+    }
+
+    cJSON* pMethodJson = cJSON_GetObjectItemCaseSensitive(pMessageJson, "method");
+
+    if (pMethodJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no method or wrong format");
+        cJSON_Delete(pMessageJson);
+        return EMsgMethod::MSG_METHOD_FAILED;
+    }
+
+    std::string methodString = std::string(pMethodJson->valuestring);
+
+    cJSON_Delete(pMessageJson);
+
+    if (methodString == "rpcCommand")
+    {
+        return EMsgMethod::MSG_METHOD_RPC_COMMAND;
+    }
+    else if (methodString == "setLightIntensity")
+    {
+        return EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY;
+    }
+    else if (methodString == "getLightIntensity")
+    {
+        return EMsgMethod::MSG_METHOD_GET_LIGHT_INTENSITY;
+    }
+    else
+    {
+        return EMsgMethod::MSG_METHOD_UNKNOWN;
+    }
+}
+
+EMsgMethod extractMethodAndFillFrame(std::string newMessage, TFrame* pFrame)
+{
+    EMsgMethod msgMethod = extractMsgMethod(newMessage);
+
+    switch (msgMethod)
+    {
+        case EMsgMethod::MSG_METHOD_RPC_COMMAND:
+        {
+            bool success = parseJsonRpcCommand(newMessage, pFrame);
+            if (!success)
+            {
+                LOG_INFO("It was not possible to parse the incoming Rpc Command");
+                return EMsgMethod::MSG_METHOD_FAILED;
+            }
+
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    return msgMethod;
+}
+
+/**
  * @brief preprocessInputMessage - function parsing the message in json format into cJSON* object and checking for
  * errors. NOTE: after executing this function, it is it's user responsibility to free the memory allocated for returned
  * cJSON object after it will no longer be used - remember to call cJSON_Delete(returnedCjsonObject)
@@ -197,6 +394,90 @@ cJSON* preprocessInputMessage(const std::string& inputMessage)
     }
 
     return pInputMessageJson;
+}
+
+/**
+ * @brief parseJsonRpcCommand - function filling the TFrame structure based on the inputMessage, assuming, it contains
+ * RPC command
+ * @param inputMessage - std::string with input message to analyze
+ * @param pFrame - structure for storing the extracted data
+ * @return boolean value representing the success of the operation
+ */
+bool parseJsonRpcCommand(const std::string& inputMessage, TFrame* pFrame)
+{
+    cJSON* pDataJson = nullptr;
+    bool   result    = getDataJsonAndInitFrame(inputMessage, pFrame, &pDataJson);
+    if (!result)
+    {
+        LOG_INFO("Error has occured while extracting frame");
+        if (pDataJson != nullptr)
+        {
+            cJSON_Delete(pDataJson);
+        }
+        return false;
+    }
+
+    switch (pFrame->msgCode)
+    {
+        case EMsgCode::MSG_STATUS_REPORT:
+        {
+            bool result = processStatusReport(pDataJson, &(pFrame->frameData.deviceStatusStruct));
+            cJSON_Delete(pDataJson);
+            if (!result)
+            {
+                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
+                return false;
+            }
+            break;
+        }
+
+        case EMsgCode::MSG_HEARTBEAT:
+        {
+            bool result = processHeartbeat(pDataJson, &(pFrame->frameData.heartbeatStruct));
+            cJSON_Delete(pDataJson);
+            if (!result)
+            {
+                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
+                return false;
+            }
+            break;
+        }
+
+        case EMsgCode::MSG_HEARTBEAT_RESPONSE:
+        case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
+        {
+            bool result = processResponse(pDataJson, &(pFrame->frameData.responseStruct));
+            cJSON_Delete(pDataJson);
+            if (!result)
+            {
+                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
+                return false;
+            }
+            break;
+        }
+
+        case EMsgCode::MSG_OTA_UPDATE_LINK:
+        {
+            LOG_INFO("About to process OTA_UPDATE_LINK"); // TODO complete processing OTA_UPDATE_LINK message
+            bool result = processOtaUpdateLink(pDataJson, &(pFrame->frameData.otaUpdateLinkStruct));
+            cJSON_Delete(pDataJson);
+            if (!result)
+            {
+                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
+                return false;
+            }
+            break;
+        }
+
+        default:
+        {
+            cJSON_Delete(pDataJson);
+            LOG_INFO("Unknown command received: %d", pFrame->msgCode);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /***** MESSAGE PREPARATION *****/
@@ -445,6 +726,86 @@ cJSON* deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter
     return pOutputJson;
 }
 
+/**
+ * @brief dataJsonToParamsJson - function preparing paramsJSON based on provided dataJson, msgCode and msgCounter
+ * (see cloud communication protocol description for reference).
+ * NOTE: after calling the function, it is the user's responsibility to free the memory allocated for the returned
+ * cJSON* object. Call cJSON_Delete(returnedValue) after returned cJSON* will no longer be used
+ * @param pDataJson - cJSON* object with dataJson
+ * @param msgCode - msgCode to add to paramsJson
+ * @param msgCounter - message number to add to paramsJson
+ * @return cJSON* object with paramsJson.
+ */
+cJSON* dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter)
+{
+    cJSON* pParamsJson = cJSON_CreateObject();
+
+    if (pParamsJson == nullptr)
+    {
+        LOG_INFO("Error while creating paramsJson - dataJsonToParamsJson()");
+        return nullptr;
+    }
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "data", pDataJson)))
+    {
+        LOG_INFO("Cannot add dataJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    cJSON* pMsgCodeJson    = cJSON_CreateNumber(static_cast<int>(msgCode));
+    cJSON* pMsgCounterJson = cJSON_CreateNumber(msgCounter);
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "msgCode", pMsgCodeJson)))
+    {
+        LOG_INFO("Cannot add msgCodeJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "msgCounter", pMsgCounterJson)))
+    {
+        LOG_INFO("Cannot add msgCounterJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    return pParamsJson;
+}
+
+/**
+ * @brief dataJsonToRpcCommandJson - function creating RpcCommandJson (the most generic JSON in that protocol) from
+ * dataJson. NOTE: after calling the function, it is the user's responsibility to free the memory allocated for the
+ * returned cJSON* object. Call cJSON_Delete(returnedValue) after returned cJSON* will no longer be used
+ * @param pDataJson - cJSON* object with dataJson
+ * @param msgCode - msgCode to add to paramsJson
+ * @param msgCounter - msgCounter to add to paramsJson
+ * @return
+ */
+
+cJSON* dataJsonToRpcCommandJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter)
+{
+    cJSON* pParamsJson = dataJsonToParamsJson(pDataJson, msgCode, msgCounter);
+
+    if (pParamsJson == nullptr)
+    {
+        LOG_INFO("Error while creating paramsJson - dataJsonToRpcCommandJson()");
+        return nullptr;
+    }
+
+    cJSON* pRpcCommandJson = cJSON_CreateObject();
+
+    if (!(cJSON_AddItemToObject(pRpcCommandJson, "params", pParamsJson)))
+    {
+        LOG_INFO("Cannot add paramsJson to rpcCommandJson");
+        cJSON_Delete(pParamsJson);
+        cJSON_Delete(pRpcCommandJson);
+        return nullptr;
+    }
+
+    return pRpcCommandJson;
+}
+
 /***** STRING GET FUNCTIONS FOR FRAME PRINTING *****/
 
 std::string getStatusReportString(const TDeviceStatus& deviceStatus)
@@ -487,6 +848,87 @@ std::string TDeviceStatus::getCurrentLocalTime() const
     return output;
 }
 
+/***** FRAME PRINTING *****/
+
+void printFrame(const TFrame& frame)
+{
+    std::string dataString;
+
+    switch (frame.msgCode)
+    {
+        case EMsgCode::MSG_STATUS_REPORT:
+            dataString = getStatusReportString(frame.frameData.deviceStatusStruct);
+            break;
+
+        case EMsgCode::MSG_HEARTBEAT:
+            dataString = getHeartbeatString(frame.frameData.heartbeatStruct);
+            break;
+
+        case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
+        case EMsgCode::MSG_HEARTBEAT_RESPONSE:
+
+            dataString = getResponseString(frame.frameData.responseStruct);
+            break;
+
+        case EMsgCode::MSG_OTA_UPDATE_LINK:
+            dataString = getOtaUpdateLinkString(frame.frameData.otaUpdateLinkStruct);
+            break;
+        default:
+            LOG_INFO("Unknown message code, could not print the frame");
+    }
+
+    LOG_INFO(
+        "\n\n"
+        "******************\n"
+        "msgCounter: %d\n"
+        "msgCode: %d\n"
+        "%s",
+        frame.msgCounter,
+        frame.msgCode,
+        dataString.c_str());
+}
+
+/***** HELPER FUNCTIONS *****/
+
+std::string getMsgMethodString(EMsgMethod msgMethod)
+{
+    switch (msgMethod)
+    {
+        case EMsgMethod::MSG_METHOD_FAILED:
+            return std::string("MSG_METHOD_FAILED");
+        case EMsgMethod::MSG_METHOD_GET_LIGHT_INTENSITY:
+            return std::string("MSG_METHOD_GET_LIGHT_INTENSITY");
+        case EMsgMethod::MSG_METHOD_RPC_COMMAND:
+            return std::string("MSG_METHOD_RPC_COMMAND");
+        case EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY:
+            return std::string("MSG_METHOD_SET_LIGHT_INTENSITY");
+        case EMsgMethod::MSG_METHOD_UNKNOWN:
+            return std::string("MSG_METHOD_UNKNOWN");
+        default:
+            return std::string("MSG_METHOD_ERROR");
+    }
+}
+
+std::string getMsgCodeString(EMsgCode msgCode)
+{
+    switch (msgCode)
+    {
+        case EMsgCode::MSG_HEARTBEAT:
+            return std::string("MSG_HEARTBEAT");
+        case EMsgCode::MSG_HEARTBEAT_RESPONSE:
+            return std::string("MSG_HEARTBEAT_RESPONSE");
+        case EMsgCode::MSG_STATUS_REPORT:
+            return std::string("MSG_STATUS_REPORT");
+        case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
+            return std::string("MSG_STATUS_REPORT_RESPONSE");
+        case EMsgCode::MSG_OTA_UPDATE_LINK:
+            return std::string("MSG_OTA_UPDATE_LINK");
+        case EMsgCode::MSG_OTA_UPDATE_LINK_RESPONSE:
+            return std::string("MSG_OTA_UPDATE_LINK_RESPONSE");
+        default:
+            return std::string("MSG_UNKNOWN_MESSAGE");
+    }
+}
 
 std::string getConnectionString(bool status)
 {

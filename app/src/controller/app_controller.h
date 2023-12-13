@@ -53,7 +53,7 @@ private:
 
     bool        executeEvent(TEventControl& eventControl);
     static bool executeEvent_dummy(const TDummyEventData& eventData);
-    static bool executeEvent_performConfigurationResetAndRestart();
+    static bool executeEvent_performDeviceRestart();
     // bool executeEvent_wifiControllerConnectToAccessPoint(const TWiFiControllerConnectToAccessPointEventData
     // &eventData) const;
     bool executeEvent_wifiControllerDisconnect() const;

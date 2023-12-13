@@ -114,8 +114,7 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(
     }
     else
     {
-        LOG_WARNING("Default cloud address used");
-        mqttConfig.uri = DEFAULT_CLOUD_ADDRESS;
+        LOG_ERROR("No cloud address provided");
     }
 
     if (credentials.isSetCloudDeviceId())
@@ -124,8 +123,7 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(
     }
     else
     {
-        LOG_WARNING("Default cloud device id used");
-        mqttConfig.client_id = DEFAULT_DEVICE_ID;
+        LOG_ERROR("No cloud device id provided");
     }
 
     if (credentials.isSetCloudMqttUsername())
@@ -134,12 +132,12 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(
     }
     else
     {
-        LOG_WARNING("Default cloud mqtt username used");
-        mqttConfig.username = DEFAULT_MQTT_USERNAME;
+        LOG_ERROR("No cloud mqtt username provided");
     }
 
-    // TODO: turn on certificate verification after adding proper CA certificate in the Azure Device Provisioning
-    // Service mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
+    // TODO: turn on certificate verification after adding proper CA certificate in the Azure Device Provisioning in
+    // menuconfig (Allow insecure options)
+    // mqttConfig.cert_pem = DEFAULT_SERVER_PUBLIC_CERT;
 
     if (cloudCertificatePack.isSetFullChainCertificate())
     {
@@ -147,8 +145,7 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(
     }
     else
     {
-        LOG_WARNING("Default device public cert");
-        mqttConfig.client_cert_pem = DEFAULT_CLIENT_PUBLIC_CERT;
+        LOG_ERROR("No device public cert provided");
     }
 
     if (cloudCertificatePack.isSetPrivateKey())
@@ -157,8 +154,7 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(
     }
     else
     {
-        LOG_WARNING("Default device private key");
-        mqttConfig.client_key_pem = DEFAULT_CLIENT_PRIVATE_KEY;
+        LOG_ERROR("No device private key provided");
     }
 
     return mqttConfig;

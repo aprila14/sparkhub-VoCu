@@ -2,26 +2,21 @@ import os.path
 
 import asyncio
 
-import time
-import datetime
 from datetime import datetime
 
-from cobs import cobs
-
-from ble_protocol_control import prepare_get_wifi_mac_command, prepare_send_certificates_command
-
+from ble_protocol_control import prepare_get_wifi_mac_command, handle_get_wifi_mac_response, response_preprocessing, prepare_send_certificates_command
+from cryptography_handler import generate_device_certificates
 from utils import chunk_byte_array
+
+from configuration import OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME, CERTS_PRIVATE_DIRECTORY, CERTS_DIRECTORY
 
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
+NO_DATA_RECEIVED = ''
+
 # Program global variables
-NOTIFY_RECEIVED_DATA = ''
-
-output_directory = 'Program_output'
-
-ble_log_file_name = 'log_data.txt'
-
+notify_received_data = NO_DATA_RECEIVED
 
 async def scan_devices():
     print("Scanning available devices")
@@ -40,6 +35,21 @@ async def find_ble_device(device_address):
         print(f'Could not find device with address: {device_address}')
         return
     return device
+
+async def send_get_wifi_mac_command(ble_client, characteristic_RX_uuid):
+    payload = prepare_get_wifi_mac_command()
+
+    await ble_client.write_gatt_char(characteristic_RX_uuid, payload, response=True)
+
+async def send_device_certificates(ble_client, characteristic_RX_uuid, full_chain_cert_path, private_key_path):
+    certificates = prepare_send_certificates_command(full_chain_cert_path, private_key_path)
+
+    chunk_size = 250
+    chunks = chunk_byte_array(certificates, chunk_size)
+
+    for chunk in chunks:
+        print("Sending chunk:", chunk)
+        await ble_client.write_gatt_char(characteristic_RX_uuid, chunk, response=False)
 
 
 def get_device_characteristics(ble_client):
@@ -67,55 +77,55 @@ def get_device_characteristics(ble_client):
 
 
 def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearray):
-    global NOTIFY_RECEIVED_DATA
+    global notify_received_data
 
-    data.remove(0) # message start sign
-    data.remove(0) # message end sign
+    decoded_payload = response_preprocessing(data)
 
-    decoded_payload = cobs.decode(data)
+    mac_address = handle_get_wifi_mac_response(decoded_payload)
 
-    print(f'Received data: {decoded_payload.hex()}')
+    notify_received_data = mac_address
 
-    if os.path.isfile(os.path.join(output_directory, ble_log_file_name)):
-        with open(os.path.join(output_directory, ble_log_file_name), 'a') as f:
+    if os.path.isfile(os.path.join(OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME)):
+        with open(os.path.join(OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME), 'a') as f:
+            f.writelines(str(datetime.now()))
+            f.writelines(' - ')
             f.writelines(decoded_payload.hex())
             f.write('\n')
 
 
-async def connect_to_notifications(ble_client, characteristic_TX_uuid, characteristic_RX_uuid):
-    global NOTIFY_RECEIVED_DATA
+async def handle_device_communication(ble_client, characteristic_RX_uuid):
+    global notify_received_data
 
-    if not os.path.isdir(output_directory):
-        os.mkdir(output_directory)
+    if not os.path.isdir(OUTPUT_DIRECTORY):
+        os.mkdir(OUTPUT_DIRECTORY)
 
-    if not os.path.isfile(os.path.join(output_directory, ble_log_file_name)):
-        with open(os.path.join(output_directory, ble_log_file_name), 'w') as f:
+    if not os.path.isfile(os.path.join(OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME)):
+        with open(os.path.join(OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME), 'w') as f:
             f.write("LOGGER file!\n")
 
-    last_notify_received_data = ''
+    await send_get_wifi_mac_command(ble_client, characteristic_RX_uuid)
 
-    print("Connected to device. Connecting for notifications:")
+    # wait for MAC address from the device
+    while notify_received_data == NO_DATA_RECEIVED:
+        await asyncio.sleep(0.1)
 
-    await ble_client.start_notify(characteristic_TX_uuid, notification_handler)
+    print(f"handle_device_communication - data received: {notify_received_data}")
 
-    print("Notify started")
+    generate_device_certificates(notify_received_data)
 
-    certificates = prepare_send_certificates_command()
+    FULLCHAIN_CERTIFICATE_PATH = f"{CERTS_DIRECTORY}/{notify_received_data}-full-chain.cert.pem"
+    PRIVATE_KEY_PATH = f"{CERTS_PRIVATE_DIRECTORY}/{notify_received_data}.key.pem"
 
-    chunk_size = 250
-    chunks = chunk_byte_array(certificates, chunk_size)
-
-    # payload = prepare_get_wifi_mac_command()
-
-    for chunk in chunks:
-        print("Sending chunk:", chunk)
-        await ble_client.write_gatt_char(characteristic_RX_uuid, chunk, response=False)
+    # reset receive status
+    notify_received_data = NO_DATA_RECEIVED
+    
+    await send_device_certificates(ble_client, characteristic_RX_uuid, FULLCHAIN_CERTIFICATE_PATH, PRIVATE_KEY_PATH)
 
     while True:
         print("Waiting for data")
 
-        if last_notify_received_data != NOTIFY_RECEIVED_DATA:
-            last_notify_received_data = NOTIFY_RECEIVED_DATA
+        if notify_received_data != NO_DATA_RECEIVED:
+            notify_received_data = NO_DATA_RECEIVED
 
             print("data incoming")
 
@@ -131,7 +141,7 @@ async def handle_ble_device(selected_device_address):
 
         # available_services_and_characteristics = await get_services_and_characteristics(ble_client)
         available_services_and_characteristics = get_device_characteristics(ble_client)
-        service_selected = int(input("Choose your Nordic UART Service service: "))
+        service_selected = 0 # default is 0, to be configured from terminal if required
 
         if 'TX' in available_services_and_characteristics[service_selected]['characteristics'][0]['characteristic']:
             characteristic_RX_uuid = available_services_and_characteristics[service_selected]['characteristics'][1][
@@ -147,7 +157,13 @@ async def handle_ble_device(selected_device_address):
         print(f"characteristic_RX_uuid-{characteristic_RX_uuid}")
         print(f"characteristic_TX_uuid-{characteristic_TX_uuid}")
 
-        await connect_to_notifications(ble_client, characteristic_TX_uuid, characteristic_RX_uuid)
+        print("Connected to device. Connecting for notifications")
+
+        await ble_client.start_notify(characteristic_TX_uuid, notification_handler)
+
+        print("Notify started")
+
+        await handle_device_communication(ble_client, characteristic_RX_uuid)
     except Exception as e:
         print(e)
     finally:

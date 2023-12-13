@@ -11,7 +11,6 @@ static const char* LOG_TAG = "Main";
 #include "config_nvs.h"
 #include "console_control.h"
 #include "defines.h"
-#include "hardware_definitions.h"
 #include "hw_misc.h"
 #include "ntp_client.h"
 #include "reset_button_handler.h"
@@ -24,9 +23,8 @@ void temporaryDevelopmentCode()
     // just some quick code for testing purposes
     LOG_WARNING("Running temporaryDevelopmentCode!");
 
-    bool state = pConfig->getConfigurationFinishedState();
-    LOG_INFO("Configuration finished state = %d", state);
-    pConfig->setConfigurationFinishedState(true);
+    // Set BLE configuration state to finished
+    pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
 
     {
         prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
@@ -47,8 +45,8 @@ static void configureConnectionToLteModem()
 {
     LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
     TWiFiCredentials newWifiCredentials;
-    newWifiCredentials.setSsid("lsawicki-laptop");     // newWifiCredentials.setSsid("4G UFI-4205");
-    newWifiCredentials.setPassword("SimpleAndClever"); // newWifiCredentials.setPassword("1234567890");
+    newWifiCredentials.setSsid("4G UFI-4205");
+    newWifiCredentials.setPassword("1234567890");
     pConfig->setWifiCredentials(newWifiCredentials);
 }
 
@@ -70,7 +68,7 @@ static void configureCloudDeviceIdIfNotSet(WiFiController& wifiController)
 
         char cloudDeviceId[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH] = {};
 
-        sprintf(cloudDeviceId, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        sprintf(cloudDeviceId, "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
         newCloudCredentials.setCloudDeviceId(cloudDeviceId);
 
@@ -127,22 +125,18 @@ void initCommonGlobalModules()
 
     configureCloudDeviceIdIfNotSet(wifiController);
 
-    // If cloud certificates are stored in flash, then the BLE tasks will not start
-    // It's important to keep that in mind, in case of failed provisioning they should be removed
-    // Otherwise it would be possible to brick the device
-    const TCertificatePack& certificatePack = pConfig->getCertificatePack();
-    const bool isCertificateSet = (certificatePack.isSetFullChainCertificate() && certificatePack.isSetPrivateKey());
+    const EBleConfigurationStatus state = pConfig->getBleConfigurationStatus();
+    LOG_INFO("BLE Configuration status = %d", state);
 
     // run modules which are tasks
-    if (!isCertificateSet)
+    if (state == EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT)
     {
-        LOG_WARNING("Certificates not found");
+        LOG_WARNING("Starting BLE configuration");
         bleuartDriver.runTask(); // keep it first, there is also some initialization there, that I'm not sure about
         bleController.runTask();
     }
     else
     {
-        LOG_INFO("Certificates set in the flash");
         wifiController.runTask();
         wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
         ntpClient.runTask();

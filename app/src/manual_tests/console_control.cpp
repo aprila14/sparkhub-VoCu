@@ -122,10 +122,6 @@ static EShouldQuitConsole executeCommandFromConsole()
             LOG_INFO("%s", app::pAppController->getNtpClient()->getCurrentLocalTimeString(UtcOffset::OFFSET_UTC_2));
             break;
         }
-        case '0' ... '9':
-        {
-            break;
-        }
 
         case 'd':
         {
