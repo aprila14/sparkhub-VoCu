@@ -76,6 +76,12 @@ public:
      */
     void handleIncomingData(const uint8_t* pData, uint32_t dataSize);
 
+    /**
+     * @brief free dynamic buffers if they will no longer be used
+     *
+     */
+    void cleanup();
+
 private:
     BleuartDriver(const BleuartDriver&) = delete;
 
@@ -157,6 +163,7 @@ private:
 
     bool m_isSynced; ///< whether BLE controller/host are synced and communication can be started - TODO confirm it
     bool m_isClientConnected;                     ///< True if BLE client is connected (e.g. PC or Android app)
+    bool m_buffersClearedFlag;                    ///< flag set to avoid double freeing the dynamic buffers
     SemaphoreHandle_t m_clientConnectedSemaphore; ///< Sempaphore given when the BLE client gets connected
 };
 

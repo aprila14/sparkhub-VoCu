@@ -137,6 +137,7 @@ void initCommonGlobalModules()
     }
     else
     {
+        bleuartDriver.cleanup();
         wifiController.runTask();
         wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
         ntpClient.runTask();

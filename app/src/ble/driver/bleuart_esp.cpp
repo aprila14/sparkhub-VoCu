@@ -86,7 +86,11 @@ uint8_t* bleuartTxData = nullptr;
 
 BleuartDriver* g_pBleuartDriver = nullptr;
 
-BleuartDriver::BleuartDriver() : m_txLoopTaskHandle(nullptr), m_isSynced(false), m_isClientConnected(false)
+BleuartDriver::BleuartDriver() :
+    m_txLoopTaskHandle(nullptr),
+    m_isSynced(false),
+    m_isClientConnected(false),
+    m_buffersClearedFlag(false)
 {
     bleuartRxData = new uint8_t[BLEUART_RX_CIRCULAR_BUFFER_SIZE];
     if (bleuartRxData == nullptr)
@@ -118,11 +122,14 @@ BleuartDriver::BleuartDriver() : m_txLoopTaskHandle(nullptr), m_isSynced(false),
 
 BleuartDriver::~BleuartDriver()
 {
-    delete bleuartRxData;
-    delete bleuartTxData;
+    if (!m_buffersClearedFlag)
+    {
+        delete bleuartRxData;
+        delete bleuartTxData;
 
-    delete m_rxBuffer;
-    delete m_txBuffer;
+        delete m_rxBuffer;
+        delete m_txBuffer;
+    }
 }
 
 bool BleuartDriver::writeData(const uint8_t* pData, uint32_t dataLength)
@@ -571,6 +578,19 @@ void BleuartDriver::_performTxLoop()
         }
 
         xSemaphoreTake(m_txDataAvailable, portMAX_DELAY);
+    }
+}
+
+void BleuartDriver::cleanup()
+{
+    if (!m_buffersClearedFlag)
+    {
+        delete bleuartRxData;
+        delete bleuartTxData;
+
+        delete m_rxBuffer;
+        delete m_txBuffer;
+        m_buffersClearedFlag = true;
     }
 }
 
