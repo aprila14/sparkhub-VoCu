@@ -45,8 +45,8 @@ static void configureConnectionToLteModem()
 {
     LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
     TWiFiCredentials newWifiCredentials;
-    newWifiCredentials.setSsid("lsawicki-laptop");     // newWifiCredentials.setSsid("4G UFI-4205");
-    newWifiCredentials.setPassword("SimpleAndClever"); // newWifiCredentials.setPassword("1234567890");
+    newWifiCredentials.setSsid("4G UFI-4205");
+    newWifiCredentials.setPassword("1234567890");
     pConfig->setWifiCredentials(newWifiCredentials);
 }
 

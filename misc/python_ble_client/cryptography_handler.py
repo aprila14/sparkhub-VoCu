@@ -9,7 +9,9 @@ from datetime import datetime, timedelta
 
 import os.path
 
-from defines import ROOT_CA_NAME, INTERMEDIATE_CERTIFICATE_NAME, INTERMEDIATE_KEY_NAME, CERTS_PRIVATE_DIRECTORY, CERTS_CSR_DIRECTORY, CERTS_DIRECTORY
+from configuration import ( ROOT_CA_NAME, INTERMEDIATE_CERTIFICATE_NAME, INTERMEDIATE_KEY_NAME, 
+                                                  INTERMEDIATE_KEY_PASSWORD, CERTS_PRIVATE_DIRECTORY, CERTS_CSR_DIRECTORY, 
+                                                  CERTS_DIRECTORY, DEVICE_CERTIFICATE_EXPIRATION_TIME_DAYS )
 
 def generate_private_key():
     key = rsa.generate_private_key(
@@ -60,7 +62,7 @@ def sign_device_certificate(mac_address):
     with open(f"{CERTS_PRIVATE_DIRECTORY}/{INTERMEDIATE_KEY_NAME}", "rb") as ca_key_file:
         ca_private_key = serialization.load_pem_private_key(
             ca_key_file.read(),
-            password = b'1234',  # Use None if the key is not encrypted
+            password = INTERMEDIATE_KEY_PASSWORD,
             backend = default_backend()
         )
 
@@ -76,7 +78,7 @@ def sign_device_certificate(mac_address):
         .public_key(csr.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(datetime.utcnow())
-        .not_valid_after(datetime.utcnow() + timedelta(days=30))
+        .not_valid_after(datetime.utcnow() + timedelta(days=DEVICE_CERTIFICATE_EXPIRATION_TIME_DAYS))
     )
 
     # Add extensions if needed

@@ -8,7 +8,7 @@ from ble_protocol_control import prepare_get_wifi_mac_command, handle_get_wifi_m
 from cryptography_handler import generate_device_certificates
 from utils import chunk_byte_array
 
-from defines import OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME, CERTS_PRIVATE_DIRECTORY, CERTS_DIRECTORY
+from configuration import OUTPUT_DIRECTORY, BLE_LOG_FILE_NAME, CERTS_PRIVATE_DIRECTORY, CERTS_DIRECTORY
 
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -141,7 +141,7 @@ async def handle_ble_device(selected_device_address):
 
         # available_services_and_characteristics = await get_services_and_characteristics(ble_client)
         available_services_and_characteristics = get_device_characteristics(ble_client)
-        service_selected = int(input("Choose your Nordic UART Service service: "))
+        service_selected = 0 # default is 0, to be configured from terminal if required
 
         if 'TX' in available_services_and_characteristics[service_selected]['characteristics'][0]['characteristic']:
             characteristic_RX_uuid = available_services_and_characteristics[service_selected]['characteristics'][1][
