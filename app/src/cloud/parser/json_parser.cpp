@@ -301,7 +301,7 @@ bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo)
         return false;
     }
 
-    pFirmwareInfo->version     = pFirmwareVersionJson->valueint;
+    pFirmwareInfo->version     = std::string(pFirmwareVersionJson->valuestring);
     pFirmwareInfo->firmwareUrl = std::string(pFirmwareUrlJson->valuestring);
 
     return true;
@@ -340,7 +340,7 @@ bool addFirmwareInfoToReportedJson(cJSON** ppReportedJson, const TFirmwareInfo& 
 
     cJSON* firmwareInfoJson = cJSON_CreateObject();
 
-    if (!cJSON_AddNumberToObject(firmwareInfoJson, FIRMWARE_INFO_VERSION_KEY, firmwareInfo.version))
+    if (!cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_VERSION_KEY, firmwareInfo.version.c_str()))
     {
         LOG_ERROR("Could not add FIRMWARE_INFO_VERSION_KEY to reported JSON");
         cJSON_Delete(firmwareInfoJson);

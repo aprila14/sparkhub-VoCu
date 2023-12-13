@@ -20,7 +20,7 @@ static_assert(
 
 struct TFirmwareInfo
 {
-    uint32_t    version;
+    std::string version;
     std::string firmwareUrl;
 
     bool operator==(const TFirmwareInfo& rhs) const;
