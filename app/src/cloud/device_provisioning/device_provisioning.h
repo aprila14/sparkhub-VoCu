@@ -15,7 +15,7 @@ constexpr char    DEVICE_PROVISIONING_STATUS_ASSIGNED[]  = "assigned";
 class DeviceProvisioningController
 {
 public:
-    DeviceProvisioningController(MqttClientController* mqttClientController, CloudController* cloudController);
+    DeviceProvisioningController(MqttClientController* mqttClientController);
     ~DeviceProvisioningController() = default;
 
     void runTask();
@@ -58,7 +58,6 @@ private:
     std::string m_deviceProvisioningOperationId;
 
     MqttClientController* m_pMqttClientController; // pointer to MqttClientController for calling lower-level functions
-    CloudController*      m_pCloudController;
 };
 
 #endif // DEVICE_PROVISIONING_H

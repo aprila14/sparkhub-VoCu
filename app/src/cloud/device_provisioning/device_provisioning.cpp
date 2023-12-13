@@ -21,15 +21,12 @@ constexpr char     DEVICE_PROVISIONING_REGISTRATION_GET_STATUS_TOPIC[] =
     "$dps/registrations/GET/iotdps-get-operationstatus/?$rid=";
 } // unnamed namespace
 
-DeviceProvisioningController::DeviceProvisioningController(
-    MqttClientController* mqttClientController,
-    CloudController*      cloudController) :
+DeviceProvisioningController::DeviceProvisioningController(MqttClientController* mqttClientController) :
     m_taskHandle(),
     m_provisioningStatus(ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT),
     m_cloudCredentials()
 {
     m_pMqttClientController = mqttClientController;
-    m_pCloudController      = cloudController;
 }
 
 void DeviceProvisioningController::runTask()
@@ -66,9 +63,26 @@ void DeviceProvisioningController::initiateCloudConnection()
 
 void DeviceProvisioningController::configureCloudConnection()
 {
-    // TODO change mqtt username based on device id from config
+    const prot::cloud_set_credentials::TCloudCredentials& cloudCredentialsFromConfig = pConfig->getCloudCredentials();
+
+    char mqttUsername[prot::cloud_set_credentials::CLOUD_MQTT_USERNAME_LENGTH];
+    memset(mqttUsername, 0, prot::cloud_set_credentials::CLOUD_MQTT_USERNAME_LENGTH);
+
+    if (!cloudCredentialsFromConfig.isSetCloudDeviceId())
+    {
+        LOG_ERROR("Cloud device id not provided");
+        return;
+    }
+
+    sprintf(
+        mqttUsername,
+        "%s/registrations/%s/api-version=2019-03-31",
+        DEVICE_PROVISIONING_ID_SCOPE,
+        cloudCredentialsFromConfig.cloudDeviceId);
+
+    m_cloudCredentials.setCloudMqttUsername(mqttUsername);
+    m_cloudCredentials.setCloudDeviceId(cloudCredentialsFromConfig.cloudDeviceId);
     m_cloudCredentials.setCloudAddress(CLOUD_DEVICE_PROVISIONING_ADDRESS);
-    m_cloudCredentials.setCloudMqttUsername(DEVICE_PROVISIONING_MQTT_USERNAME);
 }
 
 void DeviceProvisioningController::createMqttUsernameAfterProvisioning(
@@ -217,11 +231,10 @@ void DeviceProvisioningController::_run()
                     provisioningInfo.deviceId.c_str());
                 saveCredentialsAfterProvisioning(provisioningInfo);
 
-                m_pCloudController->setReadinessAfterDeviceProvisioning();
-
                 m_provisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_FINISHED;
+                pConfig->setDeviceProvisioningStatus(m_provisioningStatus);
 
-                m_pMqttClientController->stop();
+                app::pAppController->addEvent(app::EEventType::PERFORM_DEVICE_RESTART);
             }
         }
 

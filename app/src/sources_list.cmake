@@ -7,7 +7,6 @@ set(NOT_TESTABLE_APPLICATION_FILES
 
 set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/main.cpp
-    ${SRC_DIR}/hardware/hardware_definitions.h
     ${SRC_DIR}/hardware/reset_button_handler.h
     ${SRC_DIR}/hardware/reset_button_handler.cpp
     ${SRC_DIR}/wifi/wifi_controller.cpp
@@ -65,7 +64,7 @@ set(TESTABLE_APPLICATION_FILES
 
     ${SRC_DIR}/cloud/device_twins/device_twins.cpp
     ${SRC_DIR}/cloud/device_twins/device_twins.h
-    
+
     ${SRC_DIR}/hardware/adc_pressure/adc_pressure.cpp
     ${SRC_DIR}/hardware/adc_pressure/adc_pressure.h
 )

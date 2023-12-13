@@ -7,7 +7,7 @@ async def main():
     print("App start")
 
     available_devices = await scan_devices()
-    device_selected = int(input("Choose your device: "))
+    device_selected = int(input("Please type the number of your device and press ENTER: "))
 
     selected_device_address = available_devices[device_selected]['address']
 

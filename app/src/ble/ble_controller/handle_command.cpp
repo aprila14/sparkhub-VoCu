@@ -83,6 +83,13 @@ handleCommand_sendCertificates(BleController* pController, const uint8_t* payloa
         return EPacketHandlingResult::SEND_NACK;
     }
 
+    // Set BLE configuration state to finished so the device can restart
+    const EBleConfigurationStatus state = pConfig->getBleConfigurationStatus();
+    LOG_INFO("BLE Configuration status = %d", state);
+    pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
+
+    app::pAppController->addEvent(app::EEventType::PERFORM_DEVICE_RESTART);
+
     return EPacketHandlingResult::HANDLED;
 }
 
