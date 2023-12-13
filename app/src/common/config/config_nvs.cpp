@@ -92,6 +92,16 @@ const TOtaUpdateLink& ConfigNvs::getOtaUpdateLink()
     return m_otaUpdateLink;
 }
 
+void ConfigNvs::setOtaCertificate(const THttpsServerCertificate& httpsServerCertificate)
+{
+    setStruct(m_otaHttpsServerCertificate, httpsServerCertificate, ConfigKeyName::OTA_HTTP_CERTIFICATE);
+}
+
+const THttpsServerCertificate& ConfigNvs::getOtaCertificate()
+{
+    return m_otaHttpsServerCertificate;
+}
+
 void ConfigNvs::setCertificatePack(const TCertificatePack& certificatePack)
 {
     setStruct(m_certificatePack, certificatePack, ConfigKeyName::CERTIFICATES);

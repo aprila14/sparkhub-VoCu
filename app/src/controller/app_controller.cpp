@@ -4,8 +4,12 @@ static const char* LOG_TAG = "AppController";
 
 #include "app_controller.h"
 
+#include "commons.h"
 #include "config_nvs.h"
 #include "sleep.h"
+
+#include "esp_http_client.h"
+#include "esp_https_ota.h"
 
 namespace
 {
@@ -189,6 +193,9 @@ bool AppController::executeEvent(AppController::TEventControl& eventControl)
         case EEventType::CLOUD_CONTROLLER__SEND_CREDENTIALS:
             result = executeEvent_cloudControllerSetCredentials();
             break;
+        case EEventType::OTA__PERFORM:
+            result = executeEvent_otaPerform();
+            break;
         default:
             assert(0); // all cases handled above
             break;
@@ -289,4 +296,49 @@ bool AppController::executeEvent_cloudControllerSetCredentials() const // NOLINT
     return true;
 }
 
+bool AppController::executeEvent_otaPerform() // NOLINT - we don't want to make it static
+{
+    LOG_INFO("Handling OTA_PERFORM event");
+
+    esp_http_client_config_t config = {};
+
+    // TODO: add reading firmwareLink from NVS here
+
+    const prot::ota_perform::THttpsServerCertificate& httpsServerCertificate = pConfig->getOtaCertificate();
+    const prot::ota_perform::TOtaUpdateLink&          otaUpdateLink          = pConfig->getOtaUpdateLink();
+
+    if (!otaUpdateLink.isSet())
+    {
+        LOG_INFO("Ota update link not set in NVS");
+        return false;
+    }
+
+    if (!httpsServerCertificate.isSet())
+    {
+        LOG_INFO("Http certificate not set in NVS");
+        config.cert_pem = NULL;
+    }
+    else
+    {
+        config.cert_pem = httpsServerCertificate.serverCertificate;
+    }
+
+    config.url                         = otaUpdateLink.firmwareLink;
+    config.skip_cert_common_name_check = false;
+
+    commons::printAvailableHeapMemory(__LINE__, __FILE__, "executeEvent_otaPerform");
+
+    esp_err_t errorCode = esp_https_ota(&config);
+    if (errorCode == ESP_OK)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
+
+    return true;
+}
 } // namespace app

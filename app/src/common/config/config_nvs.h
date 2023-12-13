@@ -54,6 +54,9 @@ public:
     virtual const TCloudCredentials& getCloudCredentials();
     virtual void                     setCloudCredentials(const TCloudCredentials& cloudCredentials);
 
+    virtual const THttpsServerCertificate& getOtaCertificate();
+    virtual void                           setOtaCertificate(const THttpsServerCertificate& httpsServerCertificate);
+
     virtual const TOtaUpdateLink& getOtaUpdateLink();
     virtual void                  setOtaUpdateLink(const TOtaUpdateLink& otaUpdateLink);
 
@@ -89,11 +92,13 @@ private:
     nvs_handle_t      m_nvsHandle   = 0;
 
     // just assign whatever value below - the config is reset at startup to assign the default value
-    bool              m_configurationFinishedState = false;
-    TWiFiCredentials  m_wiFiCredentials            = {};
-    TCloudCredentials m_cloudCredentials           = {};
-    TOtaUpdateLink    m_otaUpdateLink              = {};
-    TCertificatePack  m_certificatePack            = {};
+    bool                    m_configurationFinishedState = false;
+    TWiFiCredentials        m_wiFiCredentials            = {};
+    TCloudCredentials       m_cloudCredentials           = {};
+    TOtaUpdateLink          m_otaUpdateLink              = {};
+    THttpsServerCertificate m_otaHttpsServerCertificate  = {};
+
+    TCertificatePack m_certificatePack = {};
 
     TFirmwareInfo m_firmwareInfo = {};
 };

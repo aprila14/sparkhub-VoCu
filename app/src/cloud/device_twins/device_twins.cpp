@@ -3,6 +3,8 @@ static const char* LOG_TAG = "DeviceTwins";
 
 #include "device_twins.h"
 
+#include "app_controller.h"
+#include "commons.h"
 #include "config_nvs.h"
 #include "custom_types.h"
 #include "json_parser_defines.h"
@@ -14,6 +16,33 @@ const std::string DEVICE_TWIN_UPDATE_TOPIC            = std::string("$iothub/twi
 const std::string DEVICE_TWIN_REPORTED_TOPIC_PREFIX   = std::string("$iothub/twin/PATCH/properties/reported/?$rid=");
 const std::string DEVICE_TWIN_REPORTED_RESPONSE_TOPIC = std::string("$iothub/twin/res/#");
 } // unnamed namespace
+
+bool checkIfItIsNewFirmwareVersion(const TFirmwareInfo& firmwareInfo)
+{
+    uint32_t majorVersion = 0;
+    uint32_t minorVersion = 0;
+    uint32_t patchVersion = 0;
+
+    uint32_t projectMajorVersion = PROJECT_VER_MAJOR;
+    uint32_t projectMinorVersion = PROJECT_VER_MINOR;
+    uint32_t projectPatchVersion = PROJECT_VER_PATCH;
+
+    LOG_INFO("About to check string for version: %s", firmwareInfo.version.c_str());
+
+    uint8_t result = sscanf(firmwareInfo.version.c_str(), "%d.%d.%d", &majorVersion, &minorVersion, &patchVersion);
+
+    if (result <= 0)
+    {
+        LOG_ERROR("Error while analyzing firmwareInfo.version string");
+        return false;
+    }
+
+    return (
+        (majorVersion > projectMajorVersion) ||
+        ((majorVersion >= projectMajorVersion) && (minorVersion > projectMinorVersion)) ||
+        ((majorVersion >= projectMajorVersion) && (minorVersion >= projectMinorVersion) &&
+         (patchVersion > projectPatchVersion)));
+}
 
 DeviceTwinsController::DeviceTwinsController(
     MqttClientController* mqttClientController,
@@ -99,6 +128,31 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
             // Act upon the new firmware data -> check if firwmare needs to be updated, if so -> initate the update
 
             pConfig->setFirmwareInfo(firmwareInfoData);
+
+            if (checkIfItIsNewFirmwareVersion(firmwareInfoData))
+            {
+                LOG_INFO("Updating the firmware");
+                app::TEventData eventData        = {};
+                eventData.otaPerform.updateReady = true;
+
+                TOtaUpdateLink otaUpdateLink = {};
+                strncpy(
+                    otaUpdateLink.firmwareLink,
+                    firmwareInfoData.firmwareUrl.c_str(),
+                    strlen(firmwareInfoData.firmwareUrl.c_str()));
+
+                pConfig->setOtaUpdateLink(otaUpdateLink);
+
+                commons::printAvailableHeapMemory(__LINE__, __FILE__, "handleDeviceTwinMessage");
+
+                bool result = app::pAppController->addEvent(
+                    app::EEventType::OTA__PERFORM, app::EEventExecutionType::SYNCHRONOUS, &eventData);
+
+                if (!result)
+                {
+                    LOG_ERROR("Could not perform OTA");
+                }
+            }
 
             // Add the field to reported
 
