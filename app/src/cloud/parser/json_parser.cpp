@@ -558,13 +558,13 @@ bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisi
 
 bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo)
 {
-
+    // We are not freeing the pFirmwareInfoJson in this function, it is a part of larger JSON that will be freed
+    // outside of this function (freeing this larger JSON would cause panic abort in that case)
     cJSON* pFirmwareInfoJson = cJSON_GetObjectItemCaseSensitive(pInputJson, "firmware_info");
 
     if (pFirmwareInfoJson == nullptr)
     {
         LOG_INFO("Could not parse JSON, no firmware_info data");
-        cJSON_Delete(pFirmwareInfoJson);
         return false;
     }
 
@@ -572,7 +572,6 @@ bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo)
     if (pFirmwareVersionJson == nullptr)
     {
         LOG_ERROR("Could not find version information inside firmware_info JSON");
-        cJSON_Delete(pFirmwareInfoJson);
         return false;
     }
 
@@ -580,14 +579,11 @@ bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo)
     if (pFirmwareUrlJson == nullptr)
     {
         LOG_ERROR("Could not find url inside firmware_info JSON");
-        cJSON_Delete(pFirmwareInfoJson);
         return false;
     }
 
     pFirmwareInfo->version     = pFirmwareVersionJson->valueint;
     pFirmwareInfo->firmwareUrl = std::string(pFirmwareUrlJson->valuestring);
-
-    cJSON_Delete(pFirmwareInfoJson);
 
     return true;
 }
