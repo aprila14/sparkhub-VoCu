@@ -141,7 +141,6 @@ bool        processResponse(cJSON* dataJson, TResponse* output);
 static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
 cJSON*      preprocessInputMessage(const std::string& inputMessage);
 EMsgMethod  extractMsgMethod(const std::string& inputMessage);
-bool        getDataJsonAndInitFrame(const std::string& inputMessage, TFrame* frame, cJSON** dataJson);
 bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* frame, cJSON** dataJson);
 
 bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);
