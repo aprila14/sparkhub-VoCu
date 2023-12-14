@@ -15,6 +15,9 @@ namespace
 const std::string DEVICE_TWIN_UPDATE_TOPIC            = std::string("$iothub/twin/PATCH/properties/desired/#");
 const std::string DEVICE_TWIN_REPORTED_TOPIC_PREFIX   = std::string("$iothub/twin/PATCH/properties/reported/?$rid=");
 const std::string DEVICE_TWIN_REPORTED_RESPONSE_TOPIC = std::string("$iothub/twin/res/#");
+
+const char* OTA_SUCCESS_STRING = "ota_success";
+const char* OTA_FAIL_STRING    = "ota_fail";
 } // unnamed namespace
 
 bool checkIfItIsNewFirmwareVersion(const TFirmwareInfo& firmwareInfo)
@@ -125,7 +128,7 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
         }
         else
         {
-            // Act upon the new firmware data -> check if firwmare needs to be updated, if so -> initate the update
+            // Act upon the new firmware data -> check if firmware needs to be updated, if so -> initate the update
 
             pConfig->setFirmwareInfo(firmwareInfoData);
 
@@ -151,6 +154,16 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
                 if (!result)
                 {
                     LOG_ERROR("Could not perform OTA");
+                    reportFirmwareVersion(OTA_FAIL_STRING);
+                }
+                else
+                {
+                    LOG_INFO("OTA performed successfully");
+                    reportFirmwareVersion(OTA_SUCCESS_STRING);
+
+                    LOG_INFO("About to reset in 2000 ms");
+                    SLEEP_MS(2000);
+                    esp_restart();
                 }
             }
 
@@ -203,13 +216,31 @@ void DeviceTwinsController::handleDeviceTwinResponse()
         return;
     }
 
-    if (!m_pMqttClientController->sendMessage(buildReportedTopic(), reportedMessage))
+    if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), reportedMessage))
     {
         LOG_ERROR("Could not send reported message");
     }
 }
 
-std::string DeviceTwinsController::buildReportedTopic()
+std::string DeviceTwinsController::buildReportedTopic(int32_t requestId)
 {
-    return DEVICE_TWIN_REPORTED_TOPIC_PREFIX + std::to_string(++m_requestId);
+    return DEVICE_TWIN_REPORTED_TOPIC_PREFIX + std::to_string(requestId);
+}
+
+void DeviceTwinsController::reportFirmwareVersion(const char* otaStatus)
+{
+    std::string firmwareVersionReportedMessage =
+        json_parser::prepareFirmwareInfoReportedMessage(pConfig->getFirmwareInfo(), otaStatus);
+
+    if (firmwareVersionReportedMessage == std::string(""))
+    {
+        LOG_ERROR("Error while preparing firmware info reported message");
+        return;
+    }
+
+    if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), firmwareVersionReportedMessage))
+    {
+        LOG_ERROR("Could not send firmware info reported message");
+        return;
+    }
 }

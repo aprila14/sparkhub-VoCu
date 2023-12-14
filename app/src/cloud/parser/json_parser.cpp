@@ -12,8 +12,9 @@ static const char* LOG_TAG = "jsonParser";
 
 namespace
 {
-const char* FIRMWARE_INFO_VERSION_KEY = "version";
-const char* FIRMWARE_INFO_URL_KEY     = "url";
+const char* FIRMWARE_INFO_VERSION_KEY    = "version";
+const char* FIRMWARE_INFO_URL_KEY        = "url";
+const char* FIRMWARE_INFO_OTA_STATUS_KEY = "ota_status";
 } // unnamed namespace
 
 namespace json_parser
@@ -453,6 +454,51 @@ std::string prepareReportedMessage(cJSON* pReportedJson)
 
     std::string reportedMessage = std::string(reportedMessageCString);
     free(reportedMessageCString);
+
+    return reportedMessage;
+}
+
+std::string prepareFirmwareInfoReportedMessage(const TFirmwareInfo& firmwareInfo, const char* otaStatus)
+{
+    cJSON* reportedJson     = cJSON_CreateObject();
+    cJSON* firmwareInfoJson = cJSON_CreateObject();
+
+    if (cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_VERSION_KEY, firmwareInfo.version.c_str()) == nullptr)
+    {
+        LOG_ERROR("Could not add version to firmwareInfo reported message");
+        cJSON_Delete(reportedJson);
+        cJSON_Delete(firmwareInfoJson);
+        return std::string("");
+    }
+
+    if (cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_URL_KEY, firmwareInfo.firmwareUrl.c_str()) == nullptr)
+    {
+        LOG_ERROR("Could not add url to firmwareInfo reported message");
+        cJSON_Delete(reportedJson);
+        cJSON_Delete(firmwareInfoJson);
+        return std::string("");
+    }
+
+    if (cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_OTA_STATUS_KEY, otaStatus) == nullptr)
+    {
+        LOG_ERROR("Could not add ota status to firmwareInfo reported message");
+        cJSON_Delete(reportedJson);
+        cJSON_Delete(firmwareInfoJson);
+        return std::string("");
+    }
+
+    if (!cJSON_AddItemToObject(reportedJson, FIRMWARE_INFO_KEY, firmwareInfoJson))
+    {
+        LOG_ERROR("Could not add firmwareJson to reportedJson");
+        cJSON_Delete(reportedJson);
+        cJSON_Delete(firmwareInfoJson);
+        return std::string("");
+    }
+
+    std::string reportedMessage = prepareReportedMessage(reportedJson);
+
+    cJSON_Delete(reportedJson); // since firmwareInfoJson is already added to reportedJson, we delete only the latter
+                                // which is top level JSON (otherwise we would cause double delete issue)
 
     return reportedMessage;
 }

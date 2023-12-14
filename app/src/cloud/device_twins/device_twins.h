@@ -26,11 +26,11 @@ private:
     void        _run();
 
     void        subscribeDeviceTwinTopics();
-    std::string buildReportedTopic();
+    std::string buildReportedTopic(int32_t requestId);
     void        handleDeviceTwinMessage(const json_parser::TMessage& message);
     void        handleDeviceTwinResponse();
 
-    void reportFirmwareVersion(int32_t requestId);
+    void reportFirmwareVersion(const char* otaStatus);
 
     TaskHandle_t m_taskHandle; // handle to runTask
 

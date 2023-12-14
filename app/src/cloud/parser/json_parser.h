@@ -133,6 +133,8 @@ bool addFirmwareInfoToReportedJson(cJSON** ppReportedJson, const TFirmwareInfo& 
 
 std::string prepareReportedMessage(cJSON* pReportedJson);
 
+std::string prepareFirmwareInfoReportedMessage(const TFirmwareInfo& firmwareInfo, const char* otaStatus);
+
 #if TESTING
 
 // functions that are needed for unit tests
