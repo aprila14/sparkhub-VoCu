@@ -141,7 +141,7 @@ void ResetButtonHandler::perform()
         {
             // ESP32 configuration reset code here
             LOG_INFO("ESP32 will execute configuration reset now", m_buttonPressedDurationMs);
-            app::pAppController->addEvent(app::EEventType::PERFORM_CONFIGURATION_RESET_AND_RESTART);
+            app::pAppController->addEvent(app::EEventType::PERFORM_DEVICE_RESTART);
         }
 
         m_buttonPressedDurationMs = 0;

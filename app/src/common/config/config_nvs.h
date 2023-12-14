@@ -11,14 +11,15 @@ namespace ConfigKeyName
 {
 
 // make sure this names are unique
-constexpr const char* CONFIGURATION_FINISHED_STATE = "conf";
-constexpr const char* WIFI_CREDENTIALS             = "wifi-cr";
-constexpr const char* CLOUD_CERTIFICATES           = "cloud-cert-aws";
-constexpr const char* CLOUD_CREDENTIALS            = "cloud-cr-aws";
-constexpr const char* OTA_HTTP_CERTIFICATE         = "ota-cert";
-constexpr const char* OTA_UPDATE_LINK              = "ota-link";
-constexpr const char* CERTIFICATES                 = "cert-pack";
-constexpr const char* FIRMWARE_INFO_NVS_KEY        = "firm-info";
+constexpr const char* BLE_CONFIGURATION_STATUS   = "ble-conf";
+constexpr const char* WIFI_CREDENTIALS           = "wifi-cr";
+constexpr const char* CLOUD_CERTIFICATES         = "cloud-cert";
+constexpr const char* CLOUD_CREDENTIALS          = "cloud-cr";
+constexpr const char* OTA_HTTP_CERTIFICATE       = "ota-cert";
+constexpr const char* OTA_UPDATE_LINK            = "ota-link";
+constexpr const char* CERTIFICATES               = "cert-pack";
+constexpr const char* DEVICE_PROVISIONING_STATUS = "dev-prov";
+constexpr const char* FIRMWARE_INFO_NVS_KEY      = "firm-info";
 
 } // namespace ConfigKeyName
 
@@ -41,12 +42,23 @@ public:
      * @brief Get whether initial configuration (via BLE) has been finished
      * @return
      */
-    virtual bool getConfigurationFinishedState();
+    virtual EBleConfigurationStatus getBleConfigurationStatus();
     /**
      * @brief Set whether initial configuration (via BLE) has been finished
      * @param isFinished
      */
-    virtual void setConfigurationFinishedState(bool isFinished);
+    virtual void setBleConfigurationStatus(EBleConfigurationStatus bleStatus);
+
+    /**
+     * @brief Get whether device provisioning has been finished
+     * @return
+     */
+    virtual ECloudDeviceProvisioningStatus getDeviceProvisioningStatus();
+    /**
+     * @brief Set whether device provisioning has been finished
+     * @return
+     */
+    virtual void setDeviceProvisioningStatus(ECloudDeviceProvisioningStatus deviceProvisioningStatus);
 
     virtual const TWiFiCredentials& getWifiCredentials();
     virtual void                    setWifiCredentials(const TWiFiCredentials& wifiCredentials);
@@ -92,14 +104,15 @@ private:
     nvs_handle_t      m_nvsHandle   = 0;
 
     // just assign whatever value below - the config is reset at startup to assign the default value
-    bool                    m_configurationFinishedState = false;
-    TWiFiCredentials        m_wiFiCredentials            = {};
-    TCloudCredentials       m_cloudCredentials           = {};
-    TOtaUpdateLink          m_otaUpdateLink              = {};
-    THttpsServerCertificate m_otaHttpsServerCertificate  = {};
+    EBleConfigurationStatus m_bleConfigurationStatus    = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    TWiFiCredentials        m_wiFiCredentials           = {};
+    TCloudCredentials       m_cloudCredentials          = {};
+    TOtaUpdateLink          m_otaUpdateLink             = {};
+    THttpsServerCertificate m_otaHttpsServerCertificate = {};
 
-    TCertificatePack m_certificatePack = {};
-
+    TCertificatePack               m_certificatePack = {};
+    ECloudDeviceProvisioningStatus m_deviceProvisioningStatus =
+        ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
     TFirmwareInfo m_firmwareInfo = {};
 };
 

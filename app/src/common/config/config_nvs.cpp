@@ -20,7 +20,8 @@ bool ConfigNvs::init()
     assert(m_accessMutex);
 
     // read the initial value for each configuration parameter here
-    getBoolVar(m_configurationFinishedState, ConfigKeyName::CONFIGURATION_FINISHED_STATE);
+    getUint8Var(reinterpret_cast<uint8_t&>(m_bleConfigurationStatus), ConfigKeyName::BLE_CONFIGURATION_STATUS);
+    getUint8Var(reinterpret_cast<uint8_t&>(m_deviceProvisioningStatus), ConfigKeyName::DEVICE_PROVISIONING_STATUS);
     getStruct(m_wiFiCredentials, ConfigKeyName::WIFI_CREDENTIALS);
     getStruct(m_cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
     getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
@@ -52,14 +53,30 @@ void ConfigNvs::commitToNVS() const
     }
 }
 
-bool ConfigNvs::getConfigurationFinishedState()
+EBleConfigurationStatus ConfigNvs::getBleConfigurationStatus()
 {
-    return m_configurationFinishedState;
+    return m_bleConfigurationStatus;
 }
 
-void ConfigNvs::setConfigurationFinishedState(bool isFinished)
+void ConfigNvs::setBleConfigurationStatus(EBleConfigurationStatus bleStatus)
 {
-    setBoolVar(m_configurationFinishedState, isFinished, ConfigKeyName::CONFIGURATION_FINISHED_STATE);
+    setUint8Var(
+        reinterpret_cast<uint8_t&>(m_bleConfigurationStatus),
+        reinterpret_cast<uint8_t&>(bleStatus),
+        ConfigKeyName::BLE_CONFIGURATION_STATUS);
+}
+
+ECloudDeviceProvisioningStatus ConfigNvs::getDeviceProvisioningStatus()
+{
+    return m_deviceProvisioningStatus;
+}
+
+void ConfigNvs::setDeviceProvisioningStatus(ECloudDeviceProvisioningStatus deviceProvisioningStatus)
+{
+    setUint8Var(
+        reinterpret_cast<uint8_t&>(m_deviceProvisioningStatus),
+        reinterpret_cast<uint8_t&>(deviceProvisioningStatus),
+        ConfigKeyName::DEVICE_PROVISIONING_STATUS);
 }
 
 const TWiFiCredentials& ConfigNvs::getWifiCredentials()
@@ -279,12 +296,13 @@ void ConfigNvs::resetAllConfigurationFields()
 {
     // default values for the configuration:
 
-    m_configurationFinishedState = false;
-    m_wiFiCredentials            = TWiFiCredentials();
-    m_cloudCredentials           = TCloudCredentials();
-    m_otaUpdateLink              = TOtaUpdateLink();
-    m_certificatePack            = TCertificatePack();
-    m_firmwareInfo               = TFirmwareInfo();
+    m_bleConfigurationStatus   = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    m_wiFiCredentials          = TWiFiCredentials();
+    m_cloudCredentials         = TCloudCredentials();
+    m_otaUpdateLink            = TOtaUpdateLink();
+    m_certificatePack          = TCertificatePack();
+    m_deviceProvisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
+    m_firmwareInfo             = TFirmwareInfo();
 }
 
 template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)

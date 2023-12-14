@@ -76,6 +76,12 @@ public:
      */
     void handleIncomingData(const uint8_t* pData, uint32_t dataSize);
 
+    /**
+     * @brief free dynamic buffers if they will no longer be used
+     *
+     */
+    void cleanup();
+
 private:
     BleuartDriver(const BleuartDriver&) = delete;
 
@@ -135,7 +141,7 @@ private:
     void _performTxLoop();
 
 
-    CircularBuffer    m_rxBuffer;      ///< Circular buffer queuing raw data received from BLE, for further processing
+    CircularBuffer*   m_rxBuffer;      ///< Circular buffer queuing raw data received from BLE, for further processing
     SemaphoreHandle_t m_rxBufferMutex; ///<  Mutex to access rxBuffer and to give rxDataAvailableSemaphore
     SemaphoreHandle_t
         m_rxSomeDataAvailableSemaphore; ///< Sempaphore singaling if there is some new data available to be read.
@@ -149,7 +155,7 @@ private:
      * There is no point in doing so, because we will sent part of a package, that will not be handled anyway.
      * It will also allow to group shorter packages together in one MTU.
      */
-    CircularBuffer    m_txBuffer;        ///< Circular buffer queuing raw data to be transmitted to the PC
+    CircularBuffer*   m_txBuffer;        ///< Circular buffer queuing raw data to be transmitted to the PC
     SemaphoreHandle_t m_txBufferMutex;   ///< Mutex to access txBuffer
     SemaphoreHandle_t m_txDataAvailable; ///< Sempaphore singaling if there is any new data to be transmitted
                                          ///< (trasnmission is done in a separate thread)
@@ -157,6 +163,7 @@ private:
 
     bool m_isSynced; ///< whether BLE controller/host are synced and communication can be started - TODO confirm it
     bool m_isClientConnected;                     ///< True if BLE client is connected (e.g. PC or Android app)
+    bool m_buffersClearedFlag;                    ///< flag set to avoid double freeing the dynamic buffers
     SemaphoreHandle_t m_clientConnectedSemaphore; ///< Sempaphore given when the BLE client gets connected
 };
 

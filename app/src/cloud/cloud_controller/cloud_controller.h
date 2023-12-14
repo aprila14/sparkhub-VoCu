@@ -42,6 +42,12 @@ public:
     bool handleOtaUpdateLink(const TOtaUpdateLink& otaUpdateLinkStructure);
 
     /**
+     * Timer callback enabling to change CloudController status if the response for the heeartbeat from the cloud
+     * is not coming for a specified time period
+     */
+    void heartbeatWatchdogTimerCallback();
+
+    /**
      * Function giving semaphore informing CloudController task, that CloudConnection is ready to be established
      */
     void setReadinessToConnect();
@@ -83,6 +89,11 @@ private:
      * Function initializing MqttClientController with the given credentials
      */
     void configureCloudConnection(const prot::cloud_set_credentials::TCloudCredentials& credentials);
+
+    /**
+     * Function to set mqtt topic to send device status based on provided device id
+     */
+    void setDeviceStatusTopic(const prot::cloud_set_credentials::TCloudCredentials& credentials);
 
     /**
      * Function starting MqttClientController connection

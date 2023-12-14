@@ -15,6 +15,31 @@ constexpr uint8_t MAX_OTA_TOPIC_SUFFIX_LENGTH = 80;
 } // namespace
 namespace json_parser
 {
+
+enum class EMsgCode : uint8_t
+{
+    MSG_STATUS_REPORT            = 1,
+    MSG_STATUS_REPORT_RESPONSE   = 2,
+    MSG_HEARTBEAT                = 3,
+    MSG_HEARTBEAT_RESPONSE       = 4,
+    MSG_OTA_UPDATE_LINK          = 5,
+    MSG_OTA_UPDATE_LINK_RESPONSE = 6
+};
+
+enum class EMsgMethod : uint8_t
+{
+    MSG_METHOD_RPC_COMMAND         = 1,
+    MSG_METHOD_GET_LIGHT_INTENSITY = 2,
+    MSG_METHOD_SET_LIGHT_INTENSITY = 3,
+    MSG_METHOD_UNKNOWN             = 4,
+    MSG_METHOD_FAILED              = 5
+};
+
+struct THeartbeat
+{
+    bool heartbeat;
+};
+
 struct TResponse
 {
     bool ACK;
@@ -31,6 +56,14 @@ struct TDeviceStatus
     std::string getFirmwareVersion() const;
     std::string getCurrentLocalTime() const;
     uint32_t    msgCounter;
+};
+
+union TFrameData
+{
+    TDeviceStatus                     deviceStatusStruct;
+    THeartbeat                        heartbeatStruct;
+    TResponse                         responseStruct;
+    prot::ota_perform::TOtaUpdateLink otaUpdateLinkStruct;
 };
 
 struct TMessage
@@ -103,6 +136,11 @@ std::string prepareReportedMessage(cJSON* pReportedJson);
 #if TESTING
 
 // functions that are needed for unit tests
+bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);
+bool        processResponse(cJSON* dataJson, TResponse* output);
+static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
+cJSON*      preprocessInputMessage(const std::string& inputMessage);
+EMsgMethod  extractMsgMethod(const std::string& inputMessage);
 bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* frame, cJSON** dataJson);
 
 bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);

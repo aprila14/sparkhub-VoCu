@@ -22,8 +22,11 @@ namespace json_parser
 const char* FIRMWARE_INFO_KEY = "firmware_info";
 
 #if !TESTING // directive added to avoid double declaration of function
-static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
+static bool        processResponse(cJSON* pDataJson, TResponse* pOutput);
 static bool        processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
+static EMsgMethod  extractMsgMethod(const std::string& inputMessage);
+static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
+static cJSON*      dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
 static std::string getStatusReportString(const TDeviceStatus& deviceStatus);
 static std::string getResponseString(const TResponse& responseData);
 static std::string getConnectionString(bool status);
@@ -98,6 +101,30 @@ bool processStatusReport(cJSON* pDataJson, TDeviceStatus* pOutput)
 }
 
 /**
+ * @brief processResponse - function parsing any of the response messages (e.g. response to Heartbeat message) into
+ * TResponse structure All response messages have the same structure, therefore they do not need separate functions for
+ * parsing
+ * @param pDataJson - cJSON* object containing the payload of the message
+ * @param pOutput - pointer to TReponse structure containing extracted payload
+ * @return boolean value representing succes of the operation
+ */
+
+bool processResponse(cJSON* pDataJson, TResponse* pOutput)
+{
+    cJSON* pAckJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "ACK");
+
+    if (pAckJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no ACK or wrong format");
+        return false;
+    }
+
+    pOutput->ACK = cJSON_IsTrue(pAckJson);
+
+    return true;
+}
+
+/**
  * @brief processOtaUpdateLink - function parsing message with a link from which OTA shall be performed
  * @param pDataJson - cJSON* object containing the payload of the message
  * @param pOutput - pointer to TOtaUpdateLink structure containing extracted payload
@@ -117,6 +144,8 @@ static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput)
 
     return true;
 }
+
+/***** FRAME INTERPRETATION *****/
 
 bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* info, cJSON** dataJson)
 {
@@ -172,6 +201,54 @@ bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvi
     cJSON_Delete(pDeviceProvisioningJson);
 
     return true;
+}
+
+/**
+ * @brief extractMsgMethod - function recognizing message method (e.g. RPC Command, or message from the widget) based on
+ * the provided std::string with a message in JSON format
+ * @param inputMessage - std::string containing message to identify
+ * @return EMsgMethod with the method recognized by the function
+ */
+
+EMsgMethod extractMsgMethod(const std::string& inputMessage)
+{
+    cJSON* pMessageJson = preprocessInputMessage(inputMessage);
+
+    if (pMessageJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON");
+        return EMsgMethod::MSG_METHOD_FAILED;
+    }
+
+    cJSON* pMethodJson = cJSON_GetObjectItemCaseSensitive(pMessageJson, "method");
+
+    if (pMethodJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no method or wrong format");
+        cJSON_Delete(pMessageJson);
+        return EMsgMethod::MSG_METHOD_FAILED;
+    }
+
+    std::string methodString = std::string(pMethodJson->valuestring);
+
+    cJSON_Delete(pMessageJson);
+
+    if (methodString == "rpcCommand")
+    {
+        return EMsgMethod::MSG_METHOD_RPC_COMMAND;
+    }
+    else if (methodString == "setLightIntensity")
+    {
+        return EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY;
+    }
+    else if (methodString == "getLightIntensity")
+    {
+        return EMsgMethod::MSG_METHOD_GET_LIGHT_INTENSITY;
+    }
+    else
+    {
+        return EMsgMethod::MSG_METHOD_UNKNOWN;
+    }
 }
 
 /**
@@ -445,6 +522,53 @@ cJSON* deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter
     return pOutputJson;
 }
 
+/**
+ * @brief dataJsonToParamsJson - function preparing paramsJSON based on provided dataJson, msgCode and msgCounter
+ * (see cloud communication protocol description for reference).
+ * NOTE: after calling the function, it is the user's responsibility to free the memory allocated for the returned
+ * cJSON* object. Call cJSON_Delete(returnedValue) after returned cJSON* will no longer be used
+ * @param pDataJson - cJSON* object with dataJson
+ * @param msgCode - msgCode to add to paramsJson
+ * @param msgCounter - message number to add to paramsJson
+ * @return cJSON* object with paramsJson.
+ */
+cJSON* dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter)
+{
+    cJSON* pParamsJson = cJSON_CreateObject();
+
+    if (pParamsJson == nullptr)
+    {
+        LOG_INFO("Error while creating paramsJson - dataJsonToParamsJson()");
+        return nullptr;
+    }
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "data", pDataJson)))
+    {
+        LOG_INFO("Cannot add dataJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    cJSON* pMsgCodeJson    = cJSON_CreateNumber(static_cast<int>(msgCode));
+    cJSON* pMsgCounterJson = cJSON_CreateNumber(msgCounter);
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "msgCode", pMsgCodeJson)))
+    {
+        LOG_INFO("Cannot add msgCodeJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "msgCounter", pMsgCounterJson)))
+    {
+        LOG_INFO("Cannot add msgCounterJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    return pParamsJson;
+}
+
 /***** STRING GET FUNCTIONS FOR FRAME PRINTING *****/
 
 std::string getStatusReportString(const TDeviceStatus& deviceStatus)
@@ -487,6 +611,47 @@ std::string TDeviceStatus::getCurrentLocalTime() const
     return output;
 }
 
+/***** HELPER FUNCTIONS *****/
+
+std::string getMsgMethodString(EMsgMethod msgMethod)
+{
+    switch (msgMethod)
+    {
+        case EMsgMethod::MSG_METHOD_FAILED:
+            return std::string("MSG_METHOD_FAILED");
+        case EMsgMethod::MSG_METHOD_GET_LIGHT_INTENSITY:
+            return std::string("MSG_METHOD_GET_LIGHT_INTENSITY");
+        case EMsgMethod::MSG_METHOD_RPC_COMMAND:
+            return std::string("MSG_METHOD_RPC_COMMAND");
+        case EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY:
+            return std::string("MSG_METHOD_SET_LIGHT_INTENSITY");
+        case EMsgMethod::MSG_METHOD_UNKNOWN:
+            return std::string("MSG_METHOD_UNKNOWN");
+        default:
+            return std::string("MSG_METHOD_ERROR");
+    }
+}
+
+std::string getMsgCodeString(EMsgCode msgCode)
+{
+    switch (msgCode)
+    {
+        case EMsgCode::MSG_HEARTBEAT:
+            return std::string("MSG_HEARTBEAT");
+        case EMsgCode::MSG_HEARTBEAT_RESPONSE:
+            return std::string("MSG_HEARTBEAT_RESPONSE");
+        case EMsgCode::MSG_STATUS_REPORT:
+            return std::string("MSG_STATUS_REPORT");
+        case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
+            return std::string("MSG_STATUS_REPORT_RESPONSE");
+        case EMsgCode::MSG_OTA_UPDATE_LINK:
+            return std::string("MSG_OTA_UPDATE_LINK");
+        case EMsgCode::MSG_OTA_UPDATE_LINK_RESPONSE:
+            return std::string("MSG_OTA_UPDATE_LINK_RESPONSE");
+        default:
+            return std::string("MSG_UNKNOWN_MESSAGE");
+    }
+}
 
 std::string getConnectionString(bool status)
 {

@@ -5,15 +5,12 @@ from utils import calculate_crc16_ccitt_false
 
 ble_commands = {
 "CMD_GET_WIFI_MAC_ADDRESS" : 32,
+"CMD_GET_WIFI_MAC_ADDRESS_RESPONSE" : 8208,
 "CMD_SEND_CERTIFICATES" : 80
 }
 
 MAX_FULLCHAIN_CERTIFICATE_LENGTH = 6001
 MAX_PRIVATE_KEY_LENGTH           = 2001
-
-# TODO change to proper paths!
-FULLCHAIN_CERTIFICATE_PATH = '/home/lsawicki/Projects/sparkhub/sparkhub-LevelSense/azure_dps/certs/sparkhub-device-03-full-chain.cert.pem'
-PRIVATE_KEY_PATH = '/home/lsawicki/Projects/sparkhub/sparkhub-LevelSense/azure_dps/private/sparkhub-device-03.key.pem'
 
 class ble_command_get_wifi_mac(ctypes.Structure):
     _fields_ = [('type', ctypes.c_uint16), ('crc', ctypes.c_uint16), ('dummyByte', ctypes.c_uint8)]
@@ -35,8 +32,8 @@ class ble_command_send_certificates(ctypes.Structure):
     _fields_ = [('type', ctypes.c_uint16), ('crc', ctypes.c_uint16), ('certificates', certificate_pack_structure)]
     _pack_ = 1
 
-def read_full_chain_certificate() -> ctypes.Structure:
-    with open(FULLCHAIN_CERTIFICATE_PATH, 'rb') as file:
+def read_full_chain_certificate(full_chain_cert_path) -> ctypes.Structure:
+    with open(full_chain_cert_path, 'rb') as file:
         full_chain_certificates = full_chain_certificate_structure()
 
         # Get file size
@@ -50,8 +47,8 @@ def read_full_chain_certificate() -> ctypes.Structure:
        
         return full_chain_certificates
     
-def read_private_key() -> ctypes.Structure:
-    with open(PRIVATE_KEY_PATH, 'rb') as file:
+def read_private_key(private_key_path) -> ctypes.Structure:
+    with open(private_key_path, 'rb') as file:
         private_key = private_key_structure()
 
         # Get file size
@@ -88,10 +85,36 @@ def prepare_get_wifi_mac_command() -> bytearray:
     
     return encoded_payload
 
-def prepare_send_certificates_command() -> bytearray:
+def response_preprocessing(payload: bytearray) -> bytearray:
+    payload.remove(0) # message start sign
+    payload.remove(0) # message end sign
+
+    decoded_payload = cobs.decode(payload)
+
+    return decoded_payload
+
+def handle_get_wifi_mac_response(payload: bytearray) -> str:
+    payload_string = payload.hex()
+    print(f'Received data: {payload_string}')
+
+    header_command_info = payload_string[0:4]
+
+    get_wifi_mac_command_response_header = str(hex(ble_commands['CMD_GET_WIFI_MAC_ADDRESS_RESPONSE']))[2:6]
+
+    if header_command_info in get_wifi_mac_command_response_header:
+        print("Response for get wifi command request")
+        mac_address = payload_string[8:20].upper()
+        print(mac_address)
+
+        return mac_address
+    
+    return ""
+    
+
+def prepare_send_certificates_command(full_chain_cert_path, private_key_path) -> bytearray:
     # read certificate files
-    full_chain_certificates = read_full_chain_certificate()
-    private_key = read_private_key()
+    full_chain_certificates = read_full_chain_certificate(full_chain_cert_path)
+    private_key = read_private_key(private_key_path)
 
     certificates = certificate_pack_structure(full_chain_certificates, private_key)
 
