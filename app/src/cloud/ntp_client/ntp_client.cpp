@@ -8,7 +8,7 @@ static const char* LOG_TAG = "NtpClient";
 #include "commons.h"
 #include "sleep.h"
 
-//#include "lwip/apps/sntp.h"
+// #include "lwip/apps/sntp.h"
 #include "esp_sntp.h"
 
 
@@ -16,29 +16,26 @@ namespace
 {
 
 /**
-* @brief A global variable pointing to the "current" NtpClient.
-* Unfortuntely we need to have global access to it, to call it from the NTP client callback from LWIP (see sntp_sync_time)
-* We have one instance anyway, so it is not a big issue.
-*/
+ * @brief A global variable pointing to the "current" NtpClient.
+ * Unfortuntely we need to have global access to it, to call it from the NTP client callback from LWIP (see
+ * sntp_sync_time) We have one instance anyway, so it is not a big issue.
+ */
 NtpClient* g_pNtpClient = nullptr;
 
-}  // local namespace
+} // namespace
 
 
-NtpClient::NtpClient()
-:
-m_ntpTimeOffsetMs(0)
+NtpClient::NtpClient() : m_ntpTimeOffsetMs(0)
 {
-
 }
 
 void NtpClient::init()
 {
     m_accessMutex = mutexCreate();
-    g_pNtpClient = this;  // see note near g_pNtpClient
+    g_pNtpClient  = this; // see note near g_pNtpClient
 }
 
-void NtpClient::runTask()   // NOLINT - we don't want to make it static
+void NtpClient::runTask() // NOLINT - we don't want to make it static
 {
     LOG_INFO("NtpClient::runTask...");
     sntp_setoperatingmode(SNTP_OPMODE_POLL); // CONFIG_LWIP_SNTP_UPDATE_DELAY
@@ -104,16 +101,16 @@ int16_t NtpClient::getCurrentMinuteOfWeek(int16_t timezoneOffsetInMinutes) const
 
 int16_t NtpClient::calculateCurrentMinuteOfWeek(int16_t timezoneOffsetInMinutes, int64_t currentUtcTimestampMs)
 {
-    int64_t timezoneOffsetS = static_cast<int64_t>(timezoneOffsetInMinutes) * SEC_IN_MIN;
+    int64_t timezoneOffsetS      = static_cast<int64_t>(timezoneOffsetInMinutes) * SEC_IN_MIN;
     int64_t currentUtcTimestampS = currentUtcTimestampMs / MS_IN_S;
 
     int64_t currentLocalTimeS = timezoneOffsetS + currentUtcTimestampS;
 
     struct tm timeinfo = {};
-    time_t now = currentLocalTimeS;
+    time_t    now      = currentLocalTimeS;
     gmtime_r(&now, &timeinfo);
 
-    int weekDaysSinceMonday = (timeinfo.tm_wday + 7 - 1) % 7; //
+    int     weekDaysSinceMonday = (timeinfo.tm_wday + 7 - 1) % 7; //
     int16_t minuteOfWeek = (weekDaysSinceMonday * HOURS_IN_DAY + timeinfo.tm_hour) * MIN_IN_HOUR + timeinfo.tm_min;
 
 
@@ -143,7 +140,7 @@ void NtpClient::sntp_sync_time(timeval* tv)
     // settimeofday(tv, NULL); - we don't want to overwirte our steady clock,
     // instead just save the time difference
     int64_t systemTimestampMs = commons::getCurrentTimestampMs();
-    int64_t ntpTimestampMs = static_cast<int64_t>(tv->tv_sec) * MS_IN_S;
+    int64_t ntpTimestampMs    = static_cast<int64_t>(tv->tv_sec) * MS_IN_S;
 
     setTimestampOffset(systemTimestampMs, ntpTimestampMs);
 
@@ -153,7 +150,7 @@ void NtpClient::sntp_sync_time(timeval* tv)
 void NtpClient::printCurrentTime(int16_t timezoneOffsetInMinutes) const
 {
     int64_t currentUtcTimestampMs = getCurrentUtcTimestampMs();
-    int64_t currentUtcTimestampS = currentUtcTimestampMs / MS_IN_S;
+    int64_t currentUtcTimestampS  = currentUtcTimestampMs / MS_IN_S;
 
     {
         // utc
@@ -163,9 +160,9 @@ void NtpClient::printCurrentTime(int16_t timezoneOffsetInMinutes) const
 
     {
         // local
-        int64_t timezoneOffsetS = static_cast<int64_t>(timezoneOffsetInMinutes) * SEC_IN_MIN;
+        int64_t timezoneOffsetS   = static_cast<int64_t>(timezoneOffsetInMinutes) * SEC_IN_MIN;
         int64_t currentLocalTimeS = timezoneOffsetS + currentUtcTimestampS;
-        time_t now = currentLocalTimeS;
+        time_t  now               = currentLocalTimeS;
         LOG_INFO("Current local time is: %s", asctime(gmtime(&now)));
     }
 }
@@ -173,10 +170,10 @@ void NtpClient::printCurrentTime(int16_t timezoneOffsetInMinutes) const
 char* NtpClient::getCurrentLocalTimeString(int16_t timezoneOffsetInMinutes) const
 {
     int64_t currentUtcTimestampMs = getCurrentUtcTimestampMs();
-    int64_t currentUtcTimestampS = currentUtcTimestampMs / MS_IN_S;
-    int64_t timezoneOffsetS = static_cast<int64_t>(timezoneOffsetInMinutes) * SEC_IN_MIN;
-    int64_t currentLocalTimeS = timezoneOffsetS + currentUtcTimestampS;
-    time_t now = currentLocalTimeS;
+    int64_t currentUtcTimestampS  = currentUtcTimestampMs / MS_IN_S;
+    int64_t timezoneOffsetS       = static_cast<int64_t>(timezoneOffsetInMinutes) * SEC_IN_MIN;
+    int64_t currentLocalTimeS     = timezoneOffsetS + currentUtcTimestampS;
+    time_t  now                   = currentLocalTimeS;
     return asctime(gmtime(&now));
 }
 
@@ -195,4 +192,3 @@ void sntp_sync_time(struct timeval* tv)
 {
     g_pNtpClient->sntp_sync_time(tv);
 }
-

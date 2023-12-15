@@ -1,0 +1,176 @@
+<mxfile host="app.diagrams.net" modified="2023-12-01T08:16:51.182Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" etag="w8wD1-x8F1LJs-eHbr19" version="22.1.5" type="device">
+  <diagram name="Page-1" id="13e1069c-82ec-6db2-03f1-153e76fe0fe0">
+    <mxGraphModel dx="1130" dy="405" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="7baba1c4bc27f4b0-4" value="&lt;font style=&quot;font-size: 8px;&quot;&gt;Standalone computer with BLE provisioning app&lt;/font&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="295" y="80" width="100" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-15" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Subscribe:&lt;br&gt;$dps/registrations/res/#&amp;nbsp;&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;" parent="7baba1c4bc27f4b0-4" target="7baba1c4bc27f4b0-6" edge="1">
+          <mxGeometry x="-0.0176" relative="1" as="geometry">
+            <mxPoint x="-144" y="541" as="sourcePoint" />
+            <mxPoint x="260" y="540" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-6" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Azure Device Provisioning&lt;/font&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="527" y="80" width="100" height="890" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-22" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="7baba1c4bc27f4b0-6" vertex="1">
+          <mxGeometry x="45" y="423" width="10" height="447" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-7" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Azure IoT Hub&lt;/font&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="715" y="80" width="100" height="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-25" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeColor=#000000;strokeWidth=1;fillColor=#FFFFFF;fontFamily=Verdana;fontSize=12;fontColor=#000000;align=center;" parent="7baba1c4bc27f4b0-7" vertex="1">
+          <mxGeometry x="45" y="700" width="10" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-8" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;ESP32 device&lt;/font&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="95" y="80" width="100" height="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-9" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="7baba1c4bc27f4b0-8" vertex="1">
+          <mxGeometry x="45" y="100" width="10" height="940" as="geometry" />
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-10" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Save certificates&lt;br&gt;to flash&amp;nbsp;&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;elbow=vertical;edgeStyle=orthogonalEdgeStyle;curved=1;" parent="7baba1c4bc27f4b0-8" edge="1">
+          <mxGeometry x="0.1679" y="-46" relative="1" as="geometry">
+            <mxPoint x="43" y="340" as="sourcePoint" />
+            <mxPoint x="45" y="398" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="11" y="340" />
+              <mxPoint x="11" y="398" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-16" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="340" y="220" width="10" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-23" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Get Wifi STA MAC&lt;br&gt;(BLE)&amp;nbsp;&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;exitX=-0.17;exitY=0.067;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.993;entryY=0.055;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="7baba1c4bc27f4b0-16" target="7baba1c4bc27f4b0-9" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="180" y="199.99999999999994" as="sourcePoint" />
+            <mxPoint x="368.05999999999995" y="199.99999999999994" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-34" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="345" y="246" width="10" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-35" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Generate cloud certificates. &lt;br&gt;Device cert&#39;s&amp;nbsp;CN is eqaul to&amp;nbsp;&lt;br&gt;provided MAC address &lt;br&gt;with &quot;sparkhub&quot; prefix&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;elbow=vertical;edgeStyle=orthogonalEdgeStyle;curved=1;entryX=0.972;entryY=0.473;entryPerimeter=0;exitX=0.913;exitY=0.098;exitDx=0;exitDy=0;exitPerimeter=0;entryDx=0;entryDy=0;" parent="1" source="7baba1c4bc27f4b0-16" target="7baba1c4bc27f4b0-34" edge="1">
+          <mxGeometry x="0.3275" y="76" relative="1" as="geometry">
+            <mxPoint x="220" y="230" as="sourcePoint" />
+            <mxPoint x="350" y="230" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="405" y="238" />
+              <mxPoint x="405" y="281" />
+            </Array>
+            <mxPoint x="75" y="-67" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-4" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Send device&#39;s private key&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;exitX=0.004;exitY=0.891;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="7baba1c4bc27f4b0-16" target="7baba1c4bc27f4b0-9" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="310" y="380" as="sourcePoint" />
+            <mxPoint x="90.39076923076928" y="379.99999999999994" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-3" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Send a full chain certificate:&lt;br&gt;- Azure DPS root&lt;br&gt;- Azure DPS intermediate certificate&lt;br&gt;- Device uniq certificate&amp;nbsp;&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;exitX=-0.136;exitY=0.693;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="7baba1c4bc27f4b0-16" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="340.00000000000017" y="339.99999999999994" as="sourcePoint" />
+            <mxPoint x="150" y="345" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-11" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Connect with certificates to:&lt;br&gt;global.azure-devices-provisioning.net&amp;nbsp;&amp;nbsp;&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;" parent="1" target="7baba1c4bc27f4b0-6" edge="1">
+          <mxGeometry x="-0.0152" relative="1" as="geometry">
+            <mxPoint x="150" y="530" as="sourcePoint" />
+            <mxPoint x="550" y="530" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-13" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Connection succesfull&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="570" y="560" as="sourcePoint" />
+            <mxPoint x="150" y="560" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-16" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Publish JSON: &lt;br&gt;{ &quot;registrationId&quot;: device_id_based_on_mac }&amp;nbsp;&lt;br&gt;to topic:&lt;br&gt;$dps/registrations/PUT/iotdps-register/?$rid={request_id}&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;" parent="1" target="7baba1c4bc27f4b0-6" edge="1">
+          <mxGeometry x="-0.0176" y="2" relative="1" as="geometry">
+            <mxPoint x="151" y="702" as="sourcePoint" />
+            <mxPoint x="555" y="701" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-17" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Publish JSON:&lt;br&gt;{&quot;operationId&quot;:&quot;operation_id&quot;,&quot;status&quot;:&quot;assigning&quot;}&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="570" y="750" as="sourcePoint" />
+            <mxPoint x="150" y="750" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-18" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Check provisioning status &lt;/b&gt;&lt;br&gt;Publish&amp;nbsp; JSON: &lt;br&gt;{ }&amp;nbsp;to topic:&lt;br&gt;$dps/registrations/GET/iotdps-get-operationstatus/&lt;br&gt;?$rid={request_id}&amp;amp;operationId={operation_id}&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;entryX=0.167;entryY=0.626;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" edge="1">
+          <mxGeometry x="0.0146" relative="1" as="geometry">
+            <mxPoint x="140" y="840" as="sourcePoint" />
+            <mxPoint x="573.6700000000001" y="840.3819999999998" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-19" value="" style="endArrow=classic;html=1;rounded=0;entryX=-0.111;entryY=0.063;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="582" y="800.1" as="sourcePoint" />
+            <mxPoint x="760.8900000000003" y="799.9999999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-20" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Create thing with provided Id&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="uZDW9I4iFCmvXwkblH1O-19" vertex="1" connectable="0">
+          <mxGeometry x="-0.2266" y="3" relative="1" as="geometry">
+            <mxPoint x="21" y="-6" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-21" value="" style="endArrow=classic;html=1;rounded=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="760" y="880" as="sourcePoint" />
+            <mxPoint x="580" y="880" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-22" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Thing created&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="uZDW9I4iFCmvXwkblH1O-21" vertex="1" connectable="0">
+          <mxGeometry x="-0.2266" y="3" relative="1" as="geometry">
+            <mxPoint x="-22" y="-13" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-23" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Publish JSON:&lt;br&gt;{&quot;operationId&quot;:&quot;operation_id&quot;,&quot;status&quot;:&quot;assigned&quot;, &quot;registrationState&quot;:{}}&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="570" y="910" as="sourcePoint" />
+            <mxPoint x="150" y="910" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-24" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Connect with certificates to:&lt;br&gt;IoT Hub address provided by Azure DPS&amp;nbsp;&amp;nbsp;&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;exitX=0.98;exitY=0.907;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="7baba1c4bc27f4b0-9" target="7baba1c4bc27f4b0-7" edge="1">
+          <mxGeometry x="0.0093" relative="1" as="geometry">
+            <mxPoint x="160" y="1030" as="sourcePoint" />
+            <mxPoint x="637" y="1030" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-25" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Connection succesfull&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=-0.224;exitY=0.82;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="7baba1c4bc27f4b0-25" edge="1">
+          <mxGeometry x="0.0128" y="1" relative="1" as="geometry">
+            <mxPoint x="570" y="1060" as="sourcePoint" />
+            <mxPoint x="150" y="1060" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uZDW9I4iFCmvXwkblH1O-26" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Publish telemetry JSON message to:&lt;br&gt;devices/{device_id}/messages/events/&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;" parent="1" target="7baba1c4bc27f4b0-7" edge="1">
+          <mxGeometry x="-0.0176" y="2" relative="1" as="geometry">
+            <mxPoint x="150" y="1100" as="sourcePoint" />
+            <mxPoint x="576" y="1100" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ywfsb6FasemLutvTjJn8-1" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Return MAC&lt;/font&gt;" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1.275;exitY=0.079;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="7baba1c4bc27f4b0-9">
+          <mxGeometry x="0.0387" relative="1" as="geometry">
+            <mxPoint x="280" y="279.8" as="sourcePoint" />
+            <mxPoint x="340" y="254" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

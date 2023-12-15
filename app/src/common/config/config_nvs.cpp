@@ -2,13 +2,9 @@
 static const char* LOG_TAG = "ConfigNvs";
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
-
 #include "config_nvs.h"
 
-
-
-ConfigNvs* pConfig = nullptr;  // see comment in header file
-
+ConfigNvs* pConfig = nullptr; // see comment in header file
 
 ConfigNvs::ConfigNvs()
 {
@@ -24,12 +20,10 @@ bool ConfigNvs::init()
     assert(m_accessMutex);
 
     // read the initial value for each configuration parameter here
-    getBoolVar(m_configurationFinishedState, ConfigKeyName::CONFIGURATION_FINISHED_STATE);
+    getUint8Var(reinterpret_cast<uint8_t&>(m_bleConfigurationStatus), ConfigKeyName::BLE_CONFIGURATION_STATUS);
+    getUint8Var(reinterpret_cast<uint8_t&>(m_deviceProvisioningStatus), ConfigKeyName::DEVICE_PROVISIONING_STATUS);
     getStruct(m_wiFiCredentials, ConfigKeyName::WIFI_CREDENTIALS);
-    getUint8Var(m_lastLightBrightness, ConfigKeyName::LAST_LIGHT_BRIGHTNESS);
     getStruct(m_cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
-    getStruct(m_cloudCertificates, ConfigKeyName::CLOUD_CERTIFICATES);
-    getStruct(m_otaHttpsServerCertificate, ConfigKeyName::OTA_HTTP_CERTIFICATE);
     getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
 
     return true;
@@ -59,14 +53,30 @@ void ConfigNvs::commitToNVS() const
     }
 }
 
-bool ConfigNvs::getConfigurationFinishedState()
+EBleConfigurationStatus ConfigNvs::getBleConfigurationStatus()
 {
-    return m_configurationFinishedState;
+    return m_bleConfigurationStatus;
 }
 
-void ConfigNvs::setConfigurationFinishedState(bool isFinished)
+void ConfigNvs::setBleConfigurationStatus(EBleConfigurationStatus bleStatus)
 {
-    setBoolVar(m_configurationFinishedState, isFinished, ConfigKeyName::CONFIGURATION_FINISHED_STATE);
+    setUint8Var(
+        reinterpret_cast<uint8_t&>(m_bleConfigurationStatus),
+        reinterpret_cast<uint8_t&>(bleStatus),
+        ConfigKeyName::BLE_CONFIGURATION_STATUS);
+}
+
+ECloudDeviceProvisioningStatus ConfigNvs::getDeviceProvisioningStatus()
+{
+    return m_deviceProvisioningStatus;
+}
+
+void ConfigNvs::setDeviceProvisioningStatus(ECloudDeviceProvisioningStatus deviceProvisioningStatus)
+{
+    setUint8Var(
+        reinterpret_cast<uint8_t&>(m_deviceProvisioningStatus),
+        reinterpret_cast<uint8_t&>(deviceProvisioningStatus),
+        ConfigKeyName::DEVICE_PROVISIONING_STATUS);
 }
 
 const TWiFiCredentials& ConfigNvs::getWifiCredentials()
@@ -89,21 +99,6 @@ void ConfigNvs::setCloudCredentials(const TCloudCredentials& cloudCredentials)
     setStruct(m_cloudCredentials, cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
 }
 
-const TCloudCertificatePack& ConfigNvs::getCloudCertificates()
-{
-    return m_cloudCertificates;
-}
-
-void ConfigNvs::setCloudCertificates(const TCloudCertificatePack& cloudCertificates)
-{
-    setStruct(m_cloudCertificates, cloudCertificates, ConfigKeyName::CLOUD_CERTIFICATES);
-}
-
-void ConfigNvs::setOtaCertificate(const THttpsServerCertificate& httpsServerCertificate)
-{
-    setStruct(m_otaHttpsServerCertificate, httpsServerCertificate, ConfigKeyName::OTA_HTTP_CERTIFICATE);
-}
-
 void ConfigNvs::setOtaUpdateLink(const TOtaUpdateLink& otaUpdateLink)
 {
     setStruct(m_otaUpdateLink, otaUpdateLink, ConfigKeyName::OTA_UPDATE_LINK);
@@ -114,22 +109,7 @@ const TOtaUpdateLink& ConfigNvs::getOtaUpdateLink()
     return m_otaUpdateLink;
 }
 
-const THttpsServerCertificate& ConfigNvs::getOtaCertificate()
-{
-    return m_otaHttpsServerCertificate;
-}
-
-void ConfigNvs::setLastLightBrightness(uint8_t value)
-{
-    setUint8Var(m_lastLightBrightness, value, ConfigKeyName::LAST_LIGHT_BRIGHTNESS);
-}
-
-uint8_t ConfigNvs::getLastLightBrightness()
-{
-    return m_lastLightBrightness;
-}
-
-void ConfigNvs::setCertificatePack(const TCertificatePack &certificatePack)
+void ConfigNvs::setCertificatePack(const TCertificatePack& certificatePack)
 {
     setStruct(m_certificatePack, certificatePack, ConfigKeyName::CERTIFICATES);
 }
@@ -274,43 +254,37 @@ void ConfigNvs::setUint32Var(uint32_t& variable, const uint32_t newValue, const 
 
 void ConfigNvs::getBoolVar(bool& variable, const char* key) const
 {
-    getUint8Var(*reinterpret_cast<uint8_t*>(&variable), key);  // NOLINT
+    getUint8Var(*reinterpret_cast<uint8_t*>(&variable), key); // NOLINT
 }
 
 void ConfigNvs::setBoolVar(bool& variable, const bool newValue, const char* key) const
 {
-    setUint8Var(*reinterpret_cast<uint8_t*>(&variable), newValue, key);  // NOLINT
+    setUint8Var(*reinterpret_cast<uint8_t*>(&variable), newValue, key); // NOLINT
 }
 
 void ConfigNvs::getInt32Var(int32_t& variable, const char* key) const
 {
-    getUint32Var(*reinterpret_cast<uint32_t*>(&variable), key);  // NOLINT
+    getUint32Var(*reinterpret_cast<uint32_t*>(&variable), key); // NOLINT
 }
 
 void ConfigNvs::setInt32Var(int32_t& variable, const int32_t newValue, const char* key) const
 {
-    setUint32Var(*reinterpret_cast<uint32_t*>(&variable), static_cast<uint32_t>(newValue), key);  // NOLINT
+    setUint32Var(*reinterpret_cast<uint32_t*>(&variable), static_cast<uint32_t>(newValue), key); // NOLINT
 }
-
 
 void ConfigNvs::resetAllConfigurationFields()
 {
     // default values for the configuration:
 
-    m_configurationFinishedState = false;
-    m_wiFiCredentials = TWiFiCredentials();
-    m_lastLightBrightness = 50;
-    m_cloudCertificates = TCloudCertificatePack();
-    m_cloudCredentials = TCloudCredentials();
-    m_otaHttpsServerCertificate = THttpsServerCertificate();
-    m_otaUpdateLink = TOtaUpdateLink();
-    m_certificatePack = TCertificatePack();
+    m_bleConfigurationStatus   = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    m_wiFiCredentials          = TWiFiCredentials();
+    m_cloudCredentials         = TCloudCredentials();
+    m_otaUpdateLink            = TOtaUpdateLink();
+    m_certificatePack          = TCertificatePack();
+    m_deviceProvisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
 }
 
-
-
-template<typename T>
-void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)
+template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)
 {
     if (variable == newValue)
     {
@@ -333,12 +307,10 @@ void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)
     LOG_INFO("key '%s' - written to config", key);
 }
 
-template<typename T>
-void ConfigNvs::getStruct(T& variable, const char* key)
+template <typename T> void ConfigNvs::getStruct(T& variable, const char* key)
 {
-    variable = T();
+    variable        = T();
     size_t dataRead = sizeof(variable);
-
 
     esp_err_t err = nvs_get_blob(this->m_nvsHandle, key, &variable, &dataRead);
     switch (err)

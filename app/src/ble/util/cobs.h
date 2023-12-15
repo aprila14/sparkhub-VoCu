@@ -29,7 +29,7 @@ namespace cobs
  * "input", writing the output to the location pointed to by
  * "output". Returns the number of bytes written to "output".
  *
-  * @param input - input buffer of data to be encoded
+ * @param input - input buffer of data to be encoded
  * @param length - size of the input buffer data
  * @param output - output buffer which will contain encoded data
  * @return number of bytes in encoded (output) buffer
@@ -50,6 +50,6 @@ size_t encode(const uint8_t* input, size_t length, uint8_t* output);
  */
 size_t decode(const uint8_t* input, size_t length, uint8_t* output);
 
-}  // namespace cobs
+} // namespace cobs
 
 #endif /* COBS_H */

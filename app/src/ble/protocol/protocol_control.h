@@ -20,14 +20,13 @@ namespace prot
 constexpr int32_t NO_PACKET_ASSEMBLED = -1;
 
 
-
 /**
  * Structure describing the packet header, or a packet without payload.
  */
-struct  __attribute__((packed)) TPacketHeader
+struct __attribute__((packed)) TPacketHeader
 {
     uint16_t type; /**< Type of the packet */
-    uint16_t crc; /**< CRC of the packet, including header, set to 0 during calculation */
+    uint16_t crc;  /**< CRC of the packet, including header, set to 0 during calculation */
 };
 
 /**
@@ -37,7 +36,7 @@ struct  __attribute__((packed)) TPacketHeader
 struct __attribute__((packed)) TPacket
 {
     TPacketHeader header;
-	uint8_t payload[0];
+    uint8_t       payload[0];
 };
 
 /**
@@ -85,24 +84,25 @@ public:
      */
     static uint16_t calculateCrc16(uint8_t* pData, uint16_t length);
 
-    const uint8_t* getOutEncodedBytes();
+    const uint8_t*       getOutEncodedBytes();
     const TPacketBuffer& getInPacket();
 
 private:
     int decodeAndCheckReceivedPacket();
 
 
-    TPacketBuffer m_inPacket;  ///< received packet data after decoding
-    uint8_t m_inEncodedBytes[MAX_BLE_PACKET_SIZE];  ///< All bytes received, before decoding
+    TPacketBuffer m_inPacket;                            ///< received packet data after decoding
+    uint8_t       m_inEncodedBytes[MAX_BLE_PACKET_SIZE]; ///< All bytes received, before decoding
 
     // TODO - get rid of output buffers - pass output buffer to packet parsing function from higher level (consider it?)
-    TPacketBuffer m_outPacket;  ///< packet data to be sent, before encoding
-    uint8_t m_outEncodedBytes[MAX_BLE_PACKET_SIZE + 2];  ///< All bytes to be sent, after encoding, with delimiters. +2 for the delimiting zeros
+    TPacketBuffer m_outPacket;                          ///< packet data to be sent, before encoding
+    uint8_t m_outEncodedBytes[MAX_BLE_PACKET_SIZE + 2]; ///< All bytes to be sent, after encoding, with delimiters. +2
+                                                        ///< for the delimiting zeros
 
     uint32_t m_packetInBytesCounter;
 };
 
 
-}  // namespace prot
+} // namespace prot
 
 #endif /* PROTOCOL_H_ */

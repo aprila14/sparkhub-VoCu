@@ -1,5 +1,5 @@
 // Please keep these 2 lines at the beginning of each cpp module - tag and local log level
-static const char *LOG_TAG = "HandleResponse";
+static const char* LOG_TAG = "HandleResponse";
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
 #ifdef IS_PC
@@ -9,18 +9,21 @@ static const char *LOG_TAG = "HandleResponse";
 #include <assert.h>
 #include <string.h>
 
-void printMacAddress(uint8_t *address, const char *type)
+void printMacAddress(uint8_t* address, const char* type)
 {
-    LOG_INFO("%s MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\n",
-             type, address[0], address[1],
-             address[2], address[3],
-             address[4], address[5]);
+    LOG_INFO(
+        "%s MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\n",
+        type,
+        address[0],
+        address[1],
+        address[2],
+        address[3],
+        address[4],
+        address[5]);
 }
 
-static EPacketHandlingResult handleResponse_test(
-        BleController* pController,
-        const uint8_t* payload,
-        uint16_t payloadLen)
+static EPacketHandlingResult
+handleResponse_test(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
 {
     UNUSED(pController);
     LOG_DEBUG("Handling response for 'test' command...");
@@ -39,7 +42,8 @@ static EPacketHandlingResult handleResponse_test(
     return EPacketHandlingResult::SEND_ACK;
 }
 
-static EPacketHandlingResult handleResponse_getWifiMacAddress(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+static EPacketHandlingResult
+handleResponse_getWifiMacAddress(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling response for Get WIFI MAC Address");
 
@@ -49,14 +53,15 @@ static EPacketHandlingResult handleResponse_getWifiMacAddress(BleController* pCo
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    prot::get_wifi_mac_address::TRes *pRes = (prot::get_wifi_mac_address::TRes*)payload;
+    prot::get_wifi_mac_address::TRes* pRes = (prot::get_wifi_mac_address::TRes*)payload;
     LOG_INFO("MAC Address obtained from device");
     printMacAddress(pRes->wifiMacAddress, "WIFI");
 
     return EPacketHandlingResult::SEND_ACK;
 }
 
-static EPacketHandlingResult handleResponse_sendCertificates(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
+static EPacketHandlingResult
+handleResponse_sendCertificates(BleController* pController, const uint8_t* payload, uint16_t payloadLen)
 {
     LOG_INFO("Handling response for Send Certificates command");
 
@@ -66,18 +71,15 @@ static EPacketHandlingResult handleResponse_sendCertificates(BleController* pCon
         return EPacketHandlingResult::SEND_NACK;
     }
 
-    prot::send_certificates::TRes *pRes = (prot::send_certificates::TRes*)payload;
+    prot::send_certificates::TRes* pRes = (prot::send_certificates::TRes*)payload;
 
     LOG_INFO("Certificates sent successfully");
 
     return EPacketHandlingResult::SEND_ACK;
 }
 
-EPacketHandlingResult handleResponse(
-    BleController *pController,
-    prot::EPacketType packetType,
-    const uint8_t *payload,
-    uint16_t payloadLen)
+EPacketHandlingResult
+handleResponse(BleController* pController, prot::EPacketType packetType, const uint8_t* payload, uint16_t payloadLen)
 {
     switch (packetType)
     {
