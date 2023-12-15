@@ -19,13 +19,8 @@
  * @param payloadLen Size of the payload
  * @return
  */
-EPacketHandlingResult handleResponse(
-        BleController* pController,
-        prot::EPacketType packetType,
-        const uint8_t* payload,
-        uint16_t payloadLen);
-
-
+EPacketHandlingResult
+handleResponse(BleController* pController, prot::EPacketType packetType, const uint8_t* payload, uint16_t payloadLen);
 
 
 #endif // HANDLE_RESPONSE_H

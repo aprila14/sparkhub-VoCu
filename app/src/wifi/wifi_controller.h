@@ -1,13 +1,13 @@
 #ifndef WIFI_CONTROLLER_H
 #define WIFI_CONTROLLER_H
 
-#include "defines.h"
 #include "custom_types.h"
+#include "defines.h"
 #include "mutex.h"
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/event_groups.h"
+#include "freertos/task.h"
 
 #include "esp_wifi.h"
 #include "esp_wifi_types.h"
@@ -50,9 +50,9 @@ public:
      * @return true if internal logic executed properly (even if it didn't connect to the WiFi)
      */
     bool connectToAccessPoint(
-            const TConnectToAccessPointCommand& command,
-            TConnectToAccessPointResult& result,
-            bool shouldReconnect);
+        const TConnectToAccessPointCommand& command,
+        TConnectToAccessPointResult&        result,
+        bool                                shouldReconnect);
 
     /**
      * @brief Disconnect from the AP that we are connected to right now. To distinguish
@@ -90,6 +90,11 @@ public:
      */
     void connectWithCredentialsFromNvs();
 
+    /**
+     * @brief
+     */
+    void getWifiMacAddress(uint8_t* mac) const;
+
     static void displayScanRecords(prot::wifi_scan_ap::TScanEntry* records, int recordsNumber);
 
 #if IS_DEBUG_BUILD
@@ -120,11 +125,10 @@ private:
 
     struct TWifiEvent
     {
-        EWifiEvent eventType;
+        EWifiEvent                eventType;
         EConnectToSsidErrorReason reason;
-        TWiFiCredentials credentials;
+        TWiFiCredentials          credentials;
     };
-
 
     /**
      * @brief Part of the run method executed in endless loop
@@ -135,7 +139,7 @@ private:
      * @brief Main logic of the module
      */
     static void run(void* pObject);
-    void _run();
+    void        _run();
 
     bool registerHandlers();
     void processWifiEvents();
@@ -145,9 +149,9 @@ private:
 
     static EConnectToSsidErrorReason parseWifiDisconnectReason(uint8_t reason);
 
-    void tryToReconnect();
-    bool initiateDisconnection();
-    bool initiateStop();
+    void         tryToReconnect();
+    bool         initiateDisconnection();
+    bool         initiateStop();
     virtual bool disconnectIfNeeded();
 
     void setConnectionStatus(bool status);
@@ -157,37 +161,36 @@ private:
 
     static prot::wifi_scan_ap::TScanEntry convertRecordToScanEntry(wifi_ap_record_t& record);
 
-    static void printErrorCode(esp_err_t errorCode, const char *message);
+    static void printErrorCode(esp_err_t errorCode, const char* message);
 
 #if IS_DEBUG_BUILD
     void printConnectionLoop() const;
 #endif
 
-    TaskHandle_t m_taskHandle;                              //handle to runTask
-    mutex_t m_publicAccessMutex = nullptr;  ///< Protects access to all public API functions
-    mutex_t m_lastConnectionErrorReasonMutex = nullptr; ///< Protects access to lastConnectionErrorReason field
+    TaskHandle_t m_taskHandle;                               // handle to runTask
+    mutex_t      m_publicAccessMutex              = nullptr; ///< Protects access to all public API functions
+    mutex_t      m_lastConnectionErrorReasonMutex = nullptr; ///< Protects access to lastConnectionErrorReason field
     EventGroupHandle_t m_eventGroup;
 
-    EConnectToSsidErrorReason m_connectionErrorReason;      //reason for connection issue, passed from wifi handler
+    EConnectToSsidErrorReason m_connectionErrorReason; // reason for connection issue, passed from wifi handler
 
-    bool m_connectionStatus;                                //indicates that connection was established
-    bool m_disconnectionInitiated;                          //indicates that disconnection was initiated by user
-    bool m_shouldReconnect;                                 //indicates that connection should be attempted until ended with success
-    bool m_scanningActive;                                  //indicates that scan of available Access Points is currently being performed
+    bool m_connectionStatus;       // indicates that connection was established
+    bool m_disconnectionInitiated; // indicates that disconnection was initiated by user
+    bool m_shouldReconnect;        // indicates that connection should be attempted until ended with success
+    bool m_scanningActive;         // indicates that scan of available Access Points is currently being performed
 
-    uint16_t m_maxRecordsFound;                             //max records found during last WiFi scan
-    uint32_t m_retryNumber;                                 //amount of times reconnection was attempted so far
-    int32_t m_timeoutMs;                                    //time after which reconnection is not attempted
-    uint64_t m_disconnectionTime;                           //time at which disconnection event occured
+    uint16_t m_maxRecordsFound;   // max records found during last WiFi scan
+    uint32_t m_retryNumber;       // amount of times reconnection was attempted so far
+    int32_t  m_timeoutMs;         // time after which reconnection is not attempted
+    uint64_t m_disconnectionTime; // time at which disconnection event occured
 
-    EConnectToSsidErrorReason m_lastConnectionErrorReason;  //error that has occured during last attempt to connect
+    EConnectToSsidErrorReason m_lastConnectionErrorReason; // error that has occured during last attempt to connect
 
     QueueHandle_t m_eventsQueue;
 
     wifi_ap_record_t m_wifiScanRecords[MAX_NUMBER_OF_SCANNED_ACCESS_POINTS];
 
     esp_err_t m_scanErrorCode;
-
 };
 
 #endif // WIFI_CONTROLLER_H

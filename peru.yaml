@@ -3,6 +3,7 @@ imports:
   CMock: app/externals/CMock
   googletest: app/externals/googletest
   esp-idf: app/externals
+  blzlib: misc/pc_ble_client/externals/blzlib
 
 git module Unity:
   url: https://github.com/ThrowTheSwitch/Unity.git
@@ -20,3 +21,7 @@ curl module esp-idf:
   url: https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v4.4.3/esp-idf-v4.4.3.zip
   filename: esp-idf.zip
   sha1: 2391bfb51b704db2eb277a18e732d62f8d3dab3a
+
+git module blzlib:
+  url: https://github.com/infsoft-locaware/blzlib.git
+  rev: b8248902b64263e2a85eba82b5606b71ef079e78
