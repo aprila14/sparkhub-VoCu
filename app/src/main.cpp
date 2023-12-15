@@ -24,20 +24,21 @@ void temporaryDevelopmentCode()
     LOG_WARNING("Running temporaryDevelopmentCode!");
 
     // Set BLE configuration state to finished
-    pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
+    // pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
 
     {
-        prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
+        // prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
 
-        LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
+        // LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
 
-        pCmdCertificate->certificates.setFullChainCertificate(std::string(DEFAULT_CLIENT_PUBLIC_CERT));
-        pCmdCertificate->certificates.setPrivateKey(std::string(DEFAULT_CLIENT_PRIVATE_KEY));
+        // pCmdCertificate->certificates.setFullChainCertificate(std::string(DEFAULT_CLIENT_PUBLIC_CERT));
+        // pCmdCertificate->certificates.setPrivateKey(std::string(DEFAULT_CLIENT_PRIVATE_KEY));
 
-        pConfig->setCertificatePack(pCmdCertificate->certificates);
+        // pConfig->setCertificatePack(pCmdCertificate->certificates);
 
-        delete pCmdCertificate;
+        // delete pCmdCertificate;
 
+        // setting the HTTP Server Public Key - needed to use https OTA
         prot::ota_perform::THttpsServerCertificate* pHttpCertificate = new prot::ota_perform::THttpsServerCertificate();
 
         strncpy(
