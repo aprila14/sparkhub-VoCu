@@ -16,8 +16,9 @@ const std::string DEVICE_TWIN_UPDATE_TOPIC            = std::string("$iothub/twi
 const std::string DEVICE_TWIN_REPORTED_TOPIC_PREFIX   = std::string("$iothub/twin/PATCH/properties/reported/?$rid=");
 const std::string DEVICE_TWIN_REPORTED_RESPONSE_TOPIC = std::string("$iothub/twin/res/#");
 
-const char* OTA_SUCCESS_STRING = "ota_success";
-const char* OTA_FAIL_STRING    = "ota_fail";
+const char* OTA_SUCCESS_STRING      = "ota_success";
+const char* OTA_FAIL_STRING         = "ota_fail";
+const char* OTA_SAME_VERSION_STRING = "same_version_received";
 } // unnamed namespace
 
 bool checkIfItIsNewFirmwareVersion(const TFirmwareInfo& firmwareInfo)
@@ -31,6 +32,7 @@ bool checkIfItIsNewFirmwareVersion(const TFirmwareInfo& firmwareInfo)
     uint32_t projectPatchVersion = PROJECT_VER_PATCH;
 
     LOG_INFO("About to check string for version: %s", firmwareInfo.version.c_str());
+    LOG_INFO("Current version: %d.%d.%d", projectMajorVersion, projectMinorVersion, projectPatchVersion);
 
     uint8_t result = sscanf(firmwareInfo.version.c_str(), "%d.%d.%d", &majorVersion, &minorVersion, &patchVersion);
 
@@ -41,10 +43,8 @@ bool checkIfItIsNewFirmwareVersion(const TFirmwareInfo& firmwareInfo)
     }
 
     return (
-        (majorVersion > projectMajorVersion) ||
-        ((majorVersion >= projectMajorVersion) && (minorVersion > projectMinorVersion)) ||
-        ((majorVersion >= projectMajorVersion) && (minorVersion >= projectMinorVersion) &&
-         (patchVersion > projectPatchVersion)));
+        (majorVersion != projectMajorVersion) || (minorVersion != projectMinorVersion) ||
+        (patchVersion != projectPatchVersion));
 }
 
 DeviceTwinsController::DeviceTwinsController(
@@ -165,6 +165,11 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
                     SLEEP_MS(2000);
                     esp_restart();
                 }
+            }
+            else
+            {
+                LOG_WARNING("Received the same version as the current one, not performing the OTA");
+                reportFirmwareVersion(OTA_SAME_VERSION_STRING);
             }
 
             // Add the field to reported
