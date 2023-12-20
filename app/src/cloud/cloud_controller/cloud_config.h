@@ -4,8 +4,10 @@
 #define CLOUD_DEVICE_PROVISIONING_ADDRESS "mqtts://global.azure-devices-provisioning.net"
 #define DEVICE_PROVISIONING_ID_SCOPE      "0ne00B73235"
 
+
 #define DEFAULT_SERVER_PUBLIC_CERT \
     "-----BEGIN CERTIFICATE-----\n" \
+
     "MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh\n" \
     "MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\n" \
     "d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBH\n" \
@@ -27,5 +29,4 @@
     "pLiaWN0bfVKfjllDiIGknibVb63dDcY3fe0Dkhvld1927jyNxF1WW6LZZm6zNTfl\n" \
     "MrY=\n" \
     "-----END CERTIFICATE-----\n"
-
 #endif // DEFAULT_CERTS_H

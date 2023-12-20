@@ -27,6 +27,7 @@ void temporaryDevelopmentCode()
     pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
 
     {
+
         prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
 
         LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
@@ -37,6 +38,7 @@ void temporaryDevelopmentCode()
         pConfig->setCertificatePack(pCmdCertificate->certificates);
 
         delete pCmdCertificate;
+
     }
 }
 #endif // IS_DEBUG_BUILD

@@ -92,10 +92,16 @@ bool processStatusReport(cJSON* pDataJson, TDeviceStatus* pOutput)
 
     std::string firmware = pFirmwareVersionJson->valuestring;
 
-    pOutput->isWiFiConnected          = cJSON_IsTrue(pWifiConnectionStateJson);
-    pOutput->isBleConnected           = cJSON_IsTrue(pBleConnectionStateJson);
-    pOutput->currentTimeFromStartupMs = static_cast<uint32_t>(pCurrentTimeMsJson->valueint);
-    strcpy(pOutput->firmwareVersion, firmware.c_str());
+
+    bool processStatusReport(cJSON *pDataJson, TDeviceStatus *pOutput)
+    {
+        cJSON *pWifiConnectionStateJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "wifiConnectionState");
+        cJSON *pBleConnectionStateJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "bleConnectionState");
+        cJSON *pBelowPressureThresholdJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "isBelowPressureAlarmThreshold");
+        cJSON *pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
+        cJSON *pCurrentTimeMsJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "currentTimeMs");
+        cJSON *pFirmwareVersionJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "firmwareVersion");
+
 
     return true;
 }
@@ -131,9 +137,14 @@ bool processHeartbeat(cJSON* pDataJson, THeartbeat* pOutput)
  * @return boolean value representing succes of the operation
  */
 
-bool processResponse(cJSON* pDataJson, TResponse* pOutput)
-{
-    cJSON* pAckJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "ACK");
+
+        pOutput->isWiFiConnected = cJSON_IsTrue(pWifiConnectionStateJson);
+        pOutput->isBleConnected = cJSON_IsTrue(pBleConnectionStateJson);
+        pOutput->isBelowPressureAlarmThreshold = cJSON_IsTrue(pBelowPressureThresholdJson);
+        pOutput->lightIntensityLevel = static_cast<uint8_t>(pLightIntensityLevelJson->valueint);
+        pOutput->currentTimeFromStartupMs = static_cast<uint32_t>(pCurrentTimeMsJson->valueint);
+        strcpy(pOutput->firmwareVersion, firmware.c_str());
+
 
     if (pAckJson == nullptr)
     {
@@ -523,9 +534,40 @@ std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus& deviceS
 
     if (pDeviceStatusCommandDataJson == nullptr)
     {
-        LOG_INFO("Error while preparing deviceStatusCommandJson in prepareDeviceStatusMessage()");
-        return "";
-    }
+
+        cJSON *pDeviceStatusJson = cJSON_CreateObject();
+        cJSON *pWifiConnectionStateJson = cJSON_CreateBool(deviceStatus.isWiFiConnected);
+        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "wifiConnectionState", pWifiConnectionStateJson)))
+        {
+            LOG_INFO("Cannot add wifiConnectionState JSON to deviceStatusJson");
+            cJSON_Delete(pDeviceStatusJson);
+            return nullptr;
+        }
+
+        cJSON *pBleConnectionStateJson = cJSON_CreateBool(deviceStatus.isBleConnected);
+        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "bleConnectionState", pBleConnectionStateJson)))
+        {
+            LOG_INFO("Cannot add bleConnectionState JSON to deviceStatusJson");
+            cJSON_Delete(pDeviceStatusJson);
+            return nullptr;
+        }
+
+        cJSON *pPressureAlarmThresholdJson = cJSON_CreateBool(deviceStatus.isBelowPressureAlarmThreshold);
+        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "PressureAlarmThreshold", pPressureAlarmThresholdJson)))
+        {
+            LOG_INFO("Cannot add bleConnectionState JSON to deviceStatusJson");
+            cJSON_Delete(pDeviceStatusJson);
+            return nullptr;
+        }
+
+        cJSON *pCurrentTimeFromStartupMsJson = cJSON_CreateNumber(deviceStatus.currentTimeFromStartupMs);
+        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentTimeFromStartupMs", pCurrentTimeFromStartupMsJson)))
+        {
+            LOG_INFO("Cannot add currentTimeMs JSON to deviceStatusJson");
+            cJSON_Delete(pDeviceStatusJson);
+            return nullptr;
+        }
+
 
     char* pDeviceStatusJsonCString = cJSON_Print(pDeviceStatusCommandDataJson);
     if (pDeviceStatusJsonCString == nullptr)
@@ -746,8 +788,14 @@ cJSON* dataJsonToRpcCommandJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msg
         return nullptr;
     }
 
+
     return pRpcCommandJson;
 }
+
+    std::string getStatusReportString(const TDeviceStatus &deviceStatus)
+    {
+        std::string statusReportString = "wifiConnectionState: " + getBooleanString(deviceStatus.isWiFiConnected) + "\n" + "bleConnectionState: " + getBooleanString(deviceStatus.isBelowPressureAlarmThreshold) + "\n" + "BelowPressureAlarmThreshold: " + getBooleanString(deviceStatus.isBelowPressureAlarmThreshold) + "\n" + "lightIntensityLevel: " + std::to_string(deviceStatus.lightIntensityLevel) + "\n" + "currentTimeFromStartupMs: " + std::to_string(deviceStatus.currentTimeFromStartupMs) + "\n" + "currentLocalTime: " + deviceStatus.currentLocalTime + "\n" + "firmwareVersion: " + deviceStatus.firmwareVersion + "\n";
+
 
 /***** STRING GET FUNCTIONS FOR FRAME PRINTING *****/
 
