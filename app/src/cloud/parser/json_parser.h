@@ -12,6 +12,7 @@ namespace
     constexpr uint8_t FIRMWARE_VERSION_LENGTH = 32;
     constexpr uint8_t MAX_TIME_STRING_LENGTH = 30;
     constexpr uint8_t MAX_OTA_TOPIC_SUFFIX_LENGTH = 80;
+    constexpr uint8_t ALARM_RESPONSE_LENGTH = 32;
 }
 namespace json_parser
 {
@@ -60,6 +61,7 @@ namespace json_parser
     {
         bool isWiFiConnected;
         bool isBleConnected;
+        bool isBelowPressureAlarmThreshold;
         uint8_t lightIntensityLevel;
         uint32_t currentTimeFromStartupMs;
         char firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];

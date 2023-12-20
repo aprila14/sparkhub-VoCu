@@ -117,6 +117,7 @@ namespace json_parser
     {
         cJSON *pWifiConnectionStateJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "wifiConnectionState");
         cJSON *pBleConnectionStateJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "bleConnectionState");
+        cJSON *pBelowPressureThresholdJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "isBelowPressureAlarmThreshold");
         cJSON *pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
         cJSON *pCurrentTimeMsJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "currentTimeMs");
         cJSON *pFirmwareVersionJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "firmwareVersion");
@@ -155,6 +156,7 @@ namespace json_parser
 
         pOutput->isWiFiConnected = cJSON_IsTrue(pWifiConnectionStateJson);
         pOutput->isBleConnected = cJSON_IsTrue(pBleConnectionStateJson);
+        pOutput->isBelowPressureAlarmThreshold = cJSON_IsTrue(pBelowPressureThresholdJson);
         pOutput->lightIntensityLevel = static_cast<uint8_t>(pLightIntensityLevelJson->valueint);
         pOutput->currentTimeFromStartupMs = static_cast<uint32_t>(pCurrentTimeMsJson->valueint);
         strcpy(pOutput->firmwareVersion, firmware.c_str());
@@ -720,6 +722,14 @@ namespace json_parser
             return nullptr;
         }
 
+        cJSON *pPressureAlarmThresholdJson = cJSON_CreateBool(deviceStatus.isBelowPressureAlarmThreshold);
+        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "PressureAlarmThreshold", pPressureAlarmThresholdJson)))
+        {
+            LOG_INFO("Cannot add bleConnectionState JSON to deviceStatusJson");
+            cJSON_Delete(pDeviceStatusJson);
+            return nullptr;
+        }
+
         cJSON *pCurrentTimeFromStartupMsJson = cJSON_CreateNumber(deviceStatus.currentTimeFromStartupMs);
         if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentTimeFromStartupMs", pCurrentTimeFromStartupMsJson)))
         {
@@ -926,7 +936,7 @@ namespace json_parser
 
     std::string getStatusReportString(const TDeviceStatus &deviceStatus)
     {
-        std::string statusReportString = "wifiConnectionState: " + getBooleanString(deviceStatus.isWiFiConnected) + "\n" + "bleConnectionState: " + getBooleanString(deviceStatus.isBleConnected) + "\n" + "lightIntensityLevel: " + std::to_string(deviceStatus.lightIntensityLevel) + "\n" + "currentTimeFromStartupMs: " + std::to_string(deviceStatus.currentTimeFromStartupMs) + "\n" + "currentLocalTime: " + deviceStatus.currentLocalTime + "\n" + "firmwareVersion: " + deviceStatus.firmwareVersion + "\n";
+        std::string statusReportString = "wifiConnectionState: " + getBooleanString(deviceStatus.isWiFiConnected) + "\n" + "bleConnectionState: " + getBooleanString(deviceStatus.isBelowPressureAlarmThreshold) + "\n" + "BelowPressureAlarmThreshold: " + getBooleanString(deviceStatus.isBelowPressureAlarmThreshold) + "\n" + "lightIntensityLevel: " + std::to_string(deviceStatus.lightIntensityLevel) + "\n" + "currentTimeFromStartupMs: " + std::to_string(deviceStatus.currentTimeFromStartupMs) + "\n" + "currentLocalTime: " + deviceStatus.currentLocalTime + "\n" + "firmwareVersion: " + deviceStatus.firmwareVersion + "\n";
 
         return statusReportString;
     }

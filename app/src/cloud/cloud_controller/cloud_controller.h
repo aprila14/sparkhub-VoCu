@@ -86,6 +86,12 @@ private:
     void updateDeviceStatus();
 
     /**
+     * Function reading the pressure Value and send Alarm if it is below a certain threshold
+     */
+    void CheckPressureValueBelowThreshold();
+
+
+    /**
      * Function setting connection status to given value
      */
     void setConnectionStatus(ECloudConnectionStatus status);
