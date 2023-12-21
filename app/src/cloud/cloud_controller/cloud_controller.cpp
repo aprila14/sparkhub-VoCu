@@ -17,11 +17,12 @@ static const char* LOG_TAG = "CloudController";
 
 namespace
 {
-constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3600 * 1000; // once per hour
-constexpr uint16_t LOCAL_TIME_OFFSET                   = UtcOffset::OFFSET_UTC_2;
-constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE  = -1;
-constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS     = 1000;
-constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE        = 200;
+constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 3600 * 1000; // once per hour
+constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
+constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
+constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE                 = -1;
+constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS                    = 1000;
+constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
 
 } // unnamed namespace
 
@@ -134,7 +135,9 @@ void CloudController::_run()
     }
 
     m_mqttClientController.runTask();
-    SLEEP_MS(1000);
+
+    // Adding some delay to allow mqttClientController to start
+    SLEEP_MS(SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER);
     m_deviceTwinsController.runTask();
     LOG_INFO("Cloud controller initiated!");
 

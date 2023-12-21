@@ -19,6 +19,8 @@ const std::string DEVICE_TWIN_REPORTED_RESPONSE_TOPIC = std::string("$iothub/twi
 const char* OTA_SUCCESS_STRING      = "ota_success";
 const char* OTA_FAIL_STRING         = "ota_fail";
 const char* OTA_SAME_VERSION_STRING = "same_version_received";
+
+constexpr uint32_t SLEEP_TIME_BEFORE_RESTART_AFTER_OTA_MS = 2000;
 } // unnamed namespace
 
 bool checkIfItIsNewFirmwareVersion(const char* firmwareVersion)
@@ -27,9 +29,9 @@ bool checkIfItIsNewFirmwareVersion(const char* firmwareVersion)
     uint32_t minorVersion = 0;
     uint32_t patchVersion = 0;
 
-    uint32_t projectMajorVersion = PROJECT_VER_MAJOR;
-    uint32_t projectMinorVersion = PROJECT_VER_MINOR;
-    uint32_t projectPatchVersion = PROJECT_VER_PATCH;
+    const uint32_t projectMajorVersion = PROJECT_VER_MAJOR;
+    const uint32_t projectMinorVersion = PROJECT_VER_MINOR;
+    const uint32_t projectPatchVersion = PROJECT_VER_PATCH;
 
     LOG_INFO("About to check string for version: %s", firmwareVersion);
     LOG_INFO("Current version: %d.%d.%d", projectMajorVersion, projectMinorVersion, projectPatchVersion);
@@ -88,7 +90,7 @@ void DeviceTwinsController::_run()
     LOG_INFO("Topics subscribed");
 
     TWorkflowData workflowData = pConfig->getWorkflowData();
-    reportDeviceUpdateStatus(0, workflowData);
+    reportDeviceUpdateStatus(EOtaAgentState::OTA_AGENT_STATE_IDLE, workflowData);
 
     while (true)
     {
@@ -106,8 +108,8 @@ void DeviceTwinsController::_run()
 
 void DeviceTwinsController::subscribeDeviceTwinTopics()
 {
-    m_pMqttClientController->addTopicForSubscription(DEVICE_TWIN_UPDATE_TOPIC, 0);
-    m_pMqttClientController->addTopicForSubscription(DEVICE_TWIN_REPORTED_RESPONSE_TOPIC, 0);
+    m_pMqttClientController->addTopicForSubscription(DEVICE_TWIN_UPDATE_TOPIC, 1);
+    m_pMqttClientController->addTopicForSubscription(DEVICE_TWIN_REPORTED_RESPONSE_TOPIC, 1);
 }
 
 void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage& message)
@@ -152,7 +154,8 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
                 app::TEventData eventData        = {};
                 eventData.otaPerform.updateReady = true;
 
-                reportDeviceUpdateStatus(6, deviceUpdateData.workflowData); // TODO add enum class for state
+                reportDeviceUpdateStatus(
+                    EOtaAgentState::OTA_AGENT_STATE_DEPLOYMENT_IN_PROGRESS, deviceUpdateData.workflowData);
 
                 bool result = app::pAppController->addEvent(
                     app::EEventType::OTA__PERFORM, app::EEventExecutionType::SYNCHRONOUS, &eventData);
@@ -160,14 +163,15 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
                 if (!result)
                 {
                     LOG_ERROR("Could not perform OTA");
-                    reportDeviceUpdateStatus(255, deviceUpdateData.workflowData);
+                    reportDeviceUpdateStatus(
+                        EOtaAgentState::OTA_AGENT_STATE_DEPLOYMENT_FAILED, deviceUpdateData.workflowData);
                 }
                 else
                 {
                     LOG_INFO("OTA performed successfully");
 
                     LOG_INFO("About to reset in 2000 ms");
-                    SLEEP_MS(2000);
+                    SLEEP_MS(SLEEP_TIME_BEFORE_RESTART_AFTER_OTA_MS);
                     esp_restart();
                 }
             }
@@ -221,7 +225,7 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
                     reportFirmwareVersion(OTA_SUCCESS_STRING);
 
                     LOG_INFO("About to reset in 2000 ms");
-                    SLEEP_MS(2000);
+                    SLEEP_MS(SLEEP_TIME_BEFORE_RESTART_AFTER_OTA_MS);
                     esp_restart();
                 }
             }
@@ -309,7 +313,7 @@ void DeviceTwinsController::reportFirmwareVersion(const char* otaStatus)
     }
 }
 
-void DeviceTwinsController::reportDeviceUpdateStatus(uint8_t state, const TWorkflowData& workflowData)
+void DeviceTwinsController::reportDeviceUpdateStatus(EOtaAgentState state, const TWorkflowData& workflowData)
 {
     TUpdateId updateId = {};
 
@@ -323,7 +327,7 @@ void DeviceTwinsController::reportDeviceUpdateStatus(uint8_t state, const TWorkf
     }
 
     std::string deviceUpdateStatusReportedMessage =
-        json_parser::prepareDeviceUpdateReport(updateId, state, workflowData);
+        json_parser::prepareDeviceUpdateReport(updateId, static_cast<uint8_t>(state), workflowData);
 
     if (deviceUpdateStatusReportedMessage == std::string(""))
     {

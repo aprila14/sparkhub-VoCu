@@ -41,6 +41,13 @@ enum class EDeviceUpdateAction
     ACTION_CANCEL   = 255
 };
 
+enum class EOtaAgentState
+{
+    OTA_AGENT_STATE_IDLE                   = 0,
+    OTA_AGENT_STATE_DEPLOYMENT_IN_PROGRESS = 6,
+    OTA_AGENT_STATE_DEPLOYMENT_FAILED      = 255
+};
+
 struct TUpdateManifest
 {
     char fileKey[MAX_FILE_KEY_LENGTH];

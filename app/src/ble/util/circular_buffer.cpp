@@ -15,6 +15,7 @@ CircularBuffer::CircularBuffer(uint8_t* pData, uint32_t size) :
     m_writeIndex(0),
     m_pData(pData)
 {
+    assert(pData != NULL);
 }
 
 bool CircularBuffer::isDataAvailable() const
