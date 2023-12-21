@@ -106,8 +106,8 @@ void DeviceTwinsController::_run()
 
 void DeviceTwinsController::subscribeDeviceTwinTopics()
 {
-    m_pMqttClientController->subscribeToTopic(DEVICE_TWIN_UPDATE_TOPIC, 0);
-    m_pMqttClientController->subscribeToTopic(DEVICE_TWIN_REPORTED_RESPONSE_TOPIC, 0);
+    m_pMqttClientController->addTopicForSubscription(DEVICE_TWIN_UPDATE_TOPIC, 0);
+    m_pMqttClientController->addTopicForSubscription(DEVICE_TWIN_REPORTED_RESPONSE_TOPIC, 0);
 }
 
 void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage& message)

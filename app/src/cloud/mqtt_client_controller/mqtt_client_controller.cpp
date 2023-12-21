@@ -32,7 +32,8 @@ MqttClientController::MqttClientController(CloudController* cloudController) :
     m_connectionStatus(false),
     m_messageQueue(),
     m_mqttClient(nullptr),
-    m_taskHandle(nullptr)
+    m_taskHandle(nullptr),
+    m_subscriptionCounter(0)
 {
     m_pCloudController  = cloudController;
     m_messageQueueMutex = mutexCreate();
@@ -75,9 +76,37 @@ void MqttClientController::handleMessages()
     // messages are currently being handled in other modules
 }
 
+bool MqttClientController::addTopicForSubscription(std::string topic, int qos)
+{
+    if (m_subscriptionCounter >= MAX_TOPIC_SUBSCRIPTIONS)
+    {
+        LOG_ERROR("Maximum number of topics for subscription has already been used");
+        return false;
+    }
+
+    if (!subscribeToTopic(topic, qos))
+    {
+        LOG_ERROR("Could not subscribe to topic");
+        return false;
+    }
+
+    m_topicsForSubscription[m_subscriptionCounter].topic = topic;
+    m_topicsForSubscription[m_subscriptionCounter].qos   = qos;
+
+    m_subscriptionCounter++;
+
+    return true;
+}
+
 void MqttClientController::subscribeToRequiredTopics() // NOLINT - we don't want to make it const
 {
-    // TODO add later subscribe topics
+    for (int i = 0; i < m_subscriptionCounter; i++)
+    {
+        if (!subscribeToTopic(m_topicsForSubscription[i].topic, m_topicsForSubscription[i].qos))
+        {
+            LOG_ERROR("Could not subscribe to topic: %s", m_topicsForSubscription[i].topic);
+        }
+    }
 }
 
 bool MqttClientController::init(const prot::cloud_set_credentials::TCloudCredentials& credentials)

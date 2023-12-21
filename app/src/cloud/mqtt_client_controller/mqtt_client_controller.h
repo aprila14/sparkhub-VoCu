@@ -87,6 +87,13 @@ public:
      */
     const esp_mqtt_client_handle_t& getMqttClient();
 
+    bool addTopicForSubscription(std::string topic, int qos);
+    struct TMqttClientSubscription
+    {
+        std::string topic;
+        int         qos;
+    };
+
 #if !TESTING
 private:
 #endif
@@ -109,6 +116,8 @@ private:
     static void run(void* pObject);
     void        _run();
 
+    static constexpr uint8_t MAX_TOPIC_SUBSCRIPTIONS = 5;
+
     bool m_connectionStatus; // boolean value representing if client is connected (true) or disconnected (false) from
                              // the broker
 
@@ -122,6 +131,10 @@ private:
 
     CloudController* m_pCloudController; // Pointer to CloudController - needed for calling it's functions TODO: change
                                          // to observer pattern
+
+    uint32_t m_subscriptionCounter;
+
+    TMqttClientSubscription m_topicsForSubscription[MAX_TOPIC_SUBSCRIPTIONS];
 };
 
 #endif // MQTTCLIENTCONTROLLER_H
