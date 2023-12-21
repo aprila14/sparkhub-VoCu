@@ -37,18 +37,6 @@ void temporaryDevelopmentCode()
         // pConfig->setCertificatePack(pCmdCertificate->certificates);
 
         // delete pCmdCertificate;
-
-        // setting the HTTP Server Public Key - needed to use https OTA
-        prot::ota_perform::THttpsServerCertificate* pHttpCertificate = new prot::ota_perform::THttpsServerCertificate();
-
-        strncpy(
-            pHttpCertificate->serverCertificate,
-            DEFAULT_HTTP_SERVER_PUBLIC_KEY,
-            strlen(DEFAULT_HTTP_SERVER_PUBLIC_KEY));
-
-        pConfig->setOtaCertificate(*pHttpCertificate);
-
-        delete pHttpCertificate;
     }
 }
 #endif // IS_DEBUG_BUILD

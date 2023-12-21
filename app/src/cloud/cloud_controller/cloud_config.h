@@ -27,29 +27,4 @@
     "pLiaWN0bfVKfjllDiIGknibVb63dDcY3fe0Dkhvld1927jyNxF1WW6LZZm6zNTfl\n" \
     "MrY=\n" \
     "-----END CERTIFICATE-----\n"
-
-// example HTTP Server Public Key, replace with the one for your HTTP Server
-#define DEFAULT_HTTP_SERVER_PUBLIC_KEY \
-    "-----BEGIN CERTIFICATE-----\n" \
-    "MIIDkzCCAnugAwIBAgIUVDqCmVldG9pJWyndbtqqtsSwmLUwDQYJKoZIhvcNAQEL\n" \
-    "BQAwWTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM\n" \
-    "GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDESMBAGA1UEAwwJMTAuNDIuMC4xMB4X\n" \
-    "DTIzMTIxMjExNDQzOVoXDTMzMTIwOTExNDQzOVowWTELMAkGA1UEBhMCQVUxEzAR\n" \
-    "BgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5\n" \
-    "IEx0ZDESMBAGA1UEAwwJMTAuNDIuMC4xMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\n" \
-    "MIIBCgKCAQEAyFbMpiQ6/GqbXFvmNiPZW6RajVIRCSOInqGq2QbH82SwYSH1kBbK\n" \
-    "RDOUXmn3VmBEY0UsGVQ79q1PpCRURpilmFzF+BElSdYa9vMvez84W2PPed7Jsv6S\n" \
-    "mPmp9VB3cEogbUQWUv2wHOsoDePbXITyi/iAJHALjTZ06woQM+4s/emKONIdv1ea\n" \
-    "aAJukvxKfRaHv21ZW0pRsa/azV9wNpvjm68xgRksTHM3fumGBwVP75FO8+e60Bf3\n" \
-    "t606gSBlKRrKqYgSTz2ftvSH5G6O+PIiyTXNVPEiUhPOH4sAGpGsmqxmX1Ls5qOO\n" \
-    "4/2fSF5k/TICg/yDqgtYgv4dOYz2wTrD5wIDAQABo1MwUTAdBgNVHQ4EFgQUnnTT\n" \
-    "r61XTFE7PIgxySH9i/dWM8wwHwYDVR0jBBgwFoAUnnTTr61XTFE7PIgxySH9i/dW\n" \
-    "M8wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAfpvBG9jj13su\n" \
-    "A7rPFwyoGqifGKME52CUG0+noTA6CbM9cFfUFet/ty7ACxdcInSIaUfrfbgcj0yk\n" \
-    "iRSK5yuATgCdsAaGOWfr44trvEIoGiaceeSo5qVywq2MmVmSFmaffwOupLxit7SY\n" \
-    "cKHWhWJaWk78gfBdLmCjgf5flED6BO6ahc2gLltgPfnObbeXOanm8RONuhEdpN8n\n" \
-    "h6vRWu2nq/FKQwHFDjwf6tBE2YMVdJ8JCyO9gwbfdpOSZ4JLmrFWIjJsDeRJnFmV\n" \
-    "sBPZAFNmUN5VCDRjob3GdhN++wignpkk3MAFvQZOf4BmOuoE3+73JUMPVhg6HBdA\n" \
-    "GQ+9Pgsfyg==\n" \
-    "-----END CERTIFICATE-----\n"
 #endif // DEFAULT_CERTS_H

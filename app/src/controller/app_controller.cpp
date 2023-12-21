@@ -303,23 +303,12 @@ bool AppController::executeEvent_otaPerform() // NOLINT - we don't want to make 
 
     // TODO: add reading firmwareLink from NVS here
 
-    const prot::ota_perform::THttpsServerCertificate& httpsServerCertificate = pConfig->getOtaCertificate();
-    const prot::ota_perform::TOtaUpdateLink&          otaUpdateLink          = pConfig->getOtaUpdateLink();
+    const prot::ota_perform::TOtaUpdateLink& otaUpdateLink = pConfig->getOtaUpdateLink();
 
     if (!otaUpdateLink.isSet())
     {
         LOG_INFO("Ota update link not set in NVS");
         return false;
-    }
-
-    if (!httpsServerCertificate.isSet())
-    {
-        LOG_INFO("Http certificate not set in NVS");
-        config.cert_pem = NULL;
-    }
-    else
-    {
-        config.cert_pem = httpsServerCertificate.serverCertificate;
     }
 
     config.url                         = otaUpdateLink.firmwareLink;

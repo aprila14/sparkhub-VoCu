@@ -145,7 +145,7 @@ One of the possible ways to update the device is sending the appropriate JSON me
 ```
 "firmware_info": 
 {
-    "url": "https://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
+    "url": "http://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
     "firmware_version": "0.5.0"
 }
 ```
@@ -156,7 +156,7 @@ after the OTA (or attempt to perform the OTA) the device is going to send back r
 "firmware_info": 
 {
     "version": "0.5.0",
-    "url": "https://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
+    "url": "http://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
     "ota_status": "ota_success"
 }
 ```
@@ -166,13 +166,7 @@ or
 "firmware_info": 
 {
     "version": "0.5.0",
-    "url": "https://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
+    "url": "http://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
     "ota_status": "ota_fail"
 }
-```
-
-In order to perform this OTA example HTTP Server Public Key needs to be replaced with proper one for the server being used in `cloud_config.h` under following define:
-
-```
-#define DEFAULT_HTTP_SERVER_PUBLIC_KEY
 ```
