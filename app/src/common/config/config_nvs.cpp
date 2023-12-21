@@ -119,16 +119,6 @@ const TCertificatePack& ConfigNvs::getCertificatePack()
     return m_certificatePack;
 }
 
-void ConfigNvs::setFirmwareInfo(const TFirmwareInfo& firmwareInfo)
-{
-    setStruct(m_firmwareInfo, firmwareInfo, ConfigKeyName::FIRMWARE_INFO_NVS_KEY);
-}
-
-const TFirmwareInfo& ConfigNvs::getFirmwareInfo()
-{
-    return m_firmwareInfo;
-}
-
 void ConfigNvs::setWorkflowData(const TWorkflowData& workflowData)
 {
     setStruct(m_workflowData, workflowData, ConfigKeyName::UPDATE_WORKFLOW_DATA_NVS_KEY);
@@ -301,7 +291,6 @@ void ConfigNvs::resetAllConfigurationFields()
     m_otaUpdateLink            = TOtaUpdateLink();
     m_certificatePack          = TCertificatePack();
     m_deviceProvisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
-    m_firmwareInfo             = TFirmwareInfo();
 }
 
 template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)

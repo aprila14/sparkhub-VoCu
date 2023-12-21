@@ -40,7 +40,7 @@ bool checkIfItIsNewFirmwareVersion(const char* firmwareVersion)
 
     if (result <= 0)
     {
-        LOG_ERROR("Error while analyzing firmwareInfo.version string");
+        LOG_ERROR("Error while analyzing firmwareVersion string");
         return false;
     }
 
@@ -179,67 +179,6 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
         }
     }
 
-    if (json_parser::checkIfFieldExistsInGivenJson(pInputJson, json_parser::FIRMWARE_INFO_KEY))
-    {
-        LOG_INFO("%s field found!", json_parser::FIRMWARE_INFO_KEY);
-
-        TFirmwareInfo firmwareInfoData = {};
-
-        if (!json_parser::parseFirmwareInfo(pInputJson, &firmwareInfoData))
-        {
-            LOG_ERROR("Error while parsing firmwareInfo");
-        }
-        else
-        {
-            // Act upon the new firmware data -> check if firmware needs to be updated, if so -> initate the update
-
-            pConfig->setFirmwareInfo(firmwareInfoData);
-
-            if (checkIfItIsNewFirmwareVersion(firmwareInfoData.version.c_str()))
-            {
-                LOG_INFO("Updating the firmware");
-                app::TEventData eventData        = {};
-                eventData.otaPerform.updateReady = true;
-
-                TOtaUpdateLink otaUpdateLink = {};
-                strncpy(
-                    otaUpdateLink.firmwareLink,
-                    firmwareInfoData.firmwareUrl.c_str(),
-                    strlen(firmwareInfoData.firmwareUrl.c_str()));
-
-                pConfig->setOtaUpdateLink(otaUpdateLink);
-
-                commons::printAvailableHeapMemory(__LINE__, __FILE__, "handleDeviceTwinMessage");
-
-                bool result = app::pAppController->addEvent(
-                    app::EEventType::OTA__PERFORM, app::EEventExecutionType::SYNCHRONOUS, &eventData);
-
-                if (!result)
-                {
-                    LOG_ERROR("Could not perform OTA");
-                    reportFirmwareVersion(OTA_FAIL_STRING);
-                }
-                else
-                {
-                    LOG_INFO("OTA performed successfully");
-                    reportFirmwareVersion(OTA_SUCCESS_STRING);
-
-                    LOG_INFO("About to reset in 2000 ms");
-                    SLEEP_MS(SLEEP_TIME_BEFORE_RESTART_AFTER_OTA_MS);
-                    esp_restart();
-                }
-            }
-            else
-            {
-                LOG_WARNING("Received the same version as the current one, not performing the OTA");
-                reportFirmwareVersion(OTA_SAME_VERSION_STRING);
-            }
-
-            // Add the field to reported
-
-            m_reportedFieldFlags |= (1 << static_cast<uint8_t>((EDeviceTwinField::DEVICE_TWIN_FIELD_FIRMWARE_INFO)));
-        }
-    }
 
     // Add handling new fields here, under separate ifs
 
@@ -260,19 +199,6 @@ void DeviceTwinsController::handleDeviceTwinResponse()
 
     if (m_reportedFieldFlags > 0)
     {
-        if (m_reportedFieldFlags & (1 << static_cast<uint8_t>(EDeviceTwinField::DEVICE_TWIN_FIELD_FIRMWARE_INFO)))
-        {
-            // add calling the function for building the reported JSON, probably based on data from config
-            TFirmwareInfo firmwareInfo = pConfig->getFirmwareInfo();
-            if (!json_parser::addFirmwareInfoToReportedJson(&pReportedJson, firmwareInfo))
-            {
-                LOG_ERROR("Could not add firmware info to reported JSON");
-            }
-            else
-            {
-                LOG_INFO("Response to firmware info message ready!");
-            }
-        }
     }
 
     std::string reportedMessage = json_parser::prepareReportedMessage(pReportedJson);
@@ -293,24 +219,6 @@ void DeviceTwinsController::handleDeviceTwinResponse()
 std::string DeviceTwinsController::buildReportedTopic(int32_t requestId)
 {
     return DEVICE_TWIN_REPORTED_TOPIC_PREFIX + std::to_string(requestId);
-}
-
-void DeviceTwinsController::reportFirmwareVersion(const char* otaStatus)
-{
-    std::string firmwareVersionReportedMessage =
-        json_parser::prepareFirmwareInfoReportedMessage(pConfig->getFirmwareInfo(), otaStatus);
-
-    if (firmwareVersionReportedMessage == std::string(""))
-    {
-        LOG_ERROR("Error while preparing firmware info reported message");
-        return;
-    }
-
-    if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), firmwareVersionReportedMessage))
-    {
-        LOG_ERROR("Could not send firmware info reported message");
-        return;
-    }
 }
 
 void DeviceTwinsController::reportDeviceUpdateStatus(EOtaAgentState state, const TWorkflowData& workflowData)

@@ -5,11 +5,6 @@
 
 #include "freertos/FreeRTOS.h"
 
-enum class EDeviceTwinField
-{
-    DEVICE_TWIN_FIELD_FIRMWARE_INFO = 0
-};
-
 class DeviceTwinsController
 {
 
@@ -30,7 +25,6 @@ private:
     void        handleDeviceTwinMessage(const json_parser::TMessage& message);
     void        handleDeviceTwinResponse();
 
-    void reportFirmwareVersion(const char* otaStatus);
     void reportDeviceUpdateStatus(EOtaAgentState state, const TWorkflowData& workflowData);
 
     TaskHandle_t m_taskHandle; // handle to runTask

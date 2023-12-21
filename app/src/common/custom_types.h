@@ -25,16 +25,6 @@ static_assert(
     MAX_NUMBER_OF_SCANNED_ACCESS_POINTS == prot::wifi_scan_ap::MAX_NUMBER_OF_NETWORKS,
     "Inconsistent protocol definition!");
 
-struct TFirmwareInfo
-{
-    std::string version;
-    std::string firmwareUrl;
-
-    bool operator==(const TFirmwareInfo& rhs) const;
-    bool setFirmwareUrl(const std::string& newFirmwareUrl);
-    bool isSetFirmwareUrl() const;
-};
-
 enum class EDeviceUpdateAction
 {
     ACTION_DOWNLOAD = 3,

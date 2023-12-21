@@ -18,7 +18,6 @@ constexpr const char* CLOUD_CREDENTIALS            = "cloud-cr";
 constexpr const char* OTA_UPDATE_LINK              = "ota-link";
 constexpr const char* CERTIFICATES                 = "cert-pack";
 constexpr const char* DEVICE_PROVISIONING_STATUS   = "dev-prov";
-constexpr const char* FIRMWARE_INFO_NVS_KEY        = "firm-info";
 constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY = "update-work";
 
 } // namespace ConfigKeyName
@@ -72,9 +71,6 @@ public:
     virtual const TCertificatePack& getCertificatePack();
     virtual void                    setCertificatePack(const TCertificatePack& certificatePack);
 
-    virtual const TFirmwareInfo& getFirmwareInfo();
-    virtual void                 setFirmwareInfo(const TFirmwareInfo& firmwareInfo);
-
     virtual const TWorkflowData& getWorkflowData();
     virtual void                 setWorkflowData(const TWorkflowData& workflowData);
 
@@ -112,7 +108,6 @@ private:
     TCertificatePack               m_certificatePack = {};
     ECloudDeviceProvisioningStatus m_deviceProvisioningStatus =
         ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
-    TFirmwareInfo m_firmwareInfo = {};
     TWorkflowData m_workflowData = {};
 };
 

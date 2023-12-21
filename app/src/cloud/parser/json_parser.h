@@ -110,22 +110,6 @@ bool checkIfFieldExistsInGivenJson(cJSON* inputJson, const char* keyword);
 bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo);
 
 /**
- * @brief Function for FirmwareInfo JSON parsing. We are assuming, that this JSON has following format:
- * {
- *     "firmware_info"
- *     {
- *          "firmware_version": 231209,
- *          "url": "http://127.0.0.1/urlToFirmware.bin"
- *     }
- * }
- * @param inputMessage JSON to be parsed
- * @param pFirmwareInfo in-out structure containing data extracted from JSON
- * @return true parsing successful
- * @return false error occurred during parsing
- */
-bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo);
-
-/**
  * @brief Function for DeviceUpdate JSON parsing (from Azure IoT Hub OTA). We are assuming, that this JSON
  * has following format (example):
  *
@@ -165,11 +149,7 @@ cJSON* preprocessInputMessage(const std::string& inputMessage);
 
 cJSON* initiateReportedJson();
 
-bool addFirmwareInfoToReportedJson(cJSON** ppReportedJson, const TFirmwareInfo& firmwareInfo);
-
 std::string prepareReportedMessage(cJSON* pReportedJson);
-
-std::string prepareFirmwareInfoReportedMessage(const TFirmwareInfo& firmwareInfo, const char* otaStatus);
 
 std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData);
 

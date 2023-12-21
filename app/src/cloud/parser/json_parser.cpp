@@ -12,11 +12,8 @@ static const char* LOG_TAG = "jsonParser";
 
 namespace
 {
-const char* FIRMWARE_INFO_VERSION_KEY    = "version";
-const char* FIRMWARE_INFO_URL_KEY        = "url";
-const char* FIRMWARE_INFO_OTA_STATUS_KEY = "ota_status";
-uint32_t    MAX_MANIFEST_STRING_LENGTH   = 1024U;
-uint32_t    MAX_UPDATE_ID_STRING_LENGTH  = 150;
+uint32_t MAX_MANIFEST_STRING_LENGTH  = 1024U;
+uint32_t MAX_UPDATE_ID_STRING_LENGTH = 150;
 } // unnamed namespace
 
 extern const char* DEVICE_PROVISIONING_MODEL_ID;
@@ -24,7 +21,6 @@ extern const char* DEVICE_PROVISIONING_MODEL_ID;
 namespace json_parser
 {
 
-const char* FIRMWARE_INFO_KEY = "firmware_info";
 const char* DEVICE_UPDATE_KEY = "deviceUpdate";
 
 #if !TESTING // directive added to avoid double declaration of function
@@ -587,38 +583,6 @@ bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisi
     return true;
 }
 
-bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo)
-{
-    // We are not freeing the pFirmwareInfoJson in this function, it is a part of larger JSON that will be freed
-    // outside of this function (freeing this larger JSON would cause panic abort in that case)
-    cJSON* pFirmwareInfoJson = cJSON_GetObjectItemCaseSensitive(pInputJson, FIRMWARE_INFO_KEY);
-
-    if (pFirmwareInfoJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no firmware_info data");
-        return false;
-    }
-
-    cJSON* pFirmwareVersionJson = cJSON_GetObjectItemCaseSensitive(pFirmwareInfoJson, "firmware_version");
-    if (pFirmwareVersionJson == nullptr)
-    {
-        LOG_ERROR("Could not find version information inside firmware_info JSON");
-        return false;
-    }
-
-    cJSON* pFirmwareUrlJson = cJSON_GetObjectItemCaseSensitive(pFirmwareInfoJson, "url");
-    if (pFirmwareUrlJson == nullptr)
-    {
-        LOG_ERROR("Could not find url inside firmware_info JSON");
-        return false;
-    }
-
-    pFirmwareInfo->version     = std::string(pFirmwareVersionJson->valuestring);
-    pFirmwareInfo->firmwareUrl = std::string(pFirmwareUrlJson->valuestring);
-
-    return true;
-}
-
 bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
 {
     if (strlen(pInputJson->valuestring) > MAX_MANIFEST_STRING_LENGTH)
@@ -853,40 +817,6 @@ cJSON* initiateReportedJson()
     return pOutJson;
 }
 
-bool addFirmwareInfoToReportedJson(cJSON** ppReportedJson, const TFirmwareInfo& firmwareInfo)
-{
-    if (ppReportedJson == nullptr)
-    {
-        LOG_ERROR("Received nullptr instead of reported JSON");
-        return false;
-    }
-
-    cJSON* firmwareInfoJson = cJSON_CreateObject();
-
-    if (!cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_VERSION_KEY, firmwareInfo.version.c_str()))
-    {
-        LOG_ERROR("Could not add FIRMWARE_INFO_VERSION_KEY to reported JSON");
-        cJSON_Delete(firmwareInfoJson);
-        return false;
-    }
-
-    if (!cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_URL_KEY, firmwareInfo.firmwareUrl.c_str()))
-    {
-        LOG_ERROR("Could not add FIRMWARE_INFO_URL to reported JSON");
-        cJSON_Delete(firmwareInfoJson);
-        return false;
-    }
-
-    if (!cJSON_AddItemToObject(*ppReportedJson, FIRMWARE_INFO_KEY, firmwareInfoJson))
-    {
-        LOG_ERROR("Could not add firmwareInfoJson to reported JSON");
-        cJSON_Delete(firmwareInfoJson);
-        return false;
-    }
-
-    return true;
-}
-
 std::string prepareReportedMessage(cJSON* pReportedJson)
 {
     char* reportedMessageCString = cJSON_Print(pReportedJson);
@@ -903,50 +833,6 @@ std::string prepareReportedMessage(cJSON* pReportedJson)
     return reportedMessage;
 }
 
-std::string prepareFirmwareInfoReportedMessage(const TFirmwareInfo& firmwareInfo, const char* otaStatus)
-{
-    cJSON* reportedJson     = cJSON_CreateObject();
-    cJSON* firmwareInfoJson = cJSON_CreateObject();
-
-    if (cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_VERSION_KEY, firmwareInfo.version.c_str()) == nullptr)
-    {
-        LOG_ERROR("Could not add version to firmwareInfo reported message");
-        cJSON_Delete(reportedJson);
-        cJSON_Delete(firmwareInfoJson);
-        return std::string("");
-    }
-
-    if (cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_URL_KEY, firmwareInfo.firmwareUrl.c_str()) == nullptr)
-    {
-        LOG_ERROR("Could not add url to firmwareInfo reported message");
-        cJSON_Delete(reportedJson);
-        cJSON_Delete(firmwareInfoJson);
-        return std::string("");
-    }
-
-    if (cJSON_AddStringToObject(firmwareInfoJson, FIRMWARE_INFO_OTA_STATUS_KEY, otaStatus) == nullptr)
-    {
-        LOG_ERROR("Could not add ota status to firmwareInfo reported message");
-        cJSON_Delete(reportedJson);
-        cJSON_Delete(firmwareInfoJson);
-        return std::string("");
-    }
-
-    if (!cJSON_AddItemToObject(reportedJson, FIRMWARE_INFO_KEY, firmwareInfoJson))
-    {
-        LOG_ERROR("Could not add firmwareJson to reportedJson");
-        cJSON_Delete(reportedJson);
-        cJSON_Delete(firmwareInfoJson);
-        return std::string("");
-    }
-
-    std::string reportedMessage = prepareReportedMessage(reportedJson);
-
-    cJSON_Delete(reportedJson); // since firmwareInfoJson is already added to reportedJson, we delete only the latter
-                                // which is top level JSON (otherwise we would cause double delete issue)
-
-    return reportedMessage;
-}
 
 /***** STRUCTURE TO JSON *****/
 

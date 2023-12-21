@@ -3,7 +3,6 @@
 
 namespace json_parser
 {
-extern const char* FIRMWARE_INFO_KEY;
 extern const char* DEVICE_UPDATE_KEY;
 }; // namespace json_parser
 

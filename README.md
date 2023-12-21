@@ -137,36 +137,3 @@ The diagram for the process is present in the docs directory
 Azure Device Provisioning configuration was done by following this tutorial: [Tutorial: Provision multiple X.509 devices using enrollment groups](https://learn.microsoft.com/en-us/azure/iot-dps/tutorial-custom-hsm-enrollment-group-x509?tabs=linux&pivots=programming-language-python)
 
 For testing purposes after device certificate generation the full chain certificate and private key can be placed in app/src/cloud/cloud_controller/cloud_config.h in defines "DEFAULT_CLIENT_PUBLIC_CERT" and "DEFAULT_CLIENT_PRIVATE_KEY"
-
-# 6. Simple OTA
-
-One of the possible ways to update the device is sending the appropriate JSON message via Device Twins that contains version of the firmware to which update is performed and URL from which the binary can be downloaded. The JSON updating firmware to version 0.5.0 may have following form:
-
-```
-"firmware_info": 
-{
-    "url": "http://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
-    "firmware_version": "0.5.0"
-}
-```
-
-after the OTA (or attempt to perform the OTA) the device is going to send back reported message with information about OTA status:
-
-```
-"firmware_info": 
-{
-    "version": "0.5.0",
-    "url": "http://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
-    "ota_status": "ota_success"
-}
-```
-or
-
-```
-"firmware_info": 
-{
-    "version": "0.5.0",
-    "url": "http://10.42.0.1:8080/sparkhub-LevelSense_050.bin",
-    "ota_status": "ota_fail"
-}
-```
