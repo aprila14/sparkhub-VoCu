@@ -21,6 +21,8 @@ constexpr char     DEVICE_PROVISIONING_REGISTRATION_GET_STATUS_TOPIC[] =
     "$dps/registrations/GET/iotdps-get-operationstatus/?$rid=";
 } // unnamed namespace
 
+const char* DEVICE_PROVISIONING_MODEL_ID = "dtmi:azure:iot:deviceUpdateContractModel;2";
+
 DeviceProvisioningController::DeviceProvisioningController(MqttClientController* mqttClientController) :
     m_taskHandle(),
     m_provisioningStatus(ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT),
@@ -94,9 +96,10 @@ void DeviceProvisioningController::createMqttUsernameAfterProvisioning(
 
     sprintf(
         mqttUsername,
-        "%s/%s/?api-version=2021-04-12",
+        "%s/%s/?api-version=2021-04-12&model-id=%s",
         provisioningInfo.assignedHub.c_str(),
-        provisioningInfo.deviceId.c_str());
+        provisioningInfo.deviceId.c_str(),
+        DEVICE_PROVISIONING_MODEL_ID);
     newCloudCredentials.setCloudMqttUsername(mqttUsername);
 }
 
