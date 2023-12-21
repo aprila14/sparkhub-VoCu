@@ -21,7 +21,7 @@ const char* OTA_FAIL_STRING         = "ota_fail";
 const char* OTA_SAME_VERSION_STRING = "same_version_received";
 } // unnamed namespace
 
-bool checkIfItIsNewFirmwareVersion(const TFirmwareInfo& firmwareInfo)
+bool checkIfItIsNewFirmwareVersion(const char* firmwareVersion)
 {
     uint32_t majorVersion = 0;
     uint32_t minorVersion = 0;
@@ -31,10 +31,10 @@ bool checkIfItIsNewFirmwareVersion(const TFirmwareInfo& firmwareInfo)
     uint32_t projectMinorVersion = PROJECT_VER_MINOR;
     uint32_t projectPatchVersion = PROJECT_VER_PATCH;
 
-    LOG_INFO("About to check string for version: %s", firmwareInfo.version.c_str());
+    LOG_INFO("About to check string for version: %s", firmwareVersion);
     LOG_INFO("Current version: %d.%d.%d", projectMajorVersion, projectMinorVersion, projectPatchVersion);
 
-    uint8_t result = sscanf(firmwareInfo.version.c_str(), "%d.%d.%d", &majorVersion, &minorVersion, &patchVersion);
+    uint8_t result = sscanf(firmwareVersion, "%d.%d.%d", &majorVersion, &minorVersion, &patchVersion);
 
     if (result <= 0)
     {
@@ -136,10 +136,13 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
 
             LOG_INFO("deviceUpdateData.fileUrl: %s", deviceUpdateData.fileUrl);
             LOG_INFO("deviceUpdateData.updateManifest.fileKey: %s", deviceUpdateData.updateManifest.fileKey);
+            LOG_INFO(
+                "deviceUpdateData.updateManifest.firmwareVersion: %s", deviceUpdateData.updateManifest.firmwareVersion);
             LOG_INFO("action: %d", deviceUpdateData.workflowData.deviceUpdateAction);
             LOG_INFO("actionId: %s", deviceUpdateData.workflowData.workflowId);
 
-            if (deviceUpdateData.workflowData.deviceUpdateAction == EDeviceUpdateAction::ACTION_DOWNLOAD)
+            if ((deviceUpdateData.workflowData.deviceUpdateAction == EDeviceUpdateAction::ACTION_DOWNLOAD) &&
+                checkIfItIsNewFirmwareVersion(deviceUpdateData.updateManifest.firmwareVersion))
             {
                 TOtaUpdateLink otaUpdateLink = {};
                 strncpy(otaUpdateLink.firmwareLink, deviceUpdateData.fileUrl, strlen(deviceUpdateData.fileUrl));
@@ -188,7 +191,7 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
 
             pConfig->setFirmwareInfo(firmwareInfoData);
 
-            if (checkIfItIsNewFirmwareVersion(firmwareInfoData))
+            if (checkIfItIsNewFirmwareVersion(firmwareInfoData.version.c_str()))
             {
                 LOG_INFO("Updating the firmware");
                 app::TEventData eventData        = {};

@@ -642,6 +642,29 @@ bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
         return false;
     }
 
+    cJSON* pUpdateIdJson = cJSON_GetObjectItemCaseSensitive(pUpdateManifestJson, "updateId");
+    if (pUpdateIdJson == nullptr)
+    {
+        LOG_ERROR("Could not find updateIdJson inside updateManifest JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    cJSON* pVersionJson = cJSON_GetObjectItemCaseSensitive(pUpdateIdJson, "version");
+    if (pVersionJson == nullptr)
+    {
+        LOG_ERROR("Could not find versionJson inside updateId JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    if (strlen(pVersionJson->valuestring) > MAX_OTA_VERSION_STRING_LENGTH)
+    {
+        LOG_ERROR("Version string in update manifest is too long");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
     cJSON* pInstructionsJson = cJSON_GetObjectItemCaseSensitive(pUpdateManifestJson, "instructions");
     if (pInstructionsJson == nullptr)
     {
@@ -689,6 +712,7 @@ bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
         return false;
     }
 
+    strncpy(pUpdateManifest->firmwareVersion, pVersionJson->valuestring, strlen(pVersionJson->valuestring));
     strncpy(
         pUpdateManifest->fileKey, pStepsFilesArrayElement->valuestring, strlen(pStepsFilesArrayElement->valuestring));
 

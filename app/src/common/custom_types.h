@@ -44,6 +44,7 @@ enum class EDeviceUpdateAction
 struct TUpdateManifest
 {
     char fileKey[MAX_FILE_KEY_LENGTH];
+    char firmwareVersion[MAX_OTA_VERSION_STRING_LENGTH];
 };
 
 struct TWorkflowData
