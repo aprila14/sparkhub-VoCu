@@ -9,149 +9,13 @@
 
 namespace
 {
-
-constexpr uint8_t FIRMWARE_VERSION_LENGTH     = 32;
-constexpr uint8_t MAX_TIME_STRING_LENGTH      = 30;
-constexpr uint8_t MAX_OTA_TOPIC_SUFFIX_LENGTH = 80;
-} // namespace
-namespace json_parser
-{
-
-enum class EMsgCode : uint8_t
-{
-    MSG_STATUS_REPORT            = 1,
-    MSG_STATUS_REPORT_RESPONSE   = 2,
-    MSG_HEARTBEAT                = 3,
-    MSG_HEARTBEAT_RESPONSE       = 4,
-    MSG_OTA_UPDATE_LINK          = 5,
-    MSG_OTA_UPDATE_LINK_RESPONSE = 6
-};
-
-enum class EMsgMethod : uint8_t
-{
-    MSG_METHOD_RPC_COMMAND         = 1,
-    MSG_METHOD_GET_LIGHT_INTENSITY = 2,
-    MSG_METHOD_SET_LIGHT_INTENSITY = 3,
-    MSG_METHOD_UNKNOWN             = 4,
-    MSG_METHOD_FAILED              = 5
-};
-
-struct THeartbeat
-{
-    bool heartbeat;
-};
-
-struct TResponse
-{
-    bool ACK;
-};
-
-struct TDeviceStatus
-{
-    bool        isWiFiConnected;
-    bool        isBleConnected;
-    uint32_t    currentTimeFromStartupMs;
-    char        firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];
-    char        currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
-    float       pressureSensorValue;
-    std::string getFirmwareVersion() const;
-    std::string getCurrentLocalTime() const;
-};
-
-union TFrameData
-{
-    TDeviceStatus                     deviceStatusStruct;
-    THeartbeat                        heartbeatStruct;
-    TResponse                         responseStruct;
-    prot::ota_perform::TOtaUpdateLink otaUpdateLinkStruct;
-};
-
-struct TMessage
-{
-    std::string message;
-    int32_t     requestId;
-};
-
-struct TFrame
-{
-    EMsgCode   msgCode;
-    uint32_t   msgCounter;
-    TFrameData frameData;
-};
-
-struct TDeviceProvisioningInfo
-{
-    std::string operationId;
-    std::string status;
-    std::string deviceId;
-    std::string assignedHub;
-};
-
-/**
- * @brief prepareHeartbeatMessage - function preparing std::string with heartbeat message in a JSON format based on
- * provided msgCounter value. Function assumes the ACK value of the heartbeat structure shall be set to true, therefore
- * it does not require THeartbeat structure to be passed
- * @param msgCounter - number of the message to be included in the message
- * @return std::string with the message in JSON format
- */
-
-std::string prepareHeartbeatMessage(uint32_t msgCounter);
-
-/**
- * @brief prepareDeviceStatusMessage - function preparing a DeviceStatusMessage in a JSON format
- * @param deviceStatus  - input structure containing information about device status
- * @param msgCounter - message number to be added
- * @return std::string with a message in a JSON format
- */
-std::string prepareDeviceStatusMessage(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
-
-/**
- * @brief prepareDeviceCreateProvisioningMessage
- */
-std::string
-prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH]);
-
-/**
- * @brief parseJsonDeviceProvisioning
- */
-bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo);
-
-/**
- * @brief extractMethodAndFillFrame - function that gets the std::string with a message, parses it, interprets it and
- * then fills the passed TFrame structure together with returning EMsgMethod according to the message content
- * @param newMessage - std::string with the message content
- * @param pFrame - TFrame structure to be filled according to the message content
- * @return EMsgMethod according to the message content
- */
-EMsgMethod extractMethodAndFillFrame(std::string newMessage, TFrame* pFrame);
-
-/**
- * @brief extractRequestIdFromTopic - function extracting rpc command request id, which is given as an integer at the
- * end of the topic
- * @param topic - std::string cotaining topic to extract requestId from
- * @return int32_t value with requestId
- */
-int32_t extractRequestIdFromTopic(const std::string& topic);
-
-/**
- * @brief printFrame - function allowing to print content of the TFrame structure in an easily-readable way
- * @param frame - TFrame structure to be printed
- */
-void printFrame(const TFrame& frame);
-
-/**
- * @brief getMsgMethodString - function returning std::string with a text representing the passed EMsgMethod parameter
- * @param msgMethod - EMsgMethod parameter containing a method to be printed, e.g. EMsgMethod::MSG_METHOD_RPC_COMMAND
- * @return std::string with the input parameter in the text form, e.g. "MSG_METHOD_RPC_COMMAND"
- */
-
-std::string getMsgMethodString(EMsgMethod msgMethod);
-=======
     constexpr uint8_t FIRMWARE_VERSION_LENGTH = 32;
     constexpr uint8_t MAX_TIME_STRING_LENGTH = 30;
     constexpr uint8_t MAX_OTA_TOPIC_SUFFIX_LENGTH = 80;
     constexpr uint8_t ALARM_RESPONSE_LENGTH = 32;
 }
+
+
 namespace json_parser
 {
 
@@ -268,6 +132,24 @@ namespace json_parser
         TFrameData frameData;
     };
 
+
+
+
+
+
+struct TDeviceProvisioningInfo
+{
+    std::string operationId;
+    std::string status;
+    std::string deviceId;
+    std::string assignedHub;
+};
+
+
+
+
+
+
     /**
      * @brief prepareHeartbeatMessage - function preparing std::string with heartbeat message in a JSON format based on provided
      * msgCounter value. Function assumes the ACK value of the heartbeat structure shall be set to true, therefore it does not require
@@ -285,6 +167,21 @@ namespace json_parser
      * @return std::string with a message in a JSON format
      */
     std::string prepareDeviceStatusMessage(const TDeviceStatus &deviceStatus, uint32_t msgCounter);
+
+
+
+    /**
+     * @brief prepareDeviceCreateProvisioningMessage
+     */
+    std::string
+    prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH]);
+
+    /**
+     * @brief parseJsonDeviceProvisioning
+     */
+    bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo);
+
+
 
     /**
      * @brief extractMethodAndFillFrame - function that gets the std::string with a message, parses it, interprets it and then fills
