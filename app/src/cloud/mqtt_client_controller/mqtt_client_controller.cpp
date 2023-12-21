@@ -17,6 +17,7 @@ constexpr uint8_t MAX_QUEUE_SIZE                 = 10;
 constexpr int     MQTT_CLIENT_ERROR_PUBLISH      = -1;
 constexpr int     MQTT_CLIENT_SUBSCRIPTION_ERROR = -1;
 constexpr int     MQTT_CLIENT_UNSUBSCRIBE_ERROR  = -1;
+constexpr int     MQTT_CLIENT_BUFFER_SIZE        = 8192;
 
 void _mqttEventHandler(void* handlerArgs, esp_event_base_t base, int32_t eventId, void* eventData)
 {
@@ -107,6 +108,7 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(
     mqttConfig.port                        = 8883;
     mqttConfig.keepalive                   = 60; // seconds
     mqttConfig.skip_cert_common_name_check = true;
+    mqttConfig.buffer_size                 = MQTT_CLIENT_BUFFER_SIZE;
 
     if (credentials.isSetCloudAddress())
     {
