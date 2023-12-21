@@ -87,13 +87,8 @@ void DeviceTwinsController::_run()
 
     LOG_INFO("Topics subscribed");
 
-    TUpdateId updateId = {};
 
-    strncpy(updateId.providerName, "sparkhub", strlen("sparkhub"));
-    strncpy(updateId.updateName, "sparkhub-iot-levelsense", strlen("sparkhub-iot-levelsense"));
-    strncpy(updateId.version, "0.5.0", strlen("0.5.0"));
-
-    reportDeviceUpdateStatus(updateId, 0);
+    reportDeviceUpdateStatus(0);
 
     while (true)
     {
@@ -141,6 +136,37 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
 
             LOG_INFO("deviceUpdateData.fileUrl: %s", deviceUpdateData.fileUrl);
             LOG_INFO("deviceUpdateData.updateManifest.fileKey: %s", deviceUpdateData.updateManifest.fileKey);
+            LOG_INFO("action: %d", deviceUpdateData.deviceUpdateAction);
+
+            if (deviceUpdateData.deviceUpdateAction == EDeviceUpdateAction::ACTION_DOWNLOAD)
+            {
+                TOtaUpdateLink otaUpdateLink = {};
+                strncpy(otaUpdateLink.firmwareLink, deviceUpdateData.fileUrl, strlen(deviceUpdateData.fileUrl));
+                pConfig->setOtaUpdateLink(otaUpdateLink);
+
+                app::TEventData eventData        = {};
+                eventData.otaPerform.updateReady = true;
+
+                reportDeviceUpdateStatus(6); // TODO add enum class for state
+
+                bool result = app::pAppController->addEvent(
+                    app::EEventType::OTA__PERFORM, app::EEventExecutionType::SYNCHRONOUS, &eventData);
+
+                if (!result)
+                {
+                    LOG_ERROR("Could not perform OTA");
+                    reportDeviceUpdateStatus(255);
+                }
+                else
+                {
+                    LOG_INFO("OTA performed successfully");
+
+                    LOG_INFO("About to reset in 2000 ms");
+                    SLEEP_MS(2000);
+                    esp_restart();
+                }
+            }
+            // decide if update shall be performed based on action
         }
     }
 
@@ -278,8 +304,19 @@ void DeviceTwinsController::reportFirmwareVersion(const char* otaStatus)
     }
 }
 
-void DeviceTwinsController::reportDeviceUpdateStatus(const TUpdateId& updateId, uint8_t state)
+void DeviceTwinsController::reportDeviceUpdateStatus(uint8_t state)
 {
+    TUpdateId updateId = {};
+
+    strncpy(updateId.providerName, "sparkhub", strlen("sparkhub"));
+    strncpy(updateId.updateName, "sparkhub-iot-levelsense", strlen("sparkhub-iot-levelsense"));
+
+    if (sprintf(updateId.version, "%d.%d.%d", PROJECT_VER_MAJOR, PROJECT_VER_MINOR, PROJECT_VER_PATCH) < 0)
+    {
+        LOG_ERROR("Could not fill updateId.version");
+        return;
+    }
+
     std::string deviceUpdateStatusReportedMessage = json_parser::prepareDeviceUpdateReport(updateId, state);
 
     if (deviceUpdateStatusReportedMessage == std::string(""))

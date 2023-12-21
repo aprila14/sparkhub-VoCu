@@ -666,6 +666,21 @@ bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
     return true;
 }
 
+bool parseWorkflow(cJSON* pWorkflowJson, EDeviceUpdateAction* pDeviceUpdateAction)
+{
+    cJSON* pActionJson = cJSON_GetObjectItem(pWorkflowJson, "action");
+    if (pActionJson == nullptr)
+    {
+        LOG_ERROR("Could not find action data in workflow JSON");
+        return false;
+    }
+
+    // TODO some additional validation might be added here (making sure it's one of valid values)
+    *pDeviceUpdateAction = static_cast<EDeviceUpdateAction>(pActionJson->valueint);
+
+    return true;
+}
+
 bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate)
 {
     cJSON* pDeviceUpdateJson = cJSON_GetObjectItemCaseSensitive(pInputJson, DEVICE_UPDATE_KEY);
@@ -680,6 +695,19 @@ bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate)
     if (pServiceJson == nullptr)
     {
         LOG_ERROR("Could not find service data inside deviceUpdate JSON");
+        return false;
+    }
+
+    cJSON* pWorkflowJson = cJSON_GetObjectItem(pServiceJson, "workflow");
+    if (pWorkflowJson == nullptr)
+    {
+        LOG_ERROR("Could not find workflow data inside deviceUpdate JSON");
+        return false;
+    }
+
+    if (!parseWorkflow(pWorkflowJson, &pDeviceUpdate->deviceUpdateAction))
+    {
+        LOG_ERROR("Did not manage to parse workflow data in deviceUpdate JSON");
         return false;
     }
 

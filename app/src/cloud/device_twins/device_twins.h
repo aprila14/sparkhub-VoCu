@@ -31,7 +31,7 @@ private:
     void        handleDeviceTwinResponse();
 
     void reportFirmwareVersion(const char* otaStatus);
-    void reportDeviceUpdateStatus(const TUpdateId& updateId, uint8_t state);
+    void reportDeviceUpdateStatus(uint8_t state);
 
     TaskHandle_t m_taskHandle; // handle to runTask
 

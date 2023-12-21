@@ -19,7 +19,6 @@ constexpr uint32_t MAX_PROVIDER_NAME_LENGTH            = 30U;
 constexpr uint32_t MAX_OTA_UPDATE_NAME_LENGTH          = 30U;
 constexpr uint32_t MAX_OTA_VERSION_STRING_LENGTH       = 30U;
 
-
 static_assert(
     MAX_NUMBER_OF_SCANNED_ACCESS_POINTS == prot::wifi_scan_ap::MAX_NUMBER_OF_NETWORKS,
     "Inconsistent protocol definition!");
@@ -34,6 +33,12 @@ struct TFirmwareInfo
     bool isSetFirmwareUrl() const;
 };
 
+enum class EDeviceUpdateAction
+{
+    ACTION_DOWNLOAD = 3,
+    ACTION_CANCEL   = 255
+};
+
 struct TUpdateManifest
 {
     char fileKey[MAX_FILE_KEY_LENGTH];
@@ -41,8 +46,9 @@ struct TUpdateManifest
 
 struct TDeviceUpdate
 {
-    char            fileUrl[MAX_OTA_URL_LENGTH];
-    TUpdateManifest updateManifest;
+    char                fileUrl[MAX_OTA_URL_LENGTH];
+    TUpdateManifest     updateManifest;
+    EDeviceUpdateAction deviceUpdateAction;
 };
 
 struct TUpdateId
