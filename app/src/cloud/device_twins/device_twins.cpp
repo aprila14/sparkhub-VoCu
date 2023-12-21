@@ -116,6 +116,25 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
         return;
     }
 
+    if (json_parser::checkIfFieldExistsInGivenJson(pInputJson, json_parser::DEVICE_UPDATE_KEY))
+    {
+        LOG_INFO("%s field found!", json_parser::DEVICE_UPDATE_KEY);
+
+        TDeviceUpdate deviceUpdateData = {};
+
+        if (!json_parser::parseDeviceUpdate(pInputJson, &deviceUpdateData))
+        {
+            LOG_ERROR("Error while parsing deviceUpdateData");
+        }
+        else
+        {
+            LOG_INFO("Device update data parsed properly");
+
+            LOG_INFO("deviceUpdateData.fileUrl: %s", deviceUpdateData.fileUrl);
+            LOG_INFO("deviceUpdateData.updateManifest.fileKey: %s", deviceUpdateData.updateManifest.fileKey);
+        }
+    }
+
     if (json_parser::checkIfFieldExistsInGivenJson(pInputJson, json_parser::FIRMWARE_INFO_KEY))
     {
         LOG_INFO("%s field found!", json_parser::FIRMWARE_INFO_KEY);

@@ -119,11 +119,47 @@ bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisi
  *     }
  * }
  * @param inputMessage JSON to be parsed
- * @param firmwareInfo in-out structure containing data extracted from JSON
+ * @param pFirmwareInfo in-out structure containing data extracted from JSON
  * @return true parsing successful
  * @return false error occurred during parsing
  */
 bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo);
+
+/**
+ * @brief Function for DeviceUpdate JSON parsing (from Azure IoT Hub OTA). We are assuming, that this JSON
+ * has following format (example):
+ *
+ *
+ {
+    "deviceUpdate":
+    {
+        "__t": "c",
+        "agent":
+        {
+            "deviceProperties":
+            {
+                "manufacturer": "sparkhub",
+                "model": "levelsense",
+                "contractModelId": "dtmi:azure:iot:deviceUpdateContractModel;2",
+                "aduVer": "DU;agent/1.0.0"
+            },
+            "compatPropertyNames": "manufacturer,model",
+            "state": 0,
+            "installedUpdateId":
+            {
+                "provider": "Contoso",
+                "name": "levelsense",
+                "version": "0.4.0"
+            }
+        }
+    }
+}
+ * @param pInputJson
+ * @param pDeviceUpdate
+ * @return true
+ * @return false
+ */
+bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate);
 
 cJSON* preprocessInputMessage(const std::string& inputMessage);
 

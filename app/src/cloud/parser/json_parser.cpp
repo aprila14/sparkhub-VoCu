@@ -15,12 +15,17 @@ namespace
 const char* FIRMWARE_INFO_VERSION_KEY    = "version";
 const char* FIRMWARE_INFO_URL_KEY        = "url";
 const char* FIRMWARE_INFO_OTA_STATUS_KEY = "ota_status";
+uint32_t    MAX_MANIFEST_STRING_LENGTH   = 1024U;
+uint32_t    MAX_UPDATE_ID_STRING_LENGTH  = 150;
 } // unnamed namespace
+
+extern const char* DEVICE_PROVISIONING_MODEL_ID;
 
 namespace json_parser
 {
 
 const char* FIRMWARE_INFO_KEY = "firmware_info";
+const char* DEVICE_UPDATE_KEY = "deviceUpdate";
 
 #if !TESTING // directive added to avoid double declaration of function
 static bool        processResponse(cJSON* pDataJson, TResponse* pOutput);
@@ -357,7 +362,7 @@ bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo)
 {
     // We are not freeing the pFirmwareInfoJson in this function, it is a part of larger JSON that will be freed
     // outside of this function (freeing this larger JSON would cause panic abort in that case)
-    cJSON* pFirmwareInfoJson = cJSON_GetObjectItemCaseSensitive(pInputJson, "firmware_info");
+    cJSON* pFirmwareInfoJson = cJSON_GetObjectItemCaseSensitive(pInputJson, FIRMWARE_INFO_KEY);
 
     if (pFirmwareInfoJson == nullptr)
     {
@@ -381,6 +386,143 @@ bool parseFirmwareInfo(cJSON* pInputJson, TFirmwareInfo* pFirmwareInfo)
 
     pFirmwareInfo->version     = std::string(pFirmwareVersionJson->valuestring);
     pFirmwareInfo->firmwareUrl = std::string(pFirmwareUrlJson->valuestring);
+
+    return true;
+}
+
+bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
+{
+    if (strlen(pInputJson->valuestring) > MAX_MANIFEST_STRING_LENGTH)
+    {
+        LOG_ERROR(
+            "Manifest string length (%d) exceeds maximum length (%d)",
+            strlen(pInputJson->valuestring),
+            MAX_MANIFEST_STRING_LENGTH);
+        return false;
+    }
+
+    char manifestCString[MAX_MANIFEST_STRING_LENGTH];
+
+    strncpy(manifestCString, pInputJson->valuestring, strlen(pInputJson->valuestring));
+
+    cJSON* pUpdateManifestJson = cJSON_Parse(manifestCString);
+
+    if (pUpdateManifestJson == nullptr)
+    {
+        LOG_ERROR("Could not parse updateManifest JSON");
+        return false;
+    }
+
+    cJSON* pInstructionsJson = cJSON_GetObjectItemCaseSensitive(pUpdateManifestJson, "instructions");
+    if (pInstructionsJson == nullptr)
+    {
+        LOG_ERROR("Could not find instructions inside updateManifest JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    cJSON* pStepsJson = cJSON_GetObjectItemCaseSensitive(pInstructionsJson, "steps");
+    if (pStepsJson == nullptr)
+    {
+        LOG_ERROR("Could not find steps inside instructions JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    cJSON* pStepsArrayElement = cJSON_GetArrayItem(pStepsJson, 0);
+    if (pStepsArrayElement == nullptr)
+    {
+        LOG_ERROR("Could not find 0th element of the pStepsJson array");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    cJSON* pStepsFilesJson = cJSON_GetObjectItemCaseSensitive(pStepsArrayElement, "files");
+    if (pStepsFilesJson == nullptr)
+    {
+        LOG_ERROR("Could not find files inside steps JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    cJSON* pStepsFilesArrayElement = cJSON_GetArrayItem(pStepsFilesJson, 0);
+    if (pStepsFilesArrayElement == nullptr)
+    {
+        LOG_ERROR("Could not find 0th element of pStepsFilesJson array");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    if (strlen(pStepsFilesArrayElement->valuestring) > MAX_FILE_KEY_LENGTH)
+    {
+        LOG_ERROR("File key too long");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    strncpy(
+        pUpdateManifest->fileKey, pStepsFilesArrayElement->valuestring, strlen(pStepsFilesArrayElement->valuestring));
+
+    cJSON_Delete(pUpdateManifestJson);
+
+    LOG_INFO("Parsing update manifest was correct");
+
+    return true;
+}
+
+bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate)
+{
+    cJSON* pDeviceUpdateJson = cJSON_GetObjectItemCaseSensitive(pInputJson, DEVICE_UPDATE_KEY);
+
+    if (pDeviceUpdateJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no deviceUpdate data");
+        return false;
+    }
+
+    cJSON* pServiceJson = cJSON_GetObjectItemCaseSensitive(pDeviceUpdateJson, "service");
+    if (pServiceJson == nullptr)
+    {
+        LOG_ERROR("Could not find service data inside deviceUpdate JSON");
+        return false;
+    }
+
+    cJSON* pUpdateManifestJson = cJSON_GetObjectItemCaseSensitive(pServiceJson, "updateManifest");
+    if (pUpdateManifestJson == nullptr)
+    {
+        LOG_ERROR("Could not find updateManifest data inside deviceUpdate JSON");
+        return false;
+    }
+
+    if (!parseUpdateManifest(pUpdateManifestJson, &pDeviceUpdate->updateManifest))
+    {
+        LOG_ERROR("Did not manage to parse updateManifest");
+        return false;
+    }
+
+    cJSON* pFileUrlsJson = cJSON_GetObjectItemCaseSensitive(pServiceJson, "fileUrls");
+    if (pFileUrlsJson == nullptr)
+    {
+        LOG_ERROR("Did not manage to parse fileUrls JSON");
+        return false;
+    }
+
+    cJSON* pUrlJson = cJSON_GetObjectItemCaseSensitive(pFileUrlsJson, pDeviceUpdate->updateManifest.fileKey);
+    if (pUrlJson == nullptr)
+    {
+        LOG_ERROR("Did not manage to parse urlJson JSON");
+        return false;
+    }
+
+    if (strlen(pUrlJson->valuestring) > MAX_OTA_URL_LENGTH)
+    {
+        LOG_ERROR("File URL too long, length: %d, max length: %d", strlen(pUrlJson->valuestring), MAX_OTA_URL_LENGTH);
+        return false;
+    }
+
+    strncpy(pDeviceUpdate->fileUrl, pUrlJson->valuestring, strlen(pUrlJson->valuestring));
+
+    LOG_INFO("Parsing Device Update was correct");
 
     return true;
 }

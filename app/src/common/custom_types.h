@@ -10,9 +10,15 @@
 
 #include <string>
 
-constexpr uint8_t MAX_WIFI_SSID_LENGTH                = prot::wifi_scan_ap::MAX_WIFI_SSID_LENGTH;
-constexpr uint8_t MAX_WIFI_PASSWORD_LENGTH            = prot::wifi_connect_to_ap::MAX_WIFI_PASSWORD_LENGTH;
-constexpr size_t  MAX_NUMBER_OF_SCANNED_ACCESS_POINTS = CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES;
+constexpr uint8_t  MAX_WIFI_SSID_LENGTH                = prot::wifi_scan_ap::MAX_WIFI_SSID_LENGTH;
+constexpr uint8_t  MAX_WIFI_PASSWORD_LENGTH            = prot::wifi_connect_to_ap::MAX_WIFI_PASSWORD_LENGTH;
+constexpr size_t   MAX_NUMBER_OF_SCANNED_ACCESS_POINTS = CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES;
+constexpr uint8_t  MAX_FILE_KEY_LENGTH                 = 20;
+constexpr uint32_t MAX_OTA_URL_LENGTH                  = 300U;
+constexpr uint32_t MAX_PROVIDER_NAME_LENGTH            = 30U;
+constexpr uint32_t MAX_OTA_UPDATE_NAME_LENGTH          = 30U;
+constexpr uint32_t MAX_OTA_VERSION_STRING_LENGTH       = 30U;
+
 
 static_assert(
     MAX_NUMBER_OF_SCANNED_ACCESS_POINTS == prot::wifi_scan_ap::MAX_NUMBER_OF_NETWORKS,
@@ -26,6 +32,24 @@ struct TFirmwareInfo
     bool operator==(const TFirmwareInfo& rhs) const;
     bool setFirmwareUrl(const std::string& newFirmwareUrl);
     bool isSetFirmwareUrl() const;
+};
+
+struct TUpdateManifest
+{
+    char fileKey[MAX_FILE_KEY_LENGTH];
+};
+
+struct TDeviceUpdate
+{
+    char            fileUrl[MAX_OTA_URL_LENGTH];
+    TUpdateManifest updateManifest;
+};
+
+struct TUpdateId
+{
+    char providerName[MAX_PROVIDER_NAME_LENGTH];
+    char updateName[MAX_OTA_UPDATE_NAME_LENGTH];
+    char version[MAX_OTA_VERSION_STRING_LENGTH];
 };
 
 using TWiFiCredentials             = prot::wifi_connect_to_ap::TWiFiCredentials;
