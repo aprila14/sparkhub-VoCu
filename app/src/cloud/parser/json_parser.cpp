@@ -415,7 +415,7 @@ cJSON* prepareDevicePropertiesJson()
     return pDevicePropertiesJson;
 }
 
-cJSON* prepareAgentJson(const TUpdateId& updateId, uint8_t state)
+cJSON* prepareAgentJson(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData)
 {
     cJSON* pAgentJson = cJSON_CreateObject();
     if (pAgentJson == nullptr)
@@ -436,6 +436,39 @@ cJSON* prepareAgentJson(const TUpdateId& updateId, uint8_t state)
         LOG_ERROR("Could not add deviceProperties JSON to Agent JSON");
         cJSON_Delete(pAgentJson);
         return nullptr;
+    }
+
+    if (workflowData.workflowId[0] != 0)
+    {
+        cJSON* pWorkflowJson = cJSON_CreateObject();
+        if (pWorkflowJson == nullptr)
+        {
+            LOG_ERROR("Could not allocate memory for (empty) workflow JSON");
+            return nullptr;
+        }
+
+        cJSON* pWorkflowIdJson = cJSON_CreateString(workflowData.workflowId);
+        if (!cJSON_AddItemToObject(pWorkflowJson, "id", pWorkflowIdJson))
+        {
+            LOG_ERROR("Could not add workflow id to workflow JSON");
+            cJSON_Delete(pWorkflowJson);
+            cJSON_Delete(pWorkflowIdJson);
+            return nullptr;
+        }
+
+        if (!cJSON_AddNumberToObject(pWorkflowJson, "action", static_cast<uint8_t>(workflowData.deviceUpdateAction)))
+        {
+            LOG_ERROR("Could not add action to workflow JSON");
+            cJSON_Delete(pWorkflowJson);
+            return nullptr;
+        }
+
+        if (!cJSON_AddItemToObject(pAgentJson, "workflow", pWorkflowJson))
+        {
+            LOG_ERROR("Could not add workflow JSON to agent JSON");
+            cJSON_Delete(pWorkflowJson);
+            return nullptr;
+        }
     }
 
     cJSON* pCompatPropertyNames = cJSON_CreateString("manufacturer,model");
@@ -473,7 +506,7 @@ cJSON* prepareAgentJson(const TUpdateId& updateId, uint8_t state)
     return pAgentJson;
 }
 
-std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state)
+std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData)
 {
     cJSON* pDeviceUpdateJson = cJSON_CreateObject();
 
@@ -483,7 +516,7 @@ std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state)
         return std::string("");
     }
 
-    cJSON* pAgentJson = prepareAgentJson(updateId, state);
+    cJSON* pAgentJson = prepareAgentJson(updateId, state, workflowData);
     if (pAgentJson == nullptr)
     {
         LOG_ERROR("Did not manage to prepare Agent JSON");
@@ -666,7 +699,7 @@ bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
     return true;
 }
 
-bool parseWorkflow(cJSON* pWorkflowJson, EDeviceUpdateAction* pDeviceUpdateAction)
+bool parseWorkflow(cJSON* pWorkflowJson, TWorkflowData* pWorkflowData)
 {
     cJSON* pActionJson = cJSON_GetObjectItem(pWorkflowJson, "action");
     if (pActionJson == nullptr)
@@ -675,8 +708,30 @@ bool parseWorkflow(cJSON* pWorkflowJson, EDeviceUpdateAction* pDeviceUpdateActio
         return false;
     }
 
-    // TODO some additional validation might be added here (making sure it's one of valid values)
-    *pDeviceUpdateAction = static_cast<EDeviceUpdateAction>(pActionJson->valueint);
+    cJSON* pIdJson = cJSON_GetObjectItem(pWorkflowJson, "id");
+    if (pIdJson == nullptr)
+    {
+        LOG_ERROR("Could not find id in workflow JSON");
+        return false;
+    }
+
+    EDeviceUpdateAction deviceUpdateAction = static_cast<EDeviceUpdateAction>(pActionJson->valueint);
+
+    if ((deviceUpdateAction != EDeviceUpdateAction::ACTION_DOWNLOAD) &&
+        (deviceUpdateAction != EDeviceUpdateAction::ACTION_CANCEL))
+    {
+        LOG_ERROR("Unrecognized workflow id obtained");
+        return false;
+    }
+
+    if (strlen(pIdJson->valuestring) > MAX_WORKFLOW_ID_LENGTH)
+    {
+        LOG_ERROR("Received too long workflow id");
+        return false;
+    }
+
+    pWorkflowData->deviceUpdateAction = static_cast<EDeviceUpdateAction>(pActionJson->valueint);
+    strncpy(pWorkflowData->workflowId, pIdJson->valuestring, strlen(pIdJson->valuestring));
 
     return true;
 }
@@ -705,7 +760,7 @@ bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate)
         return false;
     }
 
-    if (!parseWorkflow(pWorkflowJson, &pDeviceUpdate->deviceUpdateAction))
+    if (!parseWorkflow(pWorkflowJson, &pDeviceUpdate->workflowData))
     {
         LOG_ERROR("Did not manage to parse workflow data in deviceUpdate JSON");
         return false;

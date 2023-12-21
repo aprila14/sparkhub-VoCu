@@ -171,7 +171,7 @@ std::string prepareReportedMessage(cJSON* pReportedJson);
 
 std::string prepareFirmwareInfoReportedMessage(const TFirmwareInfo& firmwareInfo, const char* otaStatus);
 
-std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state);
+std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData);
 
 #if TESTING
 

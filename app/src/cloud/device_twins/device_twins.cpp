@@ -87,8 +87,8 @@ void DeviceTwinsController::_run()
 
     LOG_INFO("Topics subscribed");
 
-
-    reportDeviceUpdateStatus(0);
+    TWorkflowData workflowData = pConfig->getWorkflowData();
+    reportDeviceUpdateStatus(0, workflowData);
 
     while (true)
     {
@@ -136,18 +136,20 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
 
             LOG_INFO("deviceUpdateData.fileUrl: %s", deviceUpdateData.fileUrl);
             LOG_INFO("deviceUpdateData.updateManifest.fileKey: %s", deviceUpdateData.updateManifest.fileKey);
-            LOG_INFO("action: %d", deviceUpdateData.deviceUpdateAction);
+            LOG_INFO("action: %d", deviceUpdateData.workflowData.deviceUpdateAction);
+            LOG_INFO("actionId: %s", deviceUpdateData.workflowData.workflowId);
 
-            if (deviceUpdateData.deviceUpdateAction == EDeviceUpdateAction::ACTION_DOWNLOAD)
+            if (deviceUpdateData.workflowData.deviceUpdateAction == EDeviceUpdateAction::ACTION_DOWNLOAD)
             {
                 TOtaUpdateLink otaUpdateLink = {};
                 strncpy(otaUpdateLink.firmwareLink, deviceUpdateData.fileUrl, strlen(deviceUpdateData.fileUrl));
                 pConfig->setOtaUpdateLink(otaUpdateLink);
+                pConfig->setWorkflowData(deviceUpdateData.workflowData);
 
                 app::TEventData eventData        = {};
                 eventData.otaPerform.updateReady = true;
 
-                reportDeviceUpdateStatus(6); // TODO add enum class for state
+                reportDeviceUpdateStatus(6, deviceUpdateData.workflowData); // TODO add enum class for state
 
                 bool result = app::pAppController->addEvent(
                     app::EEventType::OTA__PERFORM, app::EEventExecutionType::SYNCHRONOUS, &eventData);
@@ -155,7 +157,7 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
                 if (!result)
                 {
                     LOG_ERROR("Could not perform OTA");
-                    reportDeviceUpdateStatus(255);
+                    reportDeviceUpdateStatus(255, deviceUpdateData.workflowData);
                 }
                 else
                 {
@@ -304,7 +306,7 @@ void DeviceTwinsController::reportFirmwareVersion(const char* otaStatus)
     }
 }
 
-void DeviceTwinsController::reportDeviceUpdateStatus(uint8_t state)
+void DeviceTwinsController::reportDeviceUpdateStatus(uint8_t state, const TWorkflowData& workflowData)
 {
     TUpdateId updateId = {};
 
@@ -317,7 +319,8 @@ void DeviceTwinsController::reportDeviceUpdateStatus(uint8_t state)
         return;
     }
 
-    std::string deviceUpdateStatusReportedMessage = json_parser::prepareDeviceUpdateReport(updateId, state);
+    std::string deviceUpdateStatusReportedMessage =
+        json_parser::prepareDeviceUpdateReport(updateId, state, workflowData);
 
     if (deviceUpdateStatusReportedMessage == std::string(""))
     {

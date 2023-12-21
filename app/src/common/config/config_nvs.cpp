@@ -139,6 +139,15 @@ const TFirmwareInfo& ConfigNvs::getFirmwareInfo()
     return m_firmwareInfo;
 }
 
+void ConfigNvs::setWorkflowData(const TWorkflowData& workflowData)
+{
+    setStruct(m_workflowData, workflowData, ConfigKeyName::UPDATE_WORKFLOW_DATA_NVS_KEY);
+}
+const TWorkflowData& ConfigNvs::getWorkflowData()
+{
+    return m_workflowData;
+}
+
 bool ConfigNvs::resetConfig()
 {
     LOCK_GUARD(this->m_accessMutex, accessMutexGuard);

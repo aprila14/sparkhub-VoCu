@@ -11,15 +11,16 @@ namespace ConfigKeyName
 {
 
 // make sure this names are unique
-constexpr const char* BLE_CONFIGURATION_STATUS   = "ble-conf";
-constexpr const char* WIFI_CREDENTIALS           = "wifi-cr";
-constexpr const char* CLOUD_CERTIFICATES         = "cloud-cert";
-constexpr const char* CLOUD_CREDENTIALS          = "cloud-cr";
-constexpr const char* OTA_HTTP_CERTIFICATE       = "ota-cert";
-constexpr const char* OTA_UPDATE_LINK            = "ota-link";
-constexpr const char* CERTIFICATES               = "cert-pack";
-constexpr const char* DEVICE_PROVISIONING_STATUS = "dev-prov";
-constexpr const char* FIRMWARE_INFO_NVS_KEY      = "firm-info";
+constexpr const char* BLE_CONFIGURATION_STATUS     = "ble-conf";
+constexpr const char* WIFI_CREDENTIALS             = "wifi-cr";
+constexpr const char* CLOUD_CERTIFICATES           = "cloud-cert";
+constexpr const char* CLOUD_CREDENTIALS            = "cloud-cr";
+constexpr const char* OTA_HTTP_CERTIFICATE         = "ota-cert";
+constexpr const char* OTA_UPDATE_LINK              = "ota-link";
+constexpr const char* CERTIFICATES                 = "cert-pack";
+constexpr const char* DEVICE_PROVISIONING_STATUS   = "dev-prov";
+constexpr const char* FIRMWARE_INFO_NVS_KEY        = "firm-info";
+constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY = "update-work";
 
 } // namespace ConfigKeyName
 
@@ -78,6 +79,9 @@ public:
     virtual const TFirmwareInfo& getFirmwareInfo();
     virtual void                 setFirmwareInfo(const TFirmwareInfo& firmwareInfo);
 
+    virtual const TWorkflowData& getWorkflowData();
+    virtual void                 setWorkflowData(const TWorkflowData& workflowData);
+
 #if !TESTING
 private:
 #endif
@@ -114,6 +118,7 @@ private:
     ECloudDeviceProvisioningStatus m_deviceProvisioningStatus =
         ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
     TFirmwareInfo m_firmwareInfo = {};
+    TWorkflowData m_workflowData = {};
 };
 
 // We deliberately have a globa pointer,
