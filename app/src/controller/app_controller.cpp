@@ -323,7 +323,7 @@ bool AppController::executeEvent_otaPerform() // NOLINT - we don't want to make 
     }
 
     config.url                         = otaUpdateLink.firmwareLink;
-    config.skip_cert_common_name_check = false;
+    config.skip_cert_common_name_check = true;
 
     commons::printAvailableHeapMemory(__LINE__, __FILE__, "executeEvent_otaPerform");
 
