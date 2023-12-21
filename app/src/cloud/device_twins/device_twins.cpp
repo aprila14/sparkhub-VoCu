@@ -86,6 +86,15 @@ void DeviceTwinsController::_run()
     subscribeDeviceTwinTopics();
 
     LOG_INFO("Topics subscribed");
+
+    TUpdateId updateId = {};
+
+    strncpy(updateId.providerName, "sparkhub", strlen("sparkhub"));
+    strncpy(updateId.updateName, "sparkhub-iot-levelsense", strlen("sparkhub-iot-levelsense"));
+    strncpy(updateId.version, "0.5.0", strlen("0.5.0"));
+
+    reportDeviceUpdateStatus(updateId, 0);
+
     while (true)
     {
         if (!m_pMqttClientController->checkIfMessageBufferIsEmpty())
@@ -263,6 +272,23 @@ void DeviceTwinsController::reportFirmwareVersion(const char* otaStatus)
     }
 
     if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), firmwareVersionReportedMessage))
+    {
+        LOG_ERROR("Could not send firmware info reported message");
+        return;
+    }
+}
+
+void DeviceTwinsController::reportDeviceUpdateStatus(const TUpdateId& updateId, uint8_t state)
+{
+    std::string deviceUpdateStatusReportedMessage = json_parser::prepareDeviceUpdateReport(updateId, state);
+
+    if (deviceUpdateStatusReportedMessage == std::string(""))
+    {
+        LOG_ERROR("Error while preparing deviceUpdateStatus reported message");
+        return;
+    }
+
+    if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), deviceUpdateStatusReportedMessage))
     {
         LOG_ERROR("Could not send firmware info reported message");
         return;

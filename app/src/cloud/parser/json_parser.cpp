@@ -341,6 +341,202 @@ prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credenti
     return deviceCreateProvisioningMessage;
 }
 
+cJSON* prepareInstalledUpdateIdJson(const TUpdateId& updateId)
+{
+    char installedUpdateIdCString[MAX_UPDATE_ID_STRING_LENGTH];
+
+    if (sprintf(
+            installedUpdateIdCString,
+            "{\"provider\":\"%s\",\"name\":\"%s\",\"version\":\"%s\"}",
+            updateId.providerName,
+            updateId.updateName,
+            updateId.version) < 0)
+    {
+        LOG_ERROR("Failed to prepare installedUpdateId string");
+        return nullptr;
+    }
+
+    cJSON* installedUpdateIdJson = cJSON_CreateString(installedUpdateIdCString);
+
+    if (installedUpdateIdJson == nullptr)
+    {
+        LOG_ERROR("Could not create installedUpdateIdJson");
+        return nullptr;
+    }
+
+    return installedUpdateIdJson;
+}
+
+cJSON* prepareDevicePropertiesJson()
+{
+    cJSON* pDevicePropertiesJson = cJSON_CreateObject();
+
+    if (pDevicePropertiesJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) DeviceUpdate report JSON");
+        return nullptr;
+    }
+
+    cJSON* pManufacturerJson = cJSON_CreateString("sparkhub");
+
+    if (!cJSON_AddItemToObject(pDevicePropertiesJson, "manufacturer", pManufacturerJson))
+    {
+        LOG_ERROR("Cannot add manufacturer string to DeviceUpdate report JSON");
+        cJSON_Delete(pDevicePropertiesJson);
+        return nullptr;
+    }
+
+    cJSON* pModelJson = cJSON_CreateString("sparkhub-iot-levelsense");
+
+    if (!cJSON_AddItemToObject(pDevicePropertiesJson, "model", pModelJson))
+    {
+        LOG_ERROR("Cannot add model string to DeviceUpdate report JSON");
+        cJSON_Delete(pDevicePropertiesJson);
+        return nullptr;
+    }
+
+    cJSON* pContractModelIdJson = cJSON_CreateString(DEVICE_PROVISIONING_MODEL_ID);
+
+    if (!cJSON_AddItemToObject(pDevicePropertiesJson, "contractModelId", pContractModelIdJson))
+    {
+        LOG_ERROR("Cannot add contract model id string to DeviceUpdate report JSON");
+        cJSON_Delete(pDevicePropertiesJson);
+        return nullptr;
+    }
+
+    cJSON* pAduVerJson = cJSON_CreateString("DU;agent/1.0.0");
+    if (!cJSON_AddItemToObject(pDevicePropertiesJson, "aduVer", pAduVerJson))
+    {
+        LOG_ERROR("Cannot add aduVer string to DeviceUpdate report JSON");
+        cJSON_Delete(pDevicePropertiesJson);
+        return nullptr;
+    }
+
+    return pDevicePropertiesJson;
+}
+
+cJSON* prepareAgentJson(const TUpdateId& updateId, uint8_t state)
+{
+    cJSON* pAgentJson = cJSON_CreateObject();
+    if (pAgentJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) Agent JSON");
+        return nullptr;
+    }
+
+    cJSON* pDevicePropertiesJson = prepareDevicePropertiesJson();
+    if (pDevicePropertiesJson == nullptr)
+    {
+        LOG_ERROR("Could not create DeviceProperties JSON");
+        return nullptr;
+    }
+
+    if (!cJSON_AddItemToObject(pAgentJson, "deviceProperties", pDevicePropertiesJson))
+    {
+        LOG_ERROR("Could not add deviceProperties JSON to Agent JSON");
+        cJSON_Delete(pAgentJson);
+        return nullptr;
+    }
+
+    cJSON* pCompatPropertyNames = cJSON_CreateString("manufacturer,model");
+
+    if (!cJSON_AddItemToObject(pAgentJson, "compatPropertyNames", pCompatPropertyNames))
+    {
+        LOG_ERROR("Could not add compatPropertyNames JSON to Agent JSON");
+        cJSON_Delete(pAgentJson);
+        cJSON_Delete(pCompatPropertyNames);
+        return nullptr;
+    }
+
+    if (!cJSON_AddNumberToObject(pAgentJson, "state", state))
+    {
+        LOG_ERROR("Could not add state to Agent JSON");
+        cJSON_Delete(pAgentJson);
+        return nullptr;
+    }
+
+    cJSON* installedUpdateIdJson = prepareInstalledUpdateIdJson(updateId);
+    if (installedUpdateIdJson == nullptr)
+    {
+        LOG_ERROR("Could not prepare installedUpdateIdJson");
+        cJSON_Delete(pAgentJson);
+        return nullptr;
+    }
+
+    if (!cJSON_AddItemToObject(pAgentJson, "installedUpdateId", installedUpdateIdJson))
+    {
+        LOG_ERROR("Could not add installedUpdateIdJson to agentJson");
+        cJSON_Delete(pAgentJson);
+        return nullptr;
+    }
+
+    return pAgentJson;
+}
+
+std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state)
+{
+    cJSON* pDeviceUpdateJson = cJSON_CreateObject();
+
+    if (pDeviceUpdateJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) DeviceUpdate report JSON");
+        return std::string("");
+    }
+
+    cJSON* pAgentJson = prepareAgentJson(updateId, state);
+    if (pAgentJson == nullptr)
+    {
+        LOG_ERROR("Did not manage to prepare Agent JSON");
+        cJSON_Delete(pDeviceUpdateJson);
+        return nullptr;
+    }
+
+    if (!cJSON_AddItemToObject(pDeviceUpdateJson, "agent", pAgentJson))
+    {
+        LOG_ERROR("Did not manage to add Agent JSON to deviceUpdate JSON");
+        cJSON_Delete(pDeviceUpdateJson);
+        return nullptr;
+    }
+
+    cJSON* pUnknownParameterJson = cJSON_CreateString("c");
+    if (!cJSON_AddItemToObject(pDeviceUpdateJson, "__t", pUnknownParameterJson))
+    {
+        LOG_ERROR("Cannot add unknown parameter (__t)  to DeviceUpdate report JSON");
+        cJSON_Delete(pDeviceUpdateJson);
+        return std::string("");
+    }
+
+    cJSON* pDeviceUpdateReportJson = cJSON_CreateObject();
+    if (pDeviceUpdateReportJson == nullptr)
+    {
+        LOG_ERROR("Failed to create (empty) DeviceUpdateReport JSON");
+        cJSON_Delete(pDeviceUpdateJson);
+        return std::string("");
+    }
+
+    if (!cJSON_AddItemToObject(pDeviceUpdateReportJson, "deviceUpdate", pDeviceUpdateJson))
+    {
+        LOG_ERROR("Failed to add pDeviceUpdateJson to pDeviceUpdateReportJson");
+        cJSON_Delete(pDeviceUpdateJson);
+        cJSON_Delete(pDeviceUpdateReportJson);
+        return std::string("");
+    }
+
+    char* deviceUpdateReportCString = cJSON_Print(pDeviceUpdateReportJson);
+    if (deviceUpdateReportCString == nullptr)
+    {
+        LOG_ERROR("Error while preparing deviceUpdateReportCString");
+        cJSON_Delete(pDeviceUpdateJson);
+        return std::string("");
+    }
+
+    std::string deviceUpdateReport = std::string(deviceUpdateReportCString);
+    free(deviceUpdateReportCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+    cJSON_Delete(pDeviceUpdateReportJson);
+
+    return deviceUpdateReport;
+}
+
 bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo)
 {
     cJSON* pDataJson = nullptr;
