@@ -60,15 +60,15 @@ public:
 
 
 private:
-    uint32_t m_dataSize;  ///< Size of the buffer
+    uint32_t m_dataSize; ///< Size of the buffer
 
     uint32_t m_readIndex;  ///< Index from where extract new data on read. aka head
-    uint32_t m_writeIndex;  ///< Index where to insert data on write. aka tail
+    uint32_t m_writeIndex; ///< Index where to insert data on write. aka tail
 
-    uint8_t* m_pData;  ///< flat buffer for the data
+    uint8_t* m_pData; ///< flat buffer for the data
 
     CircularBuffer() = delete;
-} ;
+};
 
 
-#endif  // CIRCULAR_BUFFER_H
+#endif // CIRCULAR_BUFFER_H

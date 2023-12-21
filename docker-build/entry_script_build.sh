@@ -64,7 +64,7 @@ main()
 
     cd $BUILD_ARTIFACTS_PATH || exit
 
-    idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=ON build  
+    idf.py -B . -C $PROJECT_DIR/ -DBUILD_WITH_PRINTS_AND_LOGS=ON -DIS_DEBUG_BUILD=OFF build  
 }
 
 main

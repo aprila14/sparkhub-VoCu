@@ -1,23 +1,25 @@
 // Please keep these 2 lines at the beginning of each cpp module
-static const char *LOG_TAG = "CloudController";
+static const char* LOG_TAG = "CloudController";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
 #include "cloud_controller.h"
 
+#include "adc_pressure.h"
 #include "app_controller.h"
+#include "cloud_config.h"
 #include "commons.h"
 #include "config_nvs.h"
 #include "ntp_client.h"
 #include "protocol_types.h"
 #include "sleep.h"
-#include "cloud_config.h"
-#include "adc_pressure.h"
 
 #include <memory>
 
-
 namespace
 {
+
+
+    constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE        = 200;  
     constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 1800 * 1000; // every 0.5 hour
     constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD = 1 * 1000; // every 1 minute
     constexpr uint16_t LOCAL_TIME_OFFSET = UtcOffset::OFFSET_UTC_2;
@@ -28,36 +30,34 @@ namespace
     bool isBelowPressureAlarm = false;
     uint32_t TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
 
-    void _heartbeatWatchdogTimerCallback(TimerHandle_t timerHandle)
-    {
-        CloudController *cloudController = static_cast<CloudController *>(pvTimerGetTimerID(timerHandle));
-        assert(cloudController);
-        cloudController->heartbeatWatchdogTimerCallback();
-    }
+
+void _heartbeatWatchdogTimerCallback(TimerHandle_t timerHandle)
+{
+    CloudController* cloudController = static_cast<CloudController*>(pvTimerGetTimerID(timerHandle));
+    assert(cloudController);
+    cloudController->heartbeatWatchdogTimerCallback();
+}
 } // unnamed namespace
 
-CloudController::CloudController()
-    : m_taskHandle(),
-      m_heartbeatWatchdogTimer(),
-      m_heartbeatWatchdogCounter(0),
-      m_msgCounter(0),
-      m_connectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED),
-      m_mqttClientController(this)
+CloudController::CloudController() :
+    m_taskHandle(),
+    m_heartbeatWatchdogTimer(),
+    m_heartbeatWatchdogCounter(0),
+    m_msgCounter(0),
+    m_connectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED),
+    m_mqttClientController(this),
+    m_deviceProvisioningController(&this->m_mqttClientController)
 {
-    m_semaphoreCredentialsReady = xSemaphoreCreateBinary();
+    m_semaphoreCredentialsReady    = xSemaphoreCreateBinary();
+    m_semaphoreWifiConnectionReady = xSemaphoreCreateBinary();
 }
 
 void CloudController::runTask()
 {
     LOG_INFO("runTask() started...");
 
-    BaseType_t xReturned = xTaskCreate(
-        run,
-        LOG_TAG,
-        DEFAULT_HUGE_STACK_SIZE,
-        this,
-        DEFAULT_TASK_PRIORITY,
-        &m_taskHandle);
+    BaseType_t xReturned =
+        xTaskCreate(run, LOG_TAG, DEFAULT_HUGE_STACK_SIZE, this, DEFAULT_TASK_PRIORITY, &m_taskHandle);
     if (xReturned != pdPASS)
         LOG_ERROR("Failed to create a task: %s", LOG_TAG);
 }
@@ -78,46 +78,69 @@ void CloudController::handleHeartbeatResponse()
     m_heartbeatWatchdogCounter = 0;
 }
 
-bool CloudController::handleOtaUpdateLink(const TOtaUpdateLink &otaUpdateLinkStructure) // NOLINT - we don't want to make it static
+bool CloudController::handleOtaUpdateLink(
+    const TOtaUpdateLink& otaUpdateLinkStructure) // NOLINT - we don't want to make it static
 {
     LOG_INFO("Handling OTA Update Link");
 
-    app::TEventData eventData = {};
+    app::TEventData eventData        = {};
     eventData.otaPerform.updateReady = true;
 
-    pConfig->setOtaUpdateLink(otaUpdateLinkStructure); // TODO storing the link in NVS is only temporary solution, finally the link should be
-                                                       // to OtaControlller class which will be responsible for performing OTA
-                                                       //(AppController will not take part in this)
+    pConfig->setOtaUpdateLink(
+        otaUpdateLinkStructure); // TODO storing the link in NVS is only temporary solution, finally the link should be
+                                 // to OtaControlller class which will be responsible for performing OTA
+                                 //(AppController will not take part in this)
 
-    bool result = app::pAppController->addEvent(app::EEventType::OTA__PERFORM, app::EEventExecutionType::ASYNCHRONOUS, &eventData);
+    bool result = app::pAppController->addEvent(
+        app::EEventType::OTA__PERFORM, app::EEventExecutionType::ASYNCHRONOUS, &eventData);
 
-    // TODO OTA - it might be needed to send some kind of response here - informing the cloud, that ESP32 got the message and is starting the update
+    // TODO OTA - it might be needed to send some kind of response here - informing the cloud, that ESP32 got the
+    // message and is starting the update
     return result;
 }
 
-bool CloudController::handleTimeSlotsList(const json_parser::TTimeSlotsList &timeSlotsListStructure) // NOLINT - we don't want to make it static
+void CloudController::run(void* pObject)
 {
-    LOG_INFO("Handling Time Slots List message");
-
-    // TODO add an event informing AppController that TimeSlotsList has been updated
-
-    return true;
+    CloudController* pCloudController =
+        reinterpret_cast<CloudController*>(pObject); // NOLINT - we need reinterpret cast
+    pCloudController->_run();
 }
 
-void CloudController::run(void *pObject)
+void CloudController::setDeviceStatusTopic(const prot::cloud_set_credentials::TCloudCredentials& credentials)
 {
-    CloudController *pCloudController = reinterpret_cast<CloudController *>(pObject); // NOLINT - we need reinterpret cast
-    pCloudController->_run();
+    if (!credentials.isSetCloudDeviceId())
+    {
+        LOG_ERROR("Cloud device id not provided");
+        return;
+    }
+
+    char deviceStatusTopic[DEVICE_STATUS_MAX_TOPIC_SIZE];
+    memset(deviceStatusTopic, 0, DEVICE_STATUS_MAX_TOPIC_SIZE);
+
+    sprintf(deviceStatusTopic, "devices/%s/messages/events/", credentials.cloudDeviceId);
+
+    m_deviceStatusTopic = std::string(deviceStatusTopic);
 }
 
 void CloudController::_run()
 {
-    xSemaphoreTake(m_semaphoreCredentialsReady, portMAX_DELAY);
-    const prot::cloud_set_credentials::TCloudCredentials &credentials = pConfig->getCloudCredentials();
+    xSemaphoreTake(m_semaphoreWifiConnectionReady, portMAX_DELAY);
 
-    configureCloudConnection(credentials);
+    const ECloudDeviceProvisioningStatus deviceProvisioningStatus = pConfig->getDeviceProvisioningStatus();
 
-    m_deviceStatusTopic = std::string(DEFAULT_TELEMETRY_MQTT_TOPIC);
+    if (deviceProvisioningStatus == ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT)
+    {
+        m_deviceProvisioningController.runTask();
+
+        xSemaphoreTake(m_semaphoreCredentialsReady, portMAX_DELAY);
+    }
+
+    const prot::cloud_set_credentials::TCloudCredentials& cloudCredentials = pConfig->getCloudCredentials();
+
+    configureCloudConnection(cloudCredentials);
+
+    setDeviceStatusTopic(cloudCredentials);
+
     if (m_connectionStatus == ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED)
     {
         LOG_INFO("Client could not be configured");
@@ -131,12 +154,18 @@ void CloudController::_run()
         LOG_INFO("Could not connect to cloud, timeout occured");
     }
 
-    m_heartbeatWatchdogTimer = xTimerCreate("Heartbeat Watchdog Timer", pdMS_TO_TICKS(HEARTBEAT_CHECK_TIMER_PERIOD_MS), true, static_cast<void *>(this), _heartbeatWatchdogTimerCallback);
+    m_heartbeatWatchdogTimer = xTimerCreate(
+        "Heartbeat Watchdog Timer",
+        pdMS_TO_TICKS(HEARTBEAT_CHECK_TIMER_PERIOD_MS),
+        true,
+        static_cast<void*>(this),
+        _heartbeatWatchdogTimerCallback);
     xTimerStart(m_heartbeatWatchdogTimer, 0);
     m_mqttClientController.runTask();
 
-    //define the number of threads to open
-    pthread_t thread1, thread2;
+
+    LOG_INFO("Cloud controller initiated!");
+
 
     while (true)
     {
@@ -187,6 +216,7 @@ void CloudController::CheckPressureValueBelowThreshold()
 void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it const
 {
     json_parser::TDeviceStatus deviceStatus = {};
+
     deviceStatus.isWiFiConnected = app::pAppController->getWiFiController()->getConnectionStatus();
     deviceStatus.isBleConnected = app::pAppController->getBleController()->isClientConnected();
     deviceStatus.isBelowPressureAlarmThreshold = isBelowPressureAlarm;
@@ -195,6 +225,7 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     //update DeviceTwin
 
     strcpy(deviceStatus.currentLocalTime, app::pAppController->getNtpClient()->getCurrentLocalTimeString(LOCAL_TIME_OFFSET));
+
     strcpy(deviceStatus.firmwareVersion, PROJECT_VER);
 
     std::string deviceStatusMessage = json_parser::prepareDeviceStatusMessage(deviceStatus, m_msgCounter);
@@ -208,7 +239,7 @@ void CloudController::setConnectionStatus(ECloudConnectionStatus status)
     m_connectionStatus = status;
 }
 
-void CloudController::configureCloudConnection(const prot::cloud_set_credentials::TCloudCredentials &credentials)
+void CloudController::configureCloudConnection(const prot::cloud_set_credentials::TCloudCredentials& credentials)
 {
     if (!(m_mqttClientController.init(credentials)))
     {
@@ -223,26 +254,29 @@ void CloudController::configureCloudConnection(const prot::cloud_set_credentials
 
 void CloudController::setReadinessToConnect()
 {
+    xSemaphoreGive(m_semaphoreWifiConnectionReady);
+}
+
+void CloudController::setReadinessAfterDeviceProvisioning()
+{
     xSemaphoreGive(m_semaphoreCredentialsReady);
 }
 
 void CloudController::setConnectedStatus()
 {
     m_connectionStatus = ECloudConnectionStatus::CLOUD_STATUS_CONNECTED;
-    app::pAppController->addEvent(app::EEventType::CLOUD_CONTROLLER__CONNECTION_ESTABLISHED,
-                                  app::EEventExecutionType::ASYNCHRONOUS,
-                                  nullptr);
+    app::pAppController->addEvent(
+        app::EEventType::CLOUD_CONTROLLER__CONNECTION_ESTABLISHED, app::EEventExecutionType::ASYNCHRONOUS, nullptr);
 }
 
 void CloudController::setNotConnectedStatus()
 {
     m_connectionStatus = ECloudConnectionStatus::CLOUD_STATUS_NOT_CONNECTED;
-    app::pAppController->addEvent(app::EEventType::CLOUD_CONTROLLER__CONNECTION_LOST,
-                                  app::EEventExecutionType::ASYNCHRONOUS,
-                                  nullptr);
+    app::pAppController->addEvent(
+        app::EEventType::CLOUD_CONTROLLER__CONNECTION_LOST, app::EEventExecutionType::ASYNCHRONOUS, nullptr);
 }
 
-const esp_mqtt_client_handle_t &CloudController::getMqttClientHandle()
+const esp_mqtt_client_handle_t& CloudController::getMqttClientHandle()
 {
     return m_mqttClientController.getMqttClient();
 }

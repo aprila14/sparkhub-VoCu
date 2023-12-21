@@ -14,6 +14,8 @@ namespace
     constexpr uint8_t MAX_OTA_TOPIC_SUFFIX_LENGTH = 80;
     constexpr uint8_t ALARM_RESPONSE_LENGTH = 32;
 }
+
+
 namespace json_parser
 {
 
@@ -130,6 +132,24 @@ namespace json_parser
         TFrameData frameData;
     };
 
+
+
+
+
+
+struct TDeviceProvisioningInfo
+{
+    std::string operationId;
+    std::string status;
+    std::string deviceId;
+    std::string assignedHub;
+};
+
+
+
+
+
+
     /**
      * @brief prepareHeartbeatMessage - function preparing std::string with heartbeat message in a JSON format based on provided
      * msgCounter value. Function assumes the ACK value of the heartbeat structure shall be set to true, therefore it does not require
@@ -147,6 +167,21 @@ namespace json_parser
      * @return std::string with a message in a JSON format
      */
     std::string prepareDeviceStatusMessage(const TDeviceStatus &deviceStatus, uint32_t msgCounter);
+
+
+
+    /**
+     * @brief prepareDeviceCreateProvisioningMessage
+     */
+    std::string
+    prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH]);
+
+    /**
+     * @brief parseJsonDeviceProvisioning
+     */
+    bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo);
+
+
 
     /**
      * @brief extractMethodAndFillFrame - function that gets the std::string with a message, parses it, interprets it and then fills
@@ -178,28 +213,28 @@ namespace json_parser
 
     std::string getMsgMethodString(EMsgMethod msgMethod);
 
+
 #if TESTING
 
-    // functions that are needed for unit tests
-    bool processStatusReport(cJSON *dataJson, TDeviceStatus *output);
-    bool processGetLightIntensityLevel(cJSON *dataJson, TSetLightLevel *output);
-    bool processResponse(cJSON *dataJson, TResponse *output);
-    static bool processOtaUpdateLink(cJSON *pDataJson, TOtaUpdateLink *pOutput);
-    static bool processTimeSlotsList(cJSON *pDataJson, TTimeSlotsList *pOutput);
-    static bool processTimeSlotsListResponse(cJSON *pDataJson, TTimeSlotsListResponse *pOutput);
-    cJSON *preprocessInputMessage(const std::string &inputMessage);
-    EMsgMethod extractMsgMethod(const std::string &inputMessage);
-    bool getDataJsonAndInitFrame(const std::string &inputMessage, TFrame *frame, cJSON **dataJson);
-    bool parseJsonRpcCommand(const std::string &inputMessage, TFrame *frame);
-    std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus &deviceStatus, uint32_t msgCounter);
-    cJSON *deviceStatusToJson(const TDeviceStatus &deviceStatus);
-    cJSON *heartbeatToJson(const THeartbeat &heartbeatStruct);
-    cJSON *widgetGetLightLevelToJson(const TSetLightLevel &lightLevelStruct);
-    cJSON *widgetSetLightLevelToJson(const TSetLightLevel &lightLevelStruct);
-    cJSON *dataJsonToParamsJson(cJSON *dataJson, EMsgCode msgCode, uint32_t msgCounter);
-    cJSON *dataJsonToRpcCommandJson(cJSON *dataJson, EMsgCode msgCode, uint32_t msgCounter);
+// functions that are needed for unit tests
+bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);
+bool        processGetLightIntensityLevel(cJSON* dataJson, TSetLightLevel* output);
+bool        processResponse(cJSON* dataJson, TResponse* output);
+static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
+cJSON*      preprocessInputMessage(const std::string& inputMessage);
+EMsgMethod  extractMsgMethod(const std::string& inputMessage);
+bool        getDataJsonAndInitFrame(const std::string& inputMessage, TFrame* frame, cJSON** dataJson);
+bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* frame, cJSON** dataJson);
+bool parseJsonRpcCommand(const std::string& inputMessage, TFrame* frame);
+std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus& deviceStatus, uint32_t msgCounter);
+cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus);
+cJSON*      heartbeatToJson(const THeartbeat& heartbeatStruct);
+cJSON*      widgetGetLightLevelToJson(const TSetLightLevel& lightLevelStruct);
+cJSON*      widgetSetLightLevelToJson(const TSetLightLevel& lightLevelStruct);
+cJSON*      dataJsonToParamsJson(cJSON* dataJson, EMsgCode msgCode, uint32_t msgCounter);
+cJSON*      dataJsonToRpcCommandJson(cJSON* dataJson, EMsgCode msgCode, uint32_t msgCounter);
 
-    int32_t extractTimeInMinutesFromString(const std::string timeString);
+int32_t extractTimeInMinutesFromString(const std::string timeString);
 
 #endif
 

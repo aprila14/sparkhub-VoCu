@@ -120,7 +120,7 @@ private:
     void advertise();
 
     static void synchronizationCallback();
-    void _synchronizationCallback();
+    void        _synchronizationCallback();
 
     /**
      * @brief Non returning task for the BLE TX thread
@@ -134,9 +134,11 @@ private:
     void _performTxLoop();
 
 
-    CircularBuffer m_rxBuffer;  ///< Circular buffer queuing raw data received from BLE, for further processing
-    SemaphoreHandle_t m_rxBufferMutex;  ///<  Mutex to access rxBuffer and to give rxDataAvailableSemaphore
-    SemaphoreHandle_t m_rxSomeDataAvailableSemaphore;  ///< Sempaphore singaling if there is some new data available to be read. Modified when some data arrives or is read from the buffer
+    CircularBuffer    m_rxBuffer;      ///< Circular buffer queuing raw data received from BLE, for further processing
+    SemaphoreHandle_t m_rxBufferMutex; ///<  Mutex to access rxBuffer and to give rxDataAvailableSemaphore
+    SemaphoreHandle_t
+        m_rxSomeDataAvailableSemaphore; ///< Sempaphore singaling if there is some new data available to be read.
+                                        ///< Modified when some data arrives or is read from the buffer
 
     /**
      * @brief Buffer to queue outgoing data
@@ -146,18 +148,19 @@ private:
      * There is no point in doing so, because we will sent part of a package, that will not be handled anyway.
      * It will also allow to group shorter packages together in one MTU.
      */
-    CircularBuffer m_txBuffer;  ///< Circular buffer queuing raw data to be transmitted to the PC
-    SemaphoreHandle_t m_txBufferMutex;  ///< Mutex to access txBuffer
-    SemaphoreHandle_t m_txDataAvailable;  ///< Sempaphore singaling if there is any new data to be transmitted (trasnmission is done in a separate thread)
-    TaskHandle_t m_txLoopTaskHandle;  ///< Handle to Data Transmission (TX) task
+    CircularBuffer    m_txBuffer;        ///< Circular buffer queuing raw data to be transmitted to the PC
+    SemaphoreHandle_t m_txBufferMutex;   ///< Mutex to access txBuffer
+    SemaphoreHandle_t m_txDataAvailable; ///< Sempaphore singaling if there is any new data to be transmitted
+                                         ///< (trasnmission is done in a separate thread)
+    TaskHandle_t m_txLoopTaskHandle;     ///< Handle to Data Transmission (TX) task
 
-    bool m_isSynced;  ///< whether BLE controller/host are synced and communication can be started - TODO confirm it
-    bool m_isClientConnected;  ///< True if BLE client is connected (e.g. PC or Android app)
-    SemaphoreHandle_t m_clientConnectedSemaphore;  ///< Sempaphore given when the BLE client gets connected
+    bool m_isSynced; ///< whether BLE controller/host are synced and communication can be started - TODO confirm it
+    bool m_isClientConnected;                     ///< True if BLE client is connected (e.g. PC or Android app)
+    SemaphoreHandle_t m_clientConnectedSemaphore; ///< Sempaphore given when the BLE client gets connected
 };
 
 
-extern BleuartDriver* g_pBleuartDriver;  ///< global variable - pointing to the BLE driver
+extern BleuartDriver* g_pBleuartDriver; ///< global variable - pointing to the BLE driver
 
 
 #endif // BLEUART_ESP_H

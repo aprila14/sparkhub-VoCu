@@ -4,8 +4,8 @@ static const char* LOG_TAG = "Commons";
 
 #include "commons.h"
 
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
 #include <sys/time.h>
 
 
@@ -107,14 +107,15 @@ void OPTIMIZE_O0_ATTRIBUTE busySleepUs(uint32_t us)
 {
     if (us > 200)
     {
-        us = us * 50 / 51;  // 10 x NOP operation + loop iteration takes about 1.02 us - it may be "corrected" by this multiplier
+        us = us * 50 /
+             51; // 10 x NOP operation + loop iteration takes about 1.02 us - it may be "corrected" by this multiplier
     }
 
     for (uint32_t i = 0; i < us; i++)
     {
         for (int i = 0; i < 10; i++)
         {
-            asm(" nop");  // NOLINT
+            asm(" nop"); // NOLINT
         }
     }
 }
@@ -122,7 +123,7 @@ void OPTIMIZE_O0_ATTRIBUTE busySleepUs(uint32_t us)
 std::string dataArrayToHexStr(uint32_t maxSize, const uint8_t* pData, uint32_t dataLength)
 {
     std::string txt;
-    txt.reserve(dataLength * 3);  // anticipate 3 character for each byte (e.g. "3A ")
+    txt.reserve(dataLength * 3); // anticipate 3 character for each byte (e.g. "3A ")
 
     for (uint32_t i = 0; i < dataLength; i++)
     {
@@ -145,7 +146,6 @@ std::string dataArrayToHexStr(uint32_t maxSize, const uint8_t* pData, uint32_t d
             txt += "...";
             break;
         }
-
     }
 
     return txt;
@@ -153,19 +153,21 @@ std::string dataArrayToHexStr(uint32_t maxSize, const uint8_t* pData, uint32_t d
 
 void printAvailableHeapMemory(int lineNumber, const char* fileName, const char* functionName)
 {
-    printf("\n***************\n"
-             "File name: %s\n"
-             "Function name: %s\n"
-             "Line number: %d\n"
-             "Currently available free heap memory: %d\n"
-             "Minimum available free heap memory: %d\n"
-             "***************\n\n",
-             fileName,
-             functionName,
-             lineNumber,
-             static_cast<uint32_t>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL)),   // NOLINT - this warning does not make sense in that case
-             esp_get_minimum_free_heap_size());                                     // it requires to explicitly set bit shift as unsigned (e.g. 1u << 11u)
-                                                                                    // correcting this would require changing the library code (esp_heap_caps.h)
+    printf(
+        "\n***************\n"
+        "File name: %s\n"
+        "Function name: %s\n"
+        "Line number: %d\n"
+        "Currently available free heap memory: %d\n"
+        "Minimum available free heap memory: %d\n"
+        "***************\n\n",
+        fileName,
+        functionName,
+        lineNumber,
+        static_cast<uint32_t>(
+            heap_caps_get_free_size(MALLOC_CAP_INTERNAL)), // NOLINT - this warning does not make sense in that case
+        esp_get_minimum_free_heap_size()); // it requires to explicitly set bit shift as unsigned (e.g. 1u << 11u)
+                                           // correcting this would require changing the library code (esp_heap_caps.h)
 }
 
-}  // namespace commons
+} // namespace commons

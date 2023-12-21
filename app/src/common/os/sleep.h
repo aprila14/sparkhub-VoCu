@@ -7,7 +7,8 @@
 #include "stdio.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #define MS_TO_TICKS(X_MS) ((X_MS) / static_cast<TickType_t>(portTICK_PERIOD_MS))
@@ -22,4 +23,4 @@ extern "C" {
 }
 #endif
 
-#endif  // SLEEP_H
+#endif // SLEEP_H

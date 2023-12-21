@@ -2,8 +2,8 @@
 #define MUTEX_H
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "freertos/task.h"
 
 
 typedef SemaphoreHandle_t mutex_t;
@@ -11,7 +11,9 @@ typedef SemaphoreHandle_t mutex_t;
 
 inline void lockGuardTake(SemaphoreHandle_t pHandle)
 {
-    while (xSemaphoreTake(pHandle, portMAX_DELAY) != pdTRUE) { }
+    while (xSemaphoreTake(pHandle, portMAX_DELAY) != pdTRUE)
+    {
+    }
 }
 
 inline void lockGuardRelease(SemaphoreHandle_t* pHandle)
@@ -28,14 +30,19 @@ inline SemaphoreHandle_t mutexCreate()
 #if !TESTING
 // gcc extension to have RAII. In case of other comppiler - cannot be used
 #ifdef __GNUC__
-#define RAII(free_func) __attribute__((cleanup (free_func)))
-#define LOCK_GUARD(mutex_, guardName_) RAII(lockGuardRelease) SemaphoreHandle_t guardName_ = mutex_; lockGuardTake(guardName_)
+#define RAII(free_func) __attribute__((cleanup(free_func)))
+#define LOCK_GUARD(mutex_, guardName_) \
+    RAII(lockGuardRelease) SemaphoreHandle_t guardName_ = mutex_; \
+    lockGuardTake(guardName_)
 #else
 #error "Compiler not supported - mutex.h!"
-#endif  //__GNUC__
+#endif //__GNUC__
 #else
-#define LOCK_GUARD(mutex_, guardName_) do {} while(0)
-#endif //TESTING
+#define LOCK_GUARD(mutex_, guardName_) \
+    do \
+    { \
+    } while (0)
+#endif // TESTING
 
 /*
 Mutex usage:
@@ -62,12 +69,14 @@ inline SemaphoreHandle_t semaphoreCreateBinary()
 
 inline SemaphoreHandle_t semaphoreCreateCounting()
 {
-    return xSemaphoreCreateCounting(INT32_MAX-1, 0);
+    return xSemaphoreCreateCounting(INT32_MAX - 1, 0);
 }
 
 inline void seamphoreTake(SemaphoreHandle_t pHandle)
 {
-    while (xSemaphoreTake(pHandle, portMAX_DELAY) != pdTRUE) { }
+    while (xSemaphoreTake(pHandle, portMAX_DELAY) != pdTRUE)
+    {
+    }
 }
 
 inline void semaphoreGive(SemaphoreHandle_t pHandle)

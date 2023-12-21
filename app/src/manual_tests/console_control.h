@@ -12,8 +12,8 @@ namespace console
 
 void runConsoleControl();
 
-}  // namespace control
+} // namespace console
 
 #endif // CONSOLE_CONTROL_H
 
-#endif  // USE_CONSOLE
+#endif // USE_CONSOLE

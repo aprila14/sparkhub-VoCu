@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+bleak = "*"
+cobs = "*"
+crc = "*"
+bleak-winrt = {version = "*", markers="sys_platform == 'win32'"}
+dbus-fast = {version = "*", markers="sys_platform == 'linux'"}
+cryptography = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
