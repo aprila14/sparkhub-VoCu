@@ -97,7 +97,9 @@ void CloudController::setDeviceStatusTopic(const prot::cloud_set_credentials::TC
     char deviceStatusTopic[DEVICE_STATUS_MAX_TOPIC_SIZE];
     memset(deviceStatusTopic, 0, DEVICE_STATUS_MAX_TOPIC_SIZE);
 
-    sprintf(deviceStatusTopic, "devices/%s/messages/events/", credentials.cloudDeviceId);
+    const char contentTypeJson[] = "$.ct=application%2Fjson%3Bcharset%3Dutf-8";
+
+    sprintf(deviceStatusTopic, "devices/%s/messages/events/%s", credentials.cloudDeviceId, contentTypeJson);
 
     m_deviceStatusTopic = std::string(deviceStatusTopic);
 }
