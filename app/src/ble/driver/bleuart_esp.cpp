@@ -92,7 +92,7 @@ BleuartDriver::BleuartDriver() :
     m_isClientConnected(false),
     m_buffersClearedFlag(false)
 {
-    bleuartRxData = new (std::nothrow) uint8_t[BLEUART_RX_CIRCULAR_BUFFER_SIZE];
+    bleuartRxData = new (std::nothrow) uint8_t[BLEUART_RX_CIRCULAR_BUFFER_SIZE]();
     if (bleuartRxData == nullptr)
     {
         LOG_ERROR("Failed to allocate memory for bleuartRxCircularBuffer");
