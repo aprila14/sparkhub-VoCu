@@ -26,6 +26,8 @@ private:
     void        handleDeviceTwinResponse();
 
     void reportDeviceUpdateStatus(EOtaAgentState state, const TWorkflowData& workflowData);
+    void
+    reportInitialDeviceUpdateStatus(EOtaAgentState state, const TWorkflowData& workflowData, const TUpdateId& updateId);
 
     TaskHandle_t m_taskHandle; // handle to runTask
 

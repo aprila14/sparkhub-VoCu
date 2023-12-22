@@ -346,7 +346,7 @@ cJSON* prepareInstalledUpdateIdJson(const TUpdateId& updateId)
             "{\"provider\":\"%s\",\"name\":\"%s\",\"version\":\"%s\"}",
             updateId.providerName,
             updateId.updateName,
-            updateId.version) < 0)
+            updateId.firmwareVersion) < 0)
     {
         LOG_ERROR("Failed to prepare installedUpdateId string");
         return nullptr;
@@ -629,6 +629,36 @@ bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
         return false;
     }
 
+    cJSON* pProviderJson = cJSON_GetObjectItemCaseSensitive(pUpdateIdJson, "provider");
+    if (pProviderJson == nullptr)
+    {
+        LOG_ERROR("Could not find providerJson inside updateId JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    if (strlen(pProviderJson->valuestring) > MAX_PROVIDER_NAME_LENGTH)
+    {
+        LOG_ERROR("Provider name in update manifest is too long");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    cJSON* pNameJson = cJSON_GetObjectItemCaseSensitive(pUpdateIdJson, "name");
+    if (pNameJson == nullptr)
+    {
+        LOG_ERROR("Could not find nameJson inside updateId JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
+    if (strlen(pNameJson->valuestring) > MAX_OTA_UPDATE_NAME_LENGTH)
+    {
+        LOG_ERROR("Update name in update manifest is too long");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
+    }
+
     cJSON* pInstructionsJson = cJSON_GetObjectItemCaseSensitive(pUpdateManifestJson, "instructions");
     if (pInstructionsJson == nullptr)
     {
@@ -676,7 +706,10 @@ bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
         return false;
     }
 
-    strncpy(pUpdateManifest->firmwareVersion, pVersionJson->valuestring, strlen(pVersionJson->valuestring));
+    strncpy(pUpdateManifest->updateId.firmwareVersion, pVersionJson->valuestring, strlen(pVersionJson->valuestring));
+    strncpy(pUpdateManifest->updateId.providerName, pProviderJson->valuestring, strlen(pProviderJson->valuestring));
+    strncpy(pUpdateManifest->updateId.updateName, pNameJson->valuestring, strlen(pNameJson->valuestring));
+
     strncpy(
         pUpdateManifest->fileKey, pStepsFilesArrayElement->valuestring, strlen(pStepsFilesArrayElement->valuestring));
 

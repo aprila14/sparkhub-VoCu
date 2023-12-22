@@ -139,17 +139,26 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
             LOG_INFO("deviceUpdateData.fileUrl: %s", deviceUpdateData.fileUrl);
             LOG_INFO("deviceUpdateData.updateManifest.fileKey: %s", deviceUpdateData.updateManifest.fileKey);
             LOG_INFO(
-                "deviceUpdateData.updateManifest.firmwareVersion: %s", deviceUpdateData.updateManifest.firmwareVersion);
+                "deviceUpdateData.updateManifest.updateId.updateName: %s",
+                deviceUpdateData.updateManifest.updateId.updateName);
+            LOG_INFO(
+                "deviceUpdateData.updateManifest.updateId.providerName: %s",
+                deviceUpdateData.updateManifest.updateId.providerName);
+            LOG_INFO(
+                "deviceUpdateData.updateManifest.updateId.firmwareVersion: %s",
+                deviceUpdateData.updateManifest.updateId.firmwareVersion);
+
             LOG_INFO("action: %d", deviceUpdateData.workflowData.deviceUpdateAction);
             LOG_INFO("actionId: %s", deviceUpdateData.workflowData.workflowId);
 
             if ((deviceUpdateData.workflowData.deviceUpdateAction == EDeviceUpdateAction::ACTION_DOWNLOAD) &&
-                checkIfItIsNewFirmwareVersion(deviceUpdateData.updateManifest.firmwareVersion))
+                checkIfItIsNewFirmwareVersion(deviceUpdateData.updateManifest.updateId.firmwareVersion))
             {
                 TOtaUpdateLink otaUpdateLink = {};
                 strncpy(otaUpdateLink.firmwareLink, deviceUpdateData.fileUrl, strlen(deviceUpdateData.fileUrl));
                 pConfig->setOtaUpdateLink(otaUpdateLink);
                 pConfig->setWorkflowData(deviceUpdateData.workflowData);
+                pConfig->setUpdateId(deviceUpdateData.updateManifest.updateId);
 
                 app::TEventData eventData        = {};
                 eventData.otaPerform.updateReady = true;
@@ -223,14 +232,21 @@ std::string DeviceTwinsController::buildReportedTopic(int32_t requestId)
 
 void DeviceTwinsController::reportDeviceUpdateStatus(EOtaAgentState state, const TWorkflowData& workflowData)
 {
-    TUpdateId updateId = {};
+    TUpdateId updateId = pConfig->getUpdateId();
 
-    strncpy(updateId.providerName, "sparkhub", strlen("sparkhub"));
-    strncpy(updateId.updateName, "sparkhub-iot-levelsense", strlen("sparkhub-iot-levelsense"));
-
-    if (sprintf(updateId.version, "%d.%d.%d", PROJECT_VER_MAJOR, PROJECT_VER_MINOR, PROJECT_VER_PATCH) < 0)
+    if (!updateId.isSetProviderName())
     {
-        LOG_ERROR("Could not fill updateId.version");
+        strncpy(updateId.providerName, "sparkhub", strlen("sparkhub"));
+    }
+
+    if (!updateId.isSetUpdateName())
+    {
+        strncpy(updateId.updateName, "sparkhub-iot-levelsense", strlen("sparkhub-iot-levelsense"));
+    }
+
+    if (sprintf(updateId.firmwareVersion, "%d.%d.%d", PROJECT_VER_MAJOR, PROJECT_VER_MINOR, PROJECT_VER_PATCH) < 0)
+    {
+        LOG_ERROR("Could not fill updateId.firmwareVersion");
         return;
     }
 

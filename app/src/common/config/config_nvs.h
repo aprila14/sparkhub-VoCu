@@ -19,6 +19,7 @@ constexpr const char* OTA_UPDATE_LINK              = "ota-link";
 constexpr const char* CERTIFICATES                 = "cert-pack";
 constexpr const char* DEVICE_PROVISIONING_STATUS   = "dev-prov";
 constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY = "work-id";
+constexpr const char* UPDDATE_ID_NVS_KEY           = "upd-id";
 
 } // namespace ConfigKeyName
 
@@ -74,6 +75,9 @@ public:
     virtual const TWorkflowData& getWorkflowData();
     virtual void                 setWorkflowData(const TWorkflowData& workflowData);
 
+    virtual const TUpdateId& getUpdateId();
+    virtual void             setUpdateId(const TUpdateId& updateId);
+
 #if !TESTING
 private:
 #endif
@@ -109,6 +113,7 @@ private:
     ECloudDeviceProvisioningStatus m_deviceProvisioningStatus =
         ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
     TWorkflowData m_workflowData = {};
+    TUpdateId     m_updateId     = {};
 };
 
 // We deliberately have a globa pointer,
