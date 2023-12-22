@@ -18,7 +18,7 @@ constexpr const char* CLOUD_CREDENTIALS            = "cloud-cr";
 constexpr const char* OTA_UPDATE_LINK              = "ota-link";
 constexpr const char* CERTIFICATES                 = "cert-pack";
 constexpr const char* DEVICE_PROVISIONING_STATUS   = "dev-prov";
-constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY = "update-work";
+constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY = "work-id";
 
 } // namespace ConfigKeyName
 
