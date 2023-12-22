@@ -156,7 +156,7 @@ Enter your device's page and edit tags. Add a tag with name 'ADUGroup' and value
 4) Prepare Update Manifest using Azure CLI. Change directory to the one in which your firmware file is stored (and in which your Update Manifest will be generated). Example command shown below:
 
 ```
-az iot du update init v5 --update-provider sparkhub --update-name sparkhub-iot-levelsense-v0.11.0 --update-version 0.11.0 --compat deviceModel=sparkhub-iot-levelsense deviceManufacturer=sparkhub --step handler=microsoft/swupdate:1 properties="{\"installedCriteria\":\"0.11.0\"}" --file path=./sparkhub-LevelSense_v0-11-0.bin > ./sparkhub.test-update.0.11.0.importmanifest.json
+az iot du update init v5 --update-provider sparkhub --update-name sparkhub-iot-levelsense --update-version 0.11.0 --compat deviceModel=sparkhub-iot-levelsense deviceManufacturer=sparkhub --step handler=microsoft/swupdate:1 properties="{\"installedCriteria\":\"0.11.0\"}" --file path=./sparkhub-LevelSense_v0-11-0.bin > ./sparkhub.test-update.0.11.0.importmanifest.json
 ```
 
 5) Import the Update Manifest following the instruction from the [link](https://learn.microsoft.com/en-us/azure/iot-hub-device-update/import-update?tabs=portal).
