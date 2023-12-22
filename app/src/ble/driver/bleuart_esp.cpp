@@ -92,7 +92,7 @@ BleuartDriver::BleuartDriver() :
     m_isClientConnected(false),
     m_buffersClearedFlag(false)
 {
-    bleuartRxData = new uint8_t[BLEUART_RX_CIRCULAR_BUFFER_SIZE];
+    bleuartRxData = new (std::nothrow) uint8_t[BLEUART_RX_CIRCULAR_BUFFER_SIZE];
     if (bleuartRxData == nullptr)
     {
         LOG_ERROR("Failed to allocate memory for bleuartRxCircularBuffer");
@@ -104,8 +104,17 @@ BleuartDriver::BleuartDriver() :
         LOG_ERROR("Failed to allocate memory for bleuartTxData");
     }
 
-    m_rxBuffer = new CircularBuffer(bleuartRxData, BLEUART_RX_CIRCULAR_BUFFER_SIZE);
-    m_txBuffer = new CircularBuffer(bleuartTxData, BLEUART_TX_CIRCULAR_BUFFER_SIZE);
+    m_rxBuffer = new (std::nothrow) CircularBuffer(bleuartRxData, BLEUART_RX_CIRCULAR_BUFFER_SIZE);
+    if (m_rxBuffer == nullptr)
+    {
+        LOG_ERROR("Failed to allocate memory for m_rxBuffer");
+    }
+
+    m_txBuffer = new (std::nothrow) CircularBuffer(bleuartTxData, BLEUART_TX_CIRCULAR_BUFFER_SIZE);
+    if (m_txBuffer == nullptr)
+    {
+        LOG_ERROR("Failed to allocate memory for m_txBuffer");
+    }
 
     m_txDataAvailable = xSemaphoreCreateBinary();
 
