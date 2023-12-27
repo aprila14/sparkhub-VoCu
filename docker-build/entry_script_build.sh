@@ -85,9 +85,9 @@ main()
 
     pushd $BUILD_ARTIFACTS_PATH || exit
 
-    get_build_info "${CUSTOM_CMAKE_FLAGS}" || exit
+    get_build_info ${CUSTOM_CMAKE_FLAGS} || exit
 
-    idf.py -B . -C $PROJECT_DIR/ "${CUSTOM_CMAKE_FLAGS}" build || exit
+    idf.py -B . -C $PROJECT_DIR/ ${CUSTOM_CMAKE_FLAGS} build || exit
 
     mv sparkhub-LevelSense.bin sparkhub-LevelSense-${FIRMWARE_VERSION}.bin
 
