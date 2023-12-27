@@ -28,5 +28,4 @@
     "pLiaWN0bfVKfjllDiIGknibVb63dDcY3fe0Dkhvld1927jyNxF1WW6LZZm6zNTfl\n" \
     "MrY=\n" \
     "-----END CERTIFICATE-----\n"
-
 #endif // DEFAULT_CERTS_H

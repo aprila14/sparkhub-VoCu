@@ -24,20 +24,21 @@ void temporaryDevelopmentCode()
     LOG_WARNING("Running temporaryDevelopmentCode!");
 
     // Set BLE configuration state to finished
-    pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
+    // pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
 
     {
 
-        prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
+        // prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
 
-        LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
 
-        pCmdCertificate->certificates.setFullChainCertificate(std::string(DEFAULT_CLIENT_PUBLIC_CERT));
-        pCmdCertificate->certificates.setPrivateKey(std::string(DEFAULT_CLIENT_PRIVATE_KEY));
+        // LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
 
-        pConfig->setCertificatePack(pCmdCertificate->certificates);
+        // pCmdCertificate->certificates.setFullChainCertificate(std::string(DEFAULT_CLIENT_PUBLIC_CERT));
+        // pCmdCertificate->certificates.setPrivateKey(std::string(DEFAULT_CLIENT_PRIVATE_KEY));
 
-        delete pCmdCertificate;
+        // pConfig->setCertificatePack(pCmdCertificate->certificates);
+
+        // delete pCmdCertificate;
 
     }
 }
@@ -139,6 +140,7 @@ void initCommonGlobalModules()
     }
     else
     {
+        bleuartDriver.cleanup();
         wifiController.runTask();
         wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
         ntpClient.runTask();

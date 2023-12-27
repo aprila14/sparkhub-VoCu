@@ -160,14 +160,17 @@ void printAvailableHeapMemory(int lineNumber, const char* fileName, const char* 
         "Line number: %d\n"
         "Currently available free heap memory: %d\n"
         "Minimum available free heap memory: %d\n"
+        "Largest free heap block: %u\n"
         "***************\n\n",
         fileName,
         functionName,
         lineNumber,
         static_cast<uint32_t>(
             heap_caps_get_free_size(MALLOC_CAP_INTERNAL)), // NOLINT - this warning does not make sense in that case
-        esp_get_minimum_free_heap_size()); // it requires to explicitly set bit shift as unsigned (e.g. 1u << 11u)
-                                           // correcting this would require changing the library code (esp_heap_caps.h)
+        esp_get_minimum_free_heap_size(),
+        heap_caps_get_largest_free_block(
+            MALLOC_CAP_DEFAULT)); // it requires to explicitly set bit shift as unsigned (e.g. 1u << 11u)
+                                  // correcting this would require changing the library code (esp_heap_caps.h)
 }
 
 } // namespace commons

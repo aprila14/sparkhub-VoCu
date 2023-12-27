@@ -134,7 +134,18 @@ namespace json_parser
 
 
 
-
+struct TDeviceStatus
+{
+    bool        isWiFiConnected;
+    bool        isBleConnected;
+    uint32_t    currentTimeFromStartupMs;
+    char        firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];
+    char        currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
+    float       pressureSensorValue;
+    std::string getFirmwareVersion() const;
+    std::string getCurrentLocalTime() const;
+    uint32_t    msgCounter;
+};
 
 
 struct TDeviceProvisioningInfo
@@ -146,95 +157,95 @@ struct TDeviceProvisioningInfo
 };
 
 
+/**
+ * @brief prepareDeviceStatusMessage - function preparing a DeviceStatusMessage in a JSON format
+ * @param deviceStatus  - input structure containing information about device status
+ * @param msgCounter - message number to be added
+ * @return std::string with a message in a JSON format
+ */
+std::string prepareDeviceStatusMessage(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
 
+/**
+ * @brief prepareDeviceCreateProvisioningMessage
+ */
+std::string
+prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH]);
 
+/**
+ * @brief Function determines if input JSON structure contains field with given keyword
+ *
+ * @param inputJson JSON structure to check
+ * @param keyword key under which field shall be found
+ * @retval true - field found
+ * @retval false - field not found
+ */
+bool checkIfFieldExistsInGivenJson(cJSON* inputJson, const char* keyword);
 
+/**
+ * @brief parseJsonDeviceProvisioning
+ */
+bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo);
 
-    /**
-     * @brief prepareHeartbeatMessage - function preparing std::string with heartbeat message in a JSON format based on provided
-     * msgCounter value. Function assumes the ACK value of the heartbeat structure shall be set to true, therefore it does not require
-     * THeartbeat structure to be passed
-     * @param msgCounter - number of the message to be included in the message
-     * @return std::string with the message in JSON format
-     */
+/**
+ * @brief Function for DeviceUpdate JSON parsing (from Azure IoT Hub OTA). We are assuming, that this JSON
+ * has following format (example):
+ *
+ *
+ {
+    "deviceUpdate":
+    {
+        "__t": "c",
+        "agent":
+        {
+            "deviceProperties":
+            {
+                "manufacturer": "sparkhub",
+                "model": "levelsense",
+                "contractModelId": "dtmi:azure:iot:deviceUpdateContractModel;2",
+                "aduVer": "DU;agent/1.0.0"
+            },
+            "compatPropertyNames": "manufacturer,model",
+            "state": 0,
+            "installedUpdateId":
+            {
+                "provider": "Contoso",
+                "name": "levelsense",
+                "version": "0.4.0"
+            }
+        }
+    }
+}
+ * @param pInputJson
+ * @param pDeviceUpdate
+ * @return true
+ * @return false
+ */
+bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate);
 
-    std::string prepareHeartbeatMessage(uint32_t msgCounter);
+cJSON* preprocessInputMessage(const std::string& inputMessage);
 
-    /**
-     * @brief prepareDeviceStatusMessage - function preparing a DeviceStatusMessage in a JSON format
-     * @param deviceStatus  - input structure containing information about device status
-     * @param msgCounter - message number to be added
-     * @return std::string with a message in a JSON format
-     */
-    std::string prepareDeviceStatusMessage(const TDeviceStatus &deviceStatus, uint32_t msgCounter);
+cJSON* initiateReportedJson();
 
+std::string prepareReportedMessage(cJSON* pReportedJson);
 
-
-    /**
-     * @brief prepareDeviceCreateProvisioningMessage
-     */
-    std::string
-    prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH]);
-
-    /**
-     * @brief parseJsonDeviceProvisioning
-     */
-    bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo);
-
-
-
-    /**
-     * @brief extractMethodAndFillFrame - function that gets the std::string with a message, parses it, interprets it and then fills
-     * the passed TFrame structure together with returning EMsgMethod according to the message content
-     * @param newMessage - std::string with the message content
-     * @param pFrame - TFrame structure to be filled according to the message content
-     * @return EMsgMethod according to the message content
-     */
-    EMsgMethod extractMethodAndFillFrame(std::string newMessage, TFrame *pFrame);
-
-    /**
-     * @brief extractRequestIdFromTopic - function extracting rpc command request id, which is given as an integer at the end of the topic
-     * @param topic - std::string cotaining topic to extract requestId from
-     * @return int32_t value with requestId
-     */
-    int32_t extractRequestIdFromTopic(const std::string &topic);
-
-    /**
-     * @brief printFrame - function allowing to print content of the TFrame structure in an easily-readable way
-     * @param frame - TFrame structure to be printed
-     */
-    void printFrame(const TFrame &frame);
-
-    /**
-     * @brief getMsgMethodString - function returning std::string with a text representing the passed EMsgMethod parameter
-     * @param msgMethod - EMsgMethod parameter containing a method to be printed, e.g. EMsgMethod::MSG_METHOD_RPC_COMMAND
-     * @return std::string with the input parameter in the text form, e.g. "MSG_METHOD_RPC_COMMAND"
-     */
-
-    std::string getMsgMethodString(EMsgMethod msgMethod);
+std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData);
 
 
 #if TESTING
 
 // functions that are needed for unit tests
 bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);
-bool        processGetLightIntensityLevel(cJSON* dataJson, TSetLightLevel* output);
 bool        processResponse(cJSON* dataJson, TResponse* output);
 static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
 cJSON*      preprocessInputMessage(const std::string& inputMessage);
 EMsgMethod  extractMsgMethod(const std::string& inputMessage);
-bool        getDataJsonAndInitFrame(const std::string& inputMessage, TFrame* frame, cJSON** dataJson);
 bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* frame, cJSON** dataJson);
-bool parseJsonRpcCommand(const std::string& inputMessage, TFrame* frame);
-std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus& deviceStatus, uint32_t msgCounter);
-cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus);
-cJSON*      heartbeatToJson(const THeartbeat& heartbeatStruct);
-cJSON*      widgetGetLightLevelToJson(const TSetLightLevel& lightLevelStruct);
-cJSON*      widgetSetLightLevelToJson(const TSetLightLevel& lightLevelStruct);
-cJSON*      dataJsonToParamsJson(cJSON* dataJson, EMsgCode msgCode, uint32_t msgCounter);
-cJSON*      dataJsonToRpcCommandJson(cJSON* dataJson, EMsgCode msgCode, uint32_t msgCounter);
 
-int32_t extractTimeInMinutesFromString(const std::string timeString);
+bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);
+std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus& deviceStatus, uint32_t msgCounter);
+cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
+
+static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
 
 #endif
 

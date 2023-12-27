@@ -137,3 +137,37 @@ The diagram for the process is present in the docs directory
 Azure Device Provisioning configuration was done by following this tutorial: [Tutorial: Provision multiple X.509 devices using enrollment groups](https://learn.microsoft.com/en-us/azure/iot-dps/tutorial-custom-hsm-enrollment-group-x509?tabs=linux&pivots=programming-language-python)
 
 For testing purposes after device certificate generation the full chain certificate and private key can be placed in app/src/cloud/cloud_controller/cloud_config.h in defines "DEFAULT_CLIENT_PUBLIC_CERT" and "DEFAULT_CLIENT_PRIVATE_KEY"
+
+# 6. Azure Device Update
+
+Following instruction has based on the demo provided by Azure, available under the [link](https://github.com/Azure-Samples/iot-middleware-freertos-samples/tree/main/demos/projects/ESPRESSIF/adu).
+
+In order to test the Azure OTA update with this project you need to:
+
+1) Install Azure CLI and Azure IoT Module, installation instruction available [here](https://learn.microsoft.com/en-us/azure/iot-hub-device-update/create-update?source=recommendations#prerequisites)
+2) Adding tag to your device
+
+Enter your device's page and edit tags. Add a tag with name 'ADUGroup' and value selected by you. Example shown in the picture below:
+
+![adding-tag](docs/azure-device-update-images/02-adding-tag-to-device.png)
+
+3) Build the firmware you want to upload during the OTA
+
+4) Prepare Update Manifest using Azure CLI. Change directory to the one in which your firmware file is stored (and in which your Update Manifest will be generated). Example command shown below:
+
+```
+az iot du update init v5 --update-provider sparkhub --update-name sparkhub-iot-levelsense --update-version 0.11.0 --compat deviceModel=sparkhub-iot-levelsense deviceManufacturer=sparkhub --step handler=microsoft/swupdate:1 properties="{\"installedCriteria\":\"0.11.0\"}" --file path=./sparkhub-LevelSense_v0-11-0.bin > ./sparkhub.test-update.0.11.0.importmanifest.json
+```
+
+5) Import the Update Manifest following the instruction from the [link](https://learn.microsoft.com/en-us/azure/iot-hub-device-update/import-update?tabs=portal).
+
+6) Deploy the update following the instruction from the [link](https://learn.microsoft.com/en-us/azure/iot-hub-device-update/deploy-update?tabs=portal)
+
+
+Additional Notes:
+
+- if you encounter following error when trying to import an update:
+
+![update-import-error](docs/azure-device-update-images/additional-note-exceeed-limit.png)
+
+this probably would be connected with limit for the device update's with the same compatibility options. Remove previous update and try adding it once again. For more details regarding possible fixes contact Azure support.

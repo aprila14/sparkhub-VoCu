@@ -18,7 +18,8 @@ static const char* LOG_TAG = "CloudController";
 namespace
 {
 
-
+    constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
+    constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
     constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE        = 200;  
     constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 1800 * 1000; // every 0.5 hour
     constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD = 1 * 1000; // every 1 minute
@@ -31,22 +32,16 @@ namespace
     uint32_t TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
 
 
-void _heartbeatWatchdogTimerCallback(TimerHandle_t timerHandle)
-{
-    CloudController* cloudController = static_cast<CloudController*>(pvTimerGetTimerID(timerHandle));
-    assert(cloudController);
-    cloudController->heartbeatWatchdogTimerCallback();
-}
+
 } // unnamed namespace
 
 CloudController::CloudController() :
     m_taskHandle(),
-    m_heartbeatWatchdogTimer(),
-    m_heartbeatWatchdogCounter(0),
     m_msgCounter(0),
     m_connectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED),
     m_mqttClientController(this),
-    m_deviceProvisioningController(&this->m_mqttClientController)
+    m_deviceProvisioningController(&this->m_mqttClientController),
+    m_deviceTwinsController(&this->m_mqttClientController, this)
 {
     m_semaphoreCredentialsReady    = xSemaphoreCreateBinary();
     m_semaphoreWifiConnectionReady = xSemaphoreCreateBinary();
@@ -70,12 +65,6 @@ ECloudConnectionStatus CloudController::getConnectionStatus() const
 void CloudController::handleStatusReportResponse(bool ACK)
 {
     LOG_INFO("Status Report ACK received");
-}
-
-void CloudController::handleHeartbeatResponse()
-{
-    LOG_INFO("Heartbeat ACK received");
-    m_heartbeatWatchdogCounter = 0;
 }
 
 bool CloudController::handleOtaUpdateLink(
@@ -117,7 +106,9 @@ void CloudController::setDeviceStatusTopic(const prot::cloud_set_credentials::TC
     char deviceStatusTopic[DEVICE_STATUS_MAX_TOPIC_SIZE];
     memset(deviceStatusTopic, 0, DEVICE_STATUS_MAX_TOPIC_SIZE);
 
-    sprintf(deviceStatusTopic, "devices/%s/messages/events/", credentials.cloudDeviceId);
+    const char contentTypeJson[] = "$.ct=application%2Fjson%3Bcharset%3Dutf-8";
+
+    sprintf(deviceStatusTopic, "devices/%s/messages/events/%s", credentials.cloudDeviceId, contentTypeJson);
 
     m_deviceStatusTopic = std::string(deviceStatusTopic);
 }
@@ -154,15 +145,12 @@ void CloudController::_run()
         LOG_INFO("Could not connect to cloud, timeout occured");
     }
 
-    m_heartbeatWatchdogTimer = xTimerCreate(
-        "Heartbeat Watchdog Timer",
-        pdMS_TO_TICKS(HEARTBEAT_CHECK_TIMER_PERIOD_MS),
-        true,
-        static_cast<void*>(this),
-        _heartbeatWatchdogTimerCallback);
-    xTimerStart(m_heartbeatWatchdogTimer, 0);
     m_mqttClientController.runTask();
 
+
+    // Adding some delay to allow mqttClientController to start
+    SLEEP_MS(SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER);
+    m_deviceTwinsController.runTask();
 
     LOG_INFO("Cloud controller initiated!");
 
@@ -291,14 +279,5 @@ void CloudController::startCloudConnection()
     {
         LOG_INFO("Error while starting mqttClientController, could not connect to the cloud");
         m_connectionStatus = ECloudConnectionStatus::CLOUD_STATUS_DISABLED;
-    }
-}
-
-void CloudController::heartbeatWatchdogTimerCallback()
-{
-    m_heartbeatWatchdogCounter++;
-    if (m_heartbeatWatchdogCounter >= 180)
-    {
-        setConnectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONNECTED);
     }
 }
