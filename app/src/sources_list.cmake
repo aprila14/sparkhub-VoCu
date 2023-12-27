@@ -61,6 +61,9 @@ set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/cloud/device_provisioning/device_provisioning.cpp
     ${SRC_DIR}/cloud/device_provisioning/device_provisioning.h
 
+    ${SRC_DIR}/cloud/device_twins/device_twins.cpp
+    ${SRC_DIR}/cloud/device_twins/device_twins.h
+
     ${SRC_DIR}/hardware/adc_pressure/adc_pressure.cpp
     ${SRC_DIR}/hardware/adc_pressure/adc_pressure.h
 )
@@ -91,4 +94,5 @@ set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/cloud/ntp_client/
     ${SRC_DIR}/cloud/parser/
     ${SRC_DIR}/cloud/device_provisioning/
+    ${SRC_DIR}/cloud/device_twins/
 )

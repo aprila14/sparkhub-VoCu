@@ -81,18 +81,41 @@ extern "C"
 extern uint16_t g_console_conn_handle;
 extern uint16_t g_bleuart_attr_read_handle;
 
-static uint8_t bleuartRxCircularBuffer[BLEUART_RX_CIRCULAR_BUFFER_SIZE];
-static uint8_t bleuartTxCircularBuffer[BLEUART_TX_CIRCULAR_BUFFER_SIZE];
+uint8_t* bleuartRxData = nullptr;
+uint8_t* bleuartTxData = nullptr;
 
 BleuartDriver* g_pBleuartDriver = nullptr;
 
 BleuartDriver::BleuartDriver() :
-    m_rxBuffer(bleuartRxCircularBuffer, BLEUART_RX_CIRCULAR_BUFFER_SIZE),
-    m_txBuffer(bleuartTxCircularBuffer, BLEUART_TX_CIRCULAR_BUFFER_SIZE),
     m_txLoopTaskHandle(nullptr),
     m_isSynced(false),
-    m_isClientConnected(false)
+    m_isClientConnected(false),
+    m_buffersClearedFlag(false)
 {
+    bleuartRxData = new (std::nothrow) uint8_t[BLEUART_RX_CIRCULAR_BUFFER_SIZE]();
+    if (bleuartRxData == nullptr)
+    {
+        LOG_ERROR("Failed to allocate memory for bleuartRxCircularBuffer");
+    }
+
+    bleuartTxData = new (std::nothrow) uint8_t[BLEUART_TX_CIRCULAR_BUFFER_SIZE]();
+    if (bleuartTxData == nullptr)
+    {
+        LOG_ERROR("Failed to allocate memory for bleuartTxData");
+    }
+
+    m_rxBuffer = new (std::nothrow) CircularBuffer(bleuartRxData, BLEUART_RX_CIRCULAR_BUFFER_SIZE);
+    if (m_rxBuffer == nullptr)
+    {
+        LOG_ERROR("Failed to allocate memory for m_rxBuffer");
+    }
+
+    m_txBuffer = new (std::nothrow) CircularBuffer(bleuartTxData, BLEUART_TX_CIRCULAR_BUFFER_SIZE);
+    if (m_txBuffer == nullptr)
+    {
+        LOG_ERROR("Failed to allocate memory for m_txBuffer");
+    }
+
     m_txDataAvailable = xSemaphoreCreateBinary();
 
     m_rxBufferMutex = xSemaphoreCreateBinary();
@@ -106,6 +129,18 @@ BleuartDriver::BleuartDriver() :
     m_clientConnectedSemaphore = xSemaphoreCreateBinary();
 }
 
+BleuartDriver::~BleuartDriver()
+{
+    if (!m_buffersClearedFlag)
+    {
+        delete bleuartRxData;
+        delete bleuartTxData;
+
+        delete m_rxBuffer;
+        delete m_txBuffer;
+    }
+}
+
 bool BleuartDriver::writeData(const uint8_t* pData, uint32_t dataLength)
 {
     if (!m_isClientConnected)
@@ -115,7 +150,7 @@ bool BleuartDriver::writeData(const uint8_t* pData, uint32_t dataLength)
     }
 
     xSemaphoreTake(m_txBufferMutex, portMAX_DELAY);
-    bool result = m_txBuffer.writeData(pData, dataLength);
+    bool result = m_txBuffer->writeData(pData, dataLength);
     xSemaphoreGive(m_txBufferMutex);
 
     if (result)
@@ -145,9 +180,9 @@ int BleuartDriver::readByte(bool blockUntilDataAvailable)
 
     {
         LOCK_GUARD(m_rxBufferMutex, rxBuferMutexGuard);
-        int byte = m_rxBuffer.readByte();
+        int byte = m_rxBuffer->readByte();
 
-        if (m_rxBuffer.isDataAvailable())
+        if (m_rxBuffer->isDataAvailable())
         {
             if (!isSemaphoreGiven(m_rxSomeDataAvailableSemaphore))
                 semaphoreGive(m_rxSomeDataAvailableSemaphore);
@@ -162,7 +197,7 @@ int BleuartDriver::readByte(bool blockUntilDataAvailable)
 int BleuartDriver::getFreeTxBufferSize()
 {
     xSemaphoreTake(m_rxBufferMutex, portMAX_DELAY);
-    uint32_t freeSize = m_txBuffer.getFreeSize();
+    uint32_t freeSize = m_txBuffer->getFreeSize();
     xSemaphoreGive(m_rxBufferMutex);
 
     return (int)freeSize;
@@ -187,7 +222,7 @@ void BleuartDriver::handleIncomingData(const uint8_t* pData, uint32_t dataSize)
 
     {
         LOCK_GUARD(m_rxBufferMutex, rxBuferMutexGuard);
-        if (!m_rxBuffer.writeData(pData, dataSize))
+        if (!m_rxBuffer->writeData(pData, dataSize))
         {
             LOG_WARNING("RX Circular buffer overflow - some packets may be lost!");
         }
@@ -508,7 +543,7 @@ void BleuartDriver::_performTxLoop()
         LOG_DEBUG("Preparing data buffer for transmission...");
         for (bytesToSend = 0; bytesToSend < BLEUART_ESP_TRANSMISSION_BUFFER_SIZE; bytesToSend++)
         {
-            int byte = m_txBuffer.readByte();
+            int byte = m_txBuffer->readByte();
             if (byte == CIRCULAR_BUFFER__NO_DATA)
             {
                 LOG_DEBUG("TX loop - No more data in TX buffer (already %d bytes in buffer)!", bytesToSend);
@@ -552,6 +587,19 @@ void BleuartDriver::_performTxLoop()
         }
 
         xSemaphoreTake(m_txDataAvailable, portMAX_DELAY);
+    }
+}
+
+void BleuartDriver::cleanup()
+{
+    if (!m_buffersClearedFlag)
+    {
+        delete bleuartRxData;
+        delete bleuartTxData;
+
+        delete m_rxBuffer;
+        delete m_txBuffer;
+        m_buffersClearedFlag = true;
     }
 }
 

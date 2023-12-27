@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include "device_provisioning.h"
+#include "device_twins.h"
 #include "esp_event.h"
 #include "json_parser.h"
 #include "protocol_types.h"
@@ -34,11 +35,6 @@ public:
      * Function handling response to the StatusReport message
      */
     static void handleStatusReportResponse(bool ACK);
-
-    /**
-     * Function handling response to the Heartbeat message
-     */
-    void handleHeartbeatResponse();
 
     /**
      * Function handling OTA update initiated from cloud
@@ -85,6 +81,12 @@ private:
     void updateDeviceStatus();
 
     /**
+     * Function reading the pressure Value and send Alarm if it is below a certain threshold
+     */
+    void CheckPressureValueBelowThreshold();
+
+
+    /**
      * Function setting connection status to given value
      */
     void setConnectionStatus(ECloudConnectionStatus status);
@@ -104,12 +106,8 @@ private:
      */
     void startCloudConnection();
 
-    TaskHandle_t  m_taskHandle;               // handle to runTask
-    TimerHandle_t m_heartbeatWatchdogTimer;   // handle to timer handling heartbeat checking
-    uint32_t      m_heartbeatWatchdogCounter; // watchdog counter that shall be zeroed everytime when heartbeat message
-                                              // comes in. If it exceedes specified value, CloudController
-                                              // is regarded as not connected
-    uint32_t m_msgCounter;                    // outgoing messages counter
+    TaskHandle_t m_taskHandle; // handle to runTask
+    uint32_t     m_msgCounter; // outgoing messages counter
 
     SemaphoreHandle_t m_semaphoreCredentialsReady;    // sempahore indicating that credentials for cloud connection have
                                                       // already been stored in NVS
@@ -119,6 +117,7 @@ private:
 
     MqttClientController         m_mqttClientController;
     DeviceProvisioningController m_deviceProvisioningController;
+    DeviceTwinsController        m_deviceTwinsController;
 
     std::string m_deviceStatusTopic;
 };
