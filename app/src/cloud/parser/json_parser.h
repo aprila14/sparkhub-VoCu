@@ -9,41 +9,130 @@
 
 namespace
 {
-constexpr uint8_t FIRMWARE_VERSION_LENGTH     = 32;
-constexpr uint8_t MAX_TIME_STRING_LENGTH      = 30;
-constexpr uint8_t MAX_OTA_TOPIC_SUFFIX_LENGTH = 80;
-} // namespace
+    constexpr uint8_t FIRMWARE_VERSION_LENGTH = 32;
+    constexpr uint8_t MAX_TIME_STRING_LENGTH = 30;
+    constexpr uint8_t MAX_OTA_TOPIC_SUFFIX_LENGTH = 80;
+    constexpr uint8_t ALARM_RESPONSE_LENGTH = 32;
+}
+
+
 namespace json_parser
 {
 
-enum class EMsgCode : uint8_t
-{
-    MSG_STATUS_REPORT            = 1,
-    MSG_STATUS_REPORT_RESPONSE   = 2,
-    MSG_HEARTBEAT                = 3,
-    MSG_HEARTBEAT_RESPONSE       = 4,
-    MSG_OTA_UPDATE_LINK          = 5,
-    MSG_OTA_UPDATE_LINK_RESPONSE = 6
-};
+    enum class EMsgCode : uint8_t
+    {
+        MSG_SET_LIGHT_INTENSITY_LEVEL = 1,
+        MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE = 2,
+        MSG_STATUS_REPORT = 3,
+        MSG_STATUS_REPORT_RESPONSE = 4,
+        MSG_HEARTBEAT = 5,
+        MSG_HEARTBEAT_RESPONSE = 6,
+        MSG_GET_LIGHT_INTENSITY_LEVEL = 7,
+        MSG_GET_LIGHT_INTENSITY_LEVEL_RESPONSE = 8,
+        MSG_OTA_UPDATE_LINK = 9,
+        MSG_OTA_UPDATE_LINK_RESPONSE = 10,
+        MSG_TIME_SLOTS_LIST = 11,
+        MSG_TIME_SLOTS_LIST_RESPONSE = 12
+    };
 
-enum class EMsgMethod : uint8_t
-{
-    MSG_METHOD_RPC_COMMAND         = 1,
-    MSG_METHOD_GET_LIGHT_INTENSITY = 2,
-    MSG_METHOD_SET_LIGHT_INTENSITY = 3,
-    MSG_METHOD_UNKNOWN             = 4,
-    MSG_METHOD_FAILED              = 5
-};
+    enum class EMsgMethod : uint8_t
+    {
+        MSG_METHOD_RPC_COMMAND = 1,
+        MSG_METHOD_GET_LIGHT_INTENSITY = 2,
+        MSG_METHOD_SET_LIGHT_INTENSITY = 3,
+        MSG_METHOD_UNKNOWN = 4,
+        MSG_METHOD_FAILED = 5
+    };
 
-struct THeartbeat
-{
-    bool heartbeat;
-};
+    struct TSetLightLevel
+    {
+        uint8_t lightIntensityLevel;
+    };
 
-struct TResponse
-{
-    bool ACK;
-};
+    struct THeartbeat
+    {
+        bool heartbeat;
+    };
+
+    struct TResponse
+    {
+        bool ACK;
+    };
+
+    struct TDeviceStatus
+    {
+        bool isWiFiConnected;
+        bool isBleConnected;
+        bool isBelowPressureAlarmThreshold;
+        uint8_t lightIntensityLevel;
+        uint32_t currentTimeFromStartupMs;
+        char firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];
+        char currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
+        float pressureSensorValue;
+        std::string getFirmwareVersion() const;
+        std::string getCurrentLocalTime() const;
+    };
+
+    struct TRepeatDaysOfWeek
+    {
+        uint8_t monday : 1;
+        uint8_t tuesday : 1;
+        uint8_t wednesday : 1;
+        uint8_t thursday : 1;
+        uint8_t friday : 1;
+        uint8_t saturday : 1;
+        uint8_t sunday : 1;
+    };
+
+    struct TSingleTimer
+    {
+        uint16_t startMinuteOfDay;
+        uint16_t endMinuteOfDay;
+        TRepeatDaysOfWeek days;
+        uint8_t lightLevel;
+    };
+
+    struct TAllTimers
+    {
+        TSingleTimer timers[42];
+    };
+
+    struct TTimeSlotsList
+    {
+        bool timeSlotListUpdated;
+        TAllTimers timersList;
+    };
+
+    struct TTimeSlotsListResponse
+    {
+        bool ACK;
+        uint32_t id;
+    };
+
+    union TFrameData
+    {
+        TSetLightLevel setLightLevelStruct;
+        TDeviceStatus deviceStatusStruct;
+        THeartbeat heartbeatStruct;
+        TResponse responseStruct;
+        prot::ota_perform::TOtaUpdateLink otaUpdateLinkStruct;
+        TTimeSlotsList timeSlotsList;
+    };
+
+    struct TMessage
+    {
+        std::string message;
+        int32_t requestId;
+    };
+
+    struct TFrame
+    {
+        EMsgCode msgCode;
+        uint32_t msgCounter;
+        TFrameData frameData;
+    };
+
+
 
 struct TDeviceStatus
 {
@@ -58,19 +147,6 @@ struct TDeviceStatus
     uint32_t    msgCounter;
 };
 
-union TFrameData
-{
-    TDeviceStatus                     deviceStatusStruct;
-    THeartbeat                        heartbeatStruct;
-    TResponse                         responseStruct;
-    prot::ota_perform::TOtaUpdateLink otaUpdateLinkStruct;
-};
-
-struct TMessage
-{
-    std::string message;
-    int32_t     requestId;
-};
 
 struct TDeviceProvisioningInfo
 {
@@ -79,6 +155,7 @@ struct TDeviceProvisioningInfo
     std::string deviceId;
     std::string assignedHub;
 };
+
 
 /**
  * @brief prepareDeviceStatusMessage - function preparing a DeviceStatusMessage in a JSON format
@@ -152,6 +229,7 @@ cJSON* initiateReportedJson();
 std::string prepareReportedMessage(cJSON* pReportedJson);
 
 std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData);
+
 
 #if TESTING
 

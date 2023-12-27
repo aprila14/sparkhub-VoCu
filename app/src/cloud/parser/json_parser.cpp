@@ -61,10 +61,14 @@ bool checkIfFieldExistsInGivenJson(cJSON* inputJson, const char* keyword)
  * @return boolean value representing success of the operation
  */
 
+
 bool processStatusReport(cJSON* pDataJson, TDeviceStatus* pOutput)
 {
     cJSON* pWifiConnectionStateJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "wifiConnectionState");
     cJSON* pBleConnectionStateJson  = cJSON_GetObjectItemCaseSensitive(pDataJson, "bleConnectionState");
+
+    cJSON* pBelowPressureAlarmThresholdJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "isBelowPressureAlarmThreshold");
+    cJSON* pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
     cJSON* pCurrentTimeMsJson       = cJSON_GetObjectItemCaseSensitive(pDataJson, "currentTimeMs");
     cJSON* pFirmwareVersionJson     = cJSON_GetObjectItemCaseSensitive(pDataJson, "firmwareVersion");
 
@@ -77,6 +81,19 @@ bool processStatusReport(cJSON* pDataJson, TDeviceStatus* pOutput)
     if (pBleConnectionStateJson == nullptr)
     {
         LOG_INFO("Could not parse JSON, no bleConnectionState or wrong format");
+        return false;
+    }
+
+
+    if (pBelowPressureAlarmThresholdJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no pBelowPressureThresholdJson or wrong format");
+        return false;
+    }
+
+    if (pLightIntensityLevelJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no lightIntensityLevel or wrong format");
         return false;
     }
 
@@ -96,10 +113,12 @@ bool processStatusReport(cJSON* pDataJson, TDeviceStatus* pOutput)
 
     pOutput->isWiFiConnected          = cJSON_IsTrue(pWifiConnectionStateJson);
     pOutput->isBleConnected           = cJSON_IsTrue(pBleConnectionStateJson);
+    pOutput->isBelowPressureAlarmThreshold           = cJSON_IsTrue(pBelowPressureAlarmThresholdJson);    
     pOutput->currentTimeFromStartupMs = static_cast<uint32_t>(pCurrentTimeMsJson->valueint);
     strcpy(pOutput->firmwareVersion, firmware.c_str());
 
     return true;
+
 }
 
 /**
@@ -125,6 +144,7 @@ bool processResponse(cJSON* pDataJson, TResponse* pOutput)
 
     return true;
 }
+
 
 /**
  * @brief processOtaUpdateLink - function parsing message with a link from which OTA shall be performed
@@ -502,7 +522,9 @@ cJSON* prepareAgentJson(const TUpdateId& updateId, uint8_t state, const TWorkflo
     return pAgentJson;
 }
 
+
 std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData)
+
 {
     cJSON* pDeviceUpdateJson = cJSON_CreateObject();
 
@@ -888,6 +910,14 @@ cJSON* deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter
         return nullptr;
     }
 
+    cJSON* pBelowPressureAlarmThresholdJson = cJSON_CreateBool(deviceStatus.isBelowPressureAlarmThreshold);
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "BelowPressureAlarmThreshold", pBelowPressureAlarmThresholdJson)))
+    {
+        LOG_INFO("Cannot add bleConnectionState JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
     cJSON* pCurrentTimeFromStartupMsJson = cJSON_CreateNumber(deviceStatus.currentTimeFromStartupMs);
     if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentTimeFromStartupMs", pCurrentTimeFromStartupMsJson)))
     {
@@ -979,6 +1009,7 @@ cJSON* dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCoun
     return pParamsJson;
 }
 
+
 /***** STRING GET FUNCTIONS FOR FRAME PRINTING *****/
 
 std::string getStatusReportString(const TDeviceStatus& deviceStatus)
@@ -986,6 +1017,7 @@ std::string getStatusReportString(const TDeviceStatus& deviceStatus)
     std::string statusReportString =
         "wifiConnectionState: " + getBooleanString(deviceStatus.isWiFiConnected) + "\n" +
         "bleConnectionState: " + getBooleanString(deviceStatus.isBleConnected) + "\n" +
+        "BelowPressureAlarmThreshold: " + getBooleanString(deviceStatus.isBelowPressureAlarmThreshold) + "\n" +
         "currentTimeFromStartupMs: " + std::to_string(deviceStatus.currentTimeFromStartupMs) + "\n" +
         "currentLocalTime: " + deviceStatus.currentLocalTime + "\n" +
         "firmwareVersion: " + deviceStatus.firmwareVersion + "\n";
