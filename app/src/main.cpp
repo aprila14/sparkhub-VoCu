@@ -13,6 +13,7 @@ static const char* LOG_TAG = "Main";
 #include "defines.h"
 #include "hw_misc.h"
 #include "ntp_client.h"
+#include "pulse_counter.h"
 #include "reset_button_handler.h"
 #include "wifi_controller.h"
 
@@ -39,7 +40,6 @@ void temporaryDevelopmentCode()
         // pConfig->setCertificatePack(pCmdCertificate->certificates);
 
         // delete pCmdCertificate;
-
     }
 }
 #endif // IS_DEBUG_BUILD
@@ -48,8 +48,8 @@ static void configureConnectionToLteModem()
 {
     LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
     TWiFiCredentials newWifiCredentials;
-    newWifiCredentials.setSsid("Marty Router King");
-    newWifiCredentials.setPassword("mk1441bl");
+    newWifiCredentials.setSsid("4G UFI-4205");
+    newWifiCredentials.setPassword("1234567890");
     pConfig->setWifiCredentials(newWifiCredentials);
 }
 
@@ -119,6 +119,8 @@ void initCommonGlobalModules()
 
     static CloudController cloudController;
 
+    static PulseCounterHandler pulseCounterHandler;
+
     // create and run app controller
     static app::AppController appController(&wifiController, &bleController, &cloudController, &ntpClient);
     app::pAppController = &appController;
@@ -145,6 +147,7 @@ void initCommonGlobalModules()
         wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
         ntpClient.runTask();
         cloudController.runTask();
+        pulseCounterHandler.runTask();
     }
 }
 
