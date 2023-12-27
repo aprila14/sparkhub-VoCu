@@ -24,19 +24,22 @@ void temporaryDevelopmentCode()
     LOG_WARNING("Running temporaryDevelopmentCode!");
 
     // Set BLE configuration state to finished
-    pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
+    // pConfig->setBleConfigurationStatus(EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_FINISHED);
 
     {
-        prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
 
-        LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
+        // prot::send_certificates::TCmd* pCmdCertificate = new prot::send_certificates::TCmd();
 
-        pCmdCertificate->certificates.setFullChainCertificate(std::string(DEFAULT_CLIENT_PUBLIC_CERT));
-        pCmdCertificate->certificates.setPrivateKey(std::string(DEFAULT_CLIENT_PRIVATE_KEY));
 
-        pConfig->setCertificatePack(pCmdCertificate->certificates);
+        // LOG_INFO("fullChainCertificate: %s", pConfig->getCertificatePack().fullChainCertificate);
 
-        delete pCmdCertificate;
+        // pCmdCertificate->certificates.setFullChainCertificate(std::string(DEFAULT_CLIENT_PUBLIC_CERT));
+        // pCmdCertificate->certificates.setPrivateKey(std::string(DEFAULT_CLIENT_PRIVATE_KEY));
+
+        // pConfig->setCertificatePack(pCmdCertificate->certificates);
+
+        // delete pCmdCertificate;
+
     }
 }
 #endif // IS_DEBUG_BUILD
@@ -45,8 +48,8 @@ static void configureConnectionToLteModem()
 {
     LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
     TWiFiCredentials newWifiCredentials;
-    newWifiCredentials.setSsid("4G UFI-4205");
-    newWifiCredentials.setPassword("1234567890");
+    newWifiCredentials.setSsid("Marty Router King");
+    newWifiCredentials.setPassword("mk1441bl");
     pConfig->setWifiCredentials(newWifiCredentials);
 }
 
@@ -137,6 +140,7 @@ void initCommonGlobalModules()
     }
     else
     {
+        bleuartDriver.cleanup();
         wifiController.runTask();
         wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
         ntpClient.runTask();

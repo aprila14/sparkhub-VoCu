@@ -44,14 +44,6 @@ struct TDummyEventData
     uint8_t dummyByte2;
 };
 
-/**
- * @brief Data for setting light power event
- */
-struct TLightControlSetPowerEventData
-{
-    uint8_t percentage;
-};
-
 struct TCloudControlSendCredentialsEventData
 {
     bool connectionReady;
@@ -68,7 +60,6 @@ struct TOtaPerformEventData
 union TEventData
 {
     TDummyEventData                       dummy;
-    TLightControlSetPowerEventData        lightControlSetPower;
     TCloudControlSendCredentialsEventData cloudControlSendCredentials;
     TOtaPerformEventData                  otaPerform;
 

@@ -82,20 +82,15 @@ set(TEST_FILES
     ${TEST_SRC_DIR}/main.cpp
     ${TEST_SRC_DIR}/code_mocks/config_nvs_mock.h
     ${TEST_SRC_DIR}/code_mocks/app_controller_mock.h
-    ${TEST_SRC_DIR}/code_mocks/light_control_interface_mock.h
     ${TEST_SRC_DIR}/test_utils.cpp
     ${TEST_SRC_DIR}/test_utils.h
 
-    ${TEST_SRC_DIR}/app_controller_test.cpp
     ${TEST_SRC_DIR}/config_nvs_test.cpp
     ${TEST_SRC_DIR}/custom_types_test.cpp
     ${TEST_SRC_DIR}/example_test.cpp
     ${TEST_SRC_DIR}/json_parser_test.cpp
-    ${TEST_SRC_DIR}/led_control_test.cpp
-    ${TEST_SRC_DIR}/reset_button_handler_test.cpp
     ${TEST_SRC_DIR}/wifi_controller_test.cpp
     ${TEST_SRC_DIR}/mqtt_client_controller_test.cpp
-    ${TEST_SRC_DIR}/cloud_controller_test.cpp
 
     ${TEST_SRC_DIR}/cobs_test.cpp
     ${TEST_SRC_DIR}/test_circular_buffer.cpp

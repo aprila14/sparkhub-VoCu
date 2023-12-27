@@ -11,14 +11,15 @@ namespace ConfigKeyName
 {
 
 // make sure this names are unique
-constexpr const char* BLE_CONFIGURATION_STATUS   = "ble-conf";
-constexpr const char* WIFI_CREDENTIALS           = "wifi-cr";
-constexpr const char* CLOUD_CERTIFICATES         = "cloud-cert";
-constexpr const char* CLOUD_CREDENTIALS          = "cloud-cr";
-constexpr const char* OTA_HTTP_CERTIFICATE       = "ota-cert";
-constexpr const char* OTA_UPDATE_LINK            = "ota-link";
-constexpr const char* CERTIFICATES               = "cert-pack";
-constexpr const char* DEVICE_PROVISIONING_STATUS = "dev-prov";
+constexpr const char* BLE_CONFIGURATION_STATUS     = "ble-conf";
+constexpr const char* WIFI_CREDENTIALS             = "wifi-cr";
+constexpr const char* CLOUD_CERTIFICATES           = "cloud-cert";
+constexpr const char* CLOUD_CREDENTIALS            = "cloud-cr";
+constexpr const char* OTA_UPDATE_LINK              = "ota-link";
+constexpr const char* CERTIFICATES                 = "cert-pack";
+constexpr const char* DEVICE_PROVISIONING_STATUS   = "dev-prov";
+constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY = "work-id";
+constexpr const char* UPDDATE_ID_NVS_KEY           = "upd-id";
 
 } // namespace ConfigKeyName
 
@@ -71,6 +72,12 @@ public:
     virtual const TCertificatePack& getCertificatePack();
     virtual void                    setCertificatePack(const TCertificatePack& certificatePack);
 
+    virtual const TWorkflowData& getWorkflowData();
+    virtual void                 setWorkflowData(const TWorkflowData& workflowData);
+
+    virtual const TUpdateId& getUpdateId();
+    virtual void             setUpdateId(const TUpdateId& updateId);
+
 #if !TESTING
 private:
 #endif
@@ -97,13 +104,16 @@ private:
     nvs_handle_t      m_nvsHandle   = 0;
 
     // just assign whatever value below - the config is reset at startup to assign the default value
-    EBleConfigurationStatus        m_bleConfigurationStatus = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
-    TWiFiCredentials               m_wiFiCredentials        = {};
-    TCloudCredentials              m_cloudCredentials       = {};
-    TOtaUpdateLink                 m_otaUpdateLink          = {};
-    TCertificatePack               m_certificatePack        = {};
+    EBleConfigurationStatus m_bleConfigurationStatus = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    TWiFiCredentials        m_wiFiCredentials        = {};
+    TCloudCredentials       m_cloudCredentials       = {};
+    TOtaUpdateLink          m_otaUpdateLink          = {};
+
+    TCertificatePack               m_certificatePack = {};
     ECloudDeviceProvisioningStatus m_deviceProvisioningStatus =
         ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
+    TWorkflowData m_workflowData = {};
+    TUpdateId     m_updateId     = {};
 };
 
 // We deliberately have a globa pointer,

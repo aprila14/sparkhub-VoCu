@@ -17,6 +17,7 @@ constexpr uint8_t MAX_QUEUE_SIZE                 = 10;
 constexpr int     MQTT_CLIENT_ERROR_PUBLISH      = -1;
 constexpr int     MQTT_CLIENT_SUBSCRIPTION_ERROR = -1;
 constexpr int     MQTT_CLIENT_UNSUBSCRIBE_ERROR  = -1;
+constexpr int     MQTT_CLIENT_BUFFER_SIZE        = 8192;
 
 void _mqttEventHandler(void* handlerArgs, esp_event_base_t base, int32_t eventId, void* eventData)
 {
@@ -31,7 +32,8 @@ MqttClientController::MqttClientController(CloudController* cloudController) :
     m_connectionStatus(false),
     m_messageQueue(),
     m_mqttClient(nullptr),
-    m_taskHandle(nullptr)
+    m_taskHandle(nullptr),
+    m_subscriptionCounter(0)
 {
     m_pCloudController  = cloudController;
     m_messageQueueMutex = mutexCreate();
@@ -71,15 +73,40 @@ void MqttClientController::perform()
 
 void MqttClientController::handleMessages()
 {
-    while (!(checkIfMessageBufferIsEmpty()))
+    // messages are currently being handled in other modules
+}
+
+bool MqttClientController::addTopicForSubscription(std::string topic, int qos)
+{
+    if (m_subscriptionCounter >= MAX_TOPIC_SUBSCRIPTIONS)
     {
-        LOG_ERROR("msg is received but not handled!!!");
+        LOG_ERROR("Maximum number of topics for subscription has already been used");
+        return false;
     }
+
+    if (!subscribeToTopic(topic, qos))
+    {
+        LOG_ERROR("Could not subscribe to topic");
+        return false;
+    }
+
+    m_topicsForSubscription[m_subscriptionCounter].topic = topic;
+    m_topicsForSubscription[m_subscriptionCounter].qos   = qos;
+
+    m_subscriptionCounter++;
+
+    return true;
 }
 
 void MqttClientController::subscribeToRequiredTopics() // NOLINT - we don't want to make it const
 {
-    // TODO add later subscribe topics
+    for (int i = 0; i < m_subscriptionCounter; i++)
+    {
+        if (!subscribeToTopic(m_topicsForSubscription[i].topic, m_topicsForSubscription[i].qos))
+        {
+            LOG_ERROR("Could not subscribe to topic: %s", m_topicsForSubscription[i].topic);
+        }
+    }
 }
 
 bool MqttClientController::init(const prot::cloud_set_credentials::TCloudCredentials& credentials)
@@ -110,6 +137,7 @@ esp_mqtt_client_config_t MqttClientController::getClientConfiguration(
     mqttConfig.port                        = 8883;
     mqttConfig.keepalive                   = 60; // seconds
     mqttConfig.skip_cert_common_name_check = true;
+    mqttConfig.buffer_size                 = MQTT_CLIENT_BUFFER_SIZE;
 
     if (credentials.isSetCloudAddress())
     {
@@ -216,6 +244,12 @@ void MqttClientController::eventHandler(void* handlerArgs, esp_event_base_t base
                 LOG_INFO("Not possible to add message to queue, queue size exceeded ");
                 break;
             }
+            if (event->data_len == 0)
+            {
+                LOG_INFO("Empty message received");
+                break;
+            }
+
             std::string newMessage = std::string(event->data, 0, event->data_len);
 
             {

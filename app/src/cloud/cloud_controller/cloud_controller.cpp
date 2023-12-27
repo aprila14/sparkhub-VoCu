@@ -17,28 +17,29 @@ static const char* LOG_TAG = "CloudController";
 
 namespace
 {
-constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 3600 * 1000; // once per hour
-constexpr uint16_t LOCAL_TIME_OFFSET                   = UtcOffset::OFFSET_UTC_2;
-constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE  = -1;
-constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS     = 1000;
-constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE        = 200;
 
-void _heartbeatWatchdogTimerCallback(TimerHandle_t timerHandle)
-{
-    CloudController* cloudController = static_cast<CloudController*>(pvTimerGetTimerID(timerHandle));
-    assert(cloudController);
-    cloudController->heartbeatWatchdogTimerCallback();
-}
+constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
+constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
+constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 1800 * 1000; // every 0.5 hour
+constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD     = 1 * 1000;    // every 1 minute
+constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
+constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE                 = -1;
+constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS                    = 1000;
+constexpr uint16_t PRESSUREALARMTHRESHOLD                             = 3.7;
+bool               firstTimePressureAlarmDetected                     = true;
+bool               isBelowPressureAlarm                               = false;
+uint32_t           TimeLastUpdateDeviceStatus                         = commons::getCurrentTimestampMs();
+
+
 } // unnamed namespace
 
 CloudController::CloudController() :
     m_taskHandle(),
-    m_heartbeatWatchdogTimer(),
-    m_heartbeatWatchdogCounter(0),
     m_msgCounter(0),
     m_connectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED),
     m_mqttClientController(this),
-    m_deviceProvisioningController(&this->m_mqttClientController)
+    m_deviceProvisioningController(&this->m_mqttClientController),
+    m_deviceTwinsController(&this->m_mqttClientController, this)
 {
     m_semaphoreCredentialsReady    = xSemaphoreCreateBinary();
     m_semaphoreWifiConnectionReady = xSemaphoreCreateBinary();
@@ -62,12 +63,6 @@ ECloudConnectionStatus CloudController::getConnectionStatus() const
 void CloudController::handleStatusReportResponse(bool ACK)
 {
     LOG_INFO("Status Report ACK received");
-}
-
-void CloudController::handleHeartbeatResponse()
-{
-    LOG_INFO("Heartbeat ACK received");
-    m_heartbeatWatchdogCounter = 0;
 }
 
 bool CloudController::handleOtaUpdateLink(
@@ -109,7 +104,9 @@ void CloudController::setDeviceStatusTopic(const prot::cloud_set_credentials::TC
     char deviceStatusTopic[DEVICE_STATUS_MAX_TOPIC_SIZE];
     memset(deviceStatusTopic, 0, DEVICE_STATUS_MAX_TOPIC_SIZE);
 
-    sprintf(deviceStatusTopic, "devices/%s/messages/events/", credentials.cloudDeviceId);
+    const char contentTypeJson[] = "$.ct=application%2Fjson%3Bcharset%3Dutf-8";
+
+    sprintf(deviceStatusTopic, "devices/%s/messages/events/%s", credentials.cloudDeviceId, contentTypeJson);
 
     m_deviceStatusTopic = std::string(deviceStatusTopic);
 }
@@ -146,16 +143,15 @@ void CloudController::_run()
         LOG_INFO("Could not connect to cloud, timeout occured");
     }
 
-    m_heartbeatWatchdogTimer = xTimerCreate(
-        "Heartbeat Watchdog Timer",
-        pdMS_TO_TICKS(HEARTBEAT_CHECK_TIMER_PERIOD_MS),
-        true,
-        static_cast<void*>(this),
-        _heartbeatWatchdogTimerCallback);
-    xTimerStart(m_heartbeatWatchdogTimer, 0);
     m_mqttClientController.runTask();
 
+
+    // Adding some delay to allow mqttClientController to start
+    SLEEP_MS(SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER);
+    m_deviceTwinsController.runTask();
+
     LOG_INFO("Cloud controller initiated!");
+
 
     while (true)
     {
@@ -165,21 +161,56 @@ void CloudController::_run()
 
 void CloudController::perform()
 {
-    updateDeviceStatus();
-    SLEEP_MS(SLEEP_TIME_BETWEEN_SENDING_MESSAGES);
+    LOG_INFO("CheckPressureValueBelowThreshold");
+    CheckPressureValueBelowThreshold();
+    SLEEP_MS(SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD);
+
+    if ((commons::getCurrentTimestampMs() - TimeLastUpdateDeviceStatus) > SLEEP_TIME_BETWEEN_SENDING_MESSAGES)
+    {
+        LOG_INFO("updateDeviceStatus");
+        updateDeviceStatus();
+        uint32_t TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
+    }
 }
+
+
+void CloudController::CheckPressureValueBelowThreshold()
+{
+    float avgPressureSensorValue = getAvgPressureSensorValue();
+    if (avgPressureSensorValue < PRESSUREALARMTHRESHOLD)
+    {
+        if (firstTimePressureAlarmDetected == true)
+        {
+            isBelowPressureAlarm = true;
+            updateDeviceStatus();
+            firstTimePressureAlarmDetected = false;
+            // LEDTurnRed();
+        }
+    }
+    else
+    {
+        firstTimePressureAlarmDetected = true;
+        isBelowPressureAlarm           = false;
+        // LEDTurnGreen();
+    }
+}
+
 
 void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it const
 {
     json_parser::TDeviceStatus deviceStatus = {};
-    deviceStatus.isWiFiConnected            = app::pAppController->getWiFiController()->getConnectionStatus();
-    deviceStatus.isBleConnected             = app::pAppController->getBleController()->isClientConnected();
-    deviceStatus.currentTimeFromStartupMs   = commons::getCurrentTimestampMs();
-    deviceStatus.pressureSensorValue        = getPressureSensorValue();
+
+    deviceStatus.isWiFiConnected               = app::pAppController->getWiFiController()->getConnectionStatus();
+    deviceStatus.isBleConnected                = app::pAppController->getBleController()->isClientConnected();
+    deviceStatus.isBelowPressureAlarmThreshold = isBelowPressureAlarm;
+    deviceStatus.currentTimeFromStartupMs      = commons::getCurrentTimestampMs();
+    deviceStatus.pressureSensorValue           = getAvgPressureSensorValue();
+    // update DeviceTwin
 
     strcpy(
         deviceStatus.currentLocalTime,
         app::pAppController->getNtpClient()->getCurrentLocalTimeString(LOCAL_TIME_OFFSET));
+
     strcpy(deviceStatus.firmwareVersion, PROJECT_VER);
 
     std::string deviceStatusMessage = json_parser::prepareDeviceStatusMessage(deviceStatus, m_msgCounter);
@@ -245,14 +276,5 @@ void CloudController::startCloudConnection()
     {
         LOG_INFO("Error while starting mqttClientController, could not connect to the cloud");
         m_connectionStatus = ECloudConnectionStatus::CLOUD_STATUS_DISABLED;
-    }
-}
-
-void CloudController::heartbeatWatchdogTimerCallback()
-{
-    m_heartbeatWatchdogCounter++;
-    if (m_heartbeatWatchdogCounter >= 180)
-    {
-        setConnectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONNECTED);
     }
 }

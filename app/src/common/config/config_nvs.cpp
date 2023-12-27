@@ -25,6 +25,8 @@ bool ConfigNvs::init()
     getStruct(m_wiFiCredentials, ConfigKeyName::WIFI_CREDENTIALS);
     getStruct(m_cloudCredentials, ConfigKeyName::CLOUD_CREDENTIALS);
     getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
+    getStruct(m_workflowData, ConfigKeyName::UPDATE_WORKFLOW_DATA_NVS_KEY);
+    getStruct(m_updateId, ConfigKeyName::UPDDATE_ID_NVS_KEY);
 
     return true;
 }
@@ -117,6 +119,25 @@ void ConfigNvs::setCertificatePack(const TCertificatePack& certificatePack)
 const TCertificatePack& ConfigNvs::getCertificatePack()
 {
     return m_certificatePack;
+}
+
+void ConfigNvs::setWorkflowData(const TWorkflowData& workflowData)
+{
+    setStruct(m_workflowData, workflowData, ConfigKeyName::UPDATE_WORKFLOW_DATA_NVS_KEY);
+}
+const TWorkflowData& ConfigNvs::getWorkflowData()
+{
+    return m_workflowData;
+}
+
+const TUpdateId& ConfigNvs::getUpdateId()
+{
+    return m_updateId;
+}
+
+void ConfigNvs::setUpdateId(const TUpdateId& updateId)
+{
+    setStruct(m_updateId, updateId, ConfigKeyName::UPDDATE_ID_NVS_KEY);
 }
 
 bool ConfigNvs::resetConfig()
@@ -282,6 +303,8 @@ void ConfigNvs::resetAllConfigurationFields()
     m_otaUpdateLink            = TOtaUpdateLink();
     m_certificatePack          = TCertificatePack();
     m_deviceProvisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
+    m_workflowData             = TWorkflowData();
+    m_updateId                 = TUpdateId();
 }
 
 template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)
