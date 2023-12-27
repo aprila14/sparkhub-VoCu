@@ -18,19 +18,17 @@ static const char* LOG_TAG = "CloudController";
 namespace
 {
 
-    constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
-    constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
-    constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE        = 200;  
-    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 1800 * 1000; // every 0.5 hour
-    constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD = 1 * 1000; // every 1 minute
-    constexpr uint16_t LOCAL_TIME_OFFSET = UtcOffset::OFFSET_UTC_2;
-    constexpr int8_t MQTT_CONNECTION_WAIT_TIME_INFINITE = -1;
-    constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS = 1000;
-    constexpr uint16_t PRESSUREALARMTHRESHOLD = 3.7;
-    bool firstTimePressureAlarmDetected = true;
-    bool isBelowPressureAlarm = false;
-    uint32_t TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
-
+constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
+constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
+constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 1800 * 1000; // every 0.5 hour
+constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD     = 1 * 1000;    // every 1 minute
+constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
+constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE                 = -1;
+constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS                    = 1000;
+constexpr uint16_t PRESSUREALARMTHRESHOLD                             = 3.7;
+bool               firstTimePressureAlarmDetected                     = true;
+bool               isBelowPressureAlarm                               = false;
+uint32_t           TimeLastUpdateDeviceStatus                         = commons::getCurrentTimestampMs();
 
 
 } // unnamed namespace
@@ -167,36 +165,33 @@ void CloudController::perform()
     CheckPressureValueBelowThreshold();
     SLEEP_MS(SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD);
 
-    if((commons::getCurrentTimestampMs()-TimeLastUpdateDeviceStatus) > SLEEP_TIME_BETWEEN_SENDING_MESSAGES)
+    if ((commons::getCurrentTimestampMs() - TimeLastUpdateDeviceStatus) > SLEEP_TIME_BETWEEN_SENDING_MESSAGES)
     {
         LOG_INFO("updateDeviceStatus");
         updateDeviceStatus();
         uint32_t TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
     }
-
 }
 
 
 void CloudController::CheckPressureValueBelowThreshold()
 {
     float avgPressureSensorValue = getAvgPressureSensorValue();
-    if(avgPressureSensorValue < PRESSUREALARMTHRESHOLD)
+    if (avgPressureSensorValue < PRESSUREALARMTHRESHOLD)
     {
-        if(firstTimePressureAlarmDetected == true)
+        if (firstTimePressureAlarmDetected == true)
         {
             isBelowPressureAlarm = true;
             updateDeviceStatus();
             firstTimePressureAlarmDetected = false;
-            //LEDTurnRed();
-
+            // LEDTurnRed();
         }
-
     }
     else
     {
         firstTimePressureAlarmDetected = true;
-        isBelowPressureAlarm = false;
-        //LEDTurnGreen();
+        isBelowPressureAlarm           = false;
+        // LEDTurnGreen();
     }
 }
 
@@ -205,14 +200,16 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
 {
     json_parser::TDeviceStatus deviceStatus = {};
 
-    deviceStatus.isWiFiConnected = app::pAppController->getWiFiController()->getConnectionStatus();
-    deviceStatus.isBleConnected = app::pAppController->getBleController()->isClientConnected();
+    deviceStatus.isWiFiConnected               = app::pAppController->getWiFiController()->getConnectionStatus();
+    deviceStatus.isBleConnected                = app::pAppController->getBleController()->isClientConnected();
     deviceStatus.isBelowPressureAlarmThreshold = isBelowPressureAlarm;
-    deviceStatus.currentTimeFromStartupMs = commons::getCurrentTimestampMs();
-    deviceStatus.pressureSensorValue = getAvgPressureSensorValue();
-    //update DeviceTwin
+    deviceStatus.currentTimeFromStartupMs      = commons::getCurrentTimestampMs();
+    deviceStatus.pressureSensorValue           = getAvgPressureSensorValue();
+    // update DeviceTwin
 
-    strcpy(deviceStatus.currentLocalTime, app::pAppController->getNtpClient()->getCurrentLocalTimeString(LOCAL_TIME_OFFSET));
+    strcpy(
+        deviceStatus.currentLocalTime,
+        app::pAppController->getNtpClient()->getCurrentLocalTimeString(LOCAL_TIME_OFFSET));
 
     strcpy(deviceStatus.firmwareVersion, PROJECT_VER);
 
