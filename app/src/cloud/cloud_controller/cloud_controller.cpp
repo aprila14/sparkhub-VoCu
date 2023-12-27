@@ -22,11 +22,11 @@ namespace
 constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
 constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
 constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 1800 * 1000; // every 0.5 hour
-constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD     = 1 * 1000;    // every 1 minute
+constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD     = 60 * 1000;    // every 1 minute
 constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
 constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE                 = -1;
 constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS                    = 1000;
-constexpr uint16_t PRESSUREALARMTHRESHOLD                             = 3.7;
+constexpr float PRESSUREALARMTHRESHOLD                                = 3.7;
 bool               firstTimePressureAlarmDetected                     = true;
 bool               isBelowPressureAlarm                               = false;
 uint32_t           TimeLastUpdateDeviceStatus                         = commons::getCurrentTimestampMs();
@@ -181,8 +181,10 @@ void CloudController::CheckPressureValueBelowThreshold()
     float avgPressureSensorValue = getAvgPressureSensorValue();
     if (avgPressureSensorValue < PRESSUREALARMTHRESHOLD)
     {
+        LOG_INFO("Pressure is below alarm threshold; no updateDeviceStus");
         if (firstTimePressureAlarmDetected == true)
         {
+            LOG_INFO("Detect first time Pressure Alarm (belowPressureThreshold); updateDeviceStatus");
             isBelowPressureAlarm = true;
             updateDeviceStatus();
             firstTimePressureAlarmDetected = false;
@@ -191,6 +193,7 @@ void CloudController::CheckPressureValueBelowThreshold()
     }
     else
     {
+        LOG_INFO("Pressure above pressure alarm threshold");
         firstTimePressureAlarmDetected = true;
         isBelowPressureAlarm           = false;
         // LEDTurnGreen();
