@@ -18,6 +18,7 @@ static const char* LOG_TAG = "CloudController";
 namespace
 {
 
+
 constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
 constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
 constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 1800 * 1000; // every 0.5 hour
@@ -29,6 +30,7 @@ constexpr uint16_t PRESSUREALARMTHRESHOLD                             = 3.7;
 bool               firstTimePressureAlarmDetected                     = true;
 bool               isBelowPressureAlarm                               = false;
 uint32_t           TimeLastUpdateDeviceStatus                         = commons::getCurrentTimestampMs();
+
 
 
 } // unnamed namespace

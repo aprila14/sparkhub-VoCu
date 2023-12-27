@@ -19,6 +19,7 @@ constexpr uint8_t ALARM_RESPONSE_LENGTH       = 32;
 namespace json_parser
 {
 
+
 enum class EMsgCode : uint8_t
 {
     MSG_SET_LIGHT_INTENSITY_LEVEL          = 1,
@@ -58,6 +59,7 @@ struct TResponse
 {
     bool ACK;
 };
+
 
 struct TDeviceStatus
 {
