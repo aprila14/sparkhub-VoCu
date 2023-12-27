@@ -181,7 +181,7 @@ void CloudController::CheckPressureValueBelowThreshold()
     float avgPressureSensorValue = getAvgPressureSensorValue();
     if (avgPressureSensorValue < PRESSUREALARMTHRESHOLD)
     {
-        LOG_INFO("Pressure is below alarm threshold; no updateDeviceStus");
+        LOG_INFO("Pressure is below alarm threshold; no updateDeviceStatus");
         if (firstTimePressureAlarmDetected == true)
         {
             LOG_INFO("Detect first time Pressure Alarm (belowPressureThreshold); updateDeviceStatus");
