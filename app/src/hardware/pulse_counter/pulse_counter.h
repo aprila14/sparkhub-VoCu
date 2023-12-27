@@ -24,6 +24,10 @@ private:
     void initiatePulseCounter(pcnt_unit_t unit);
 
     TaskHandle_t m_taskHandle; // handle to runTask
+
+    uint32_t m_counterPulses;
+
+    uint32_t m_multPulses;
 };
 
 #endif // PULSE_COUNTER_H

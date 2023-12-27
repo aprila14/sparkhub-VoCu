@@ -39,7 +39,7 @@ typedef struct
     uint32_t    status; // information on the event type that caused the interrupt
 } TPcntEvt;
 
-PulseCounterHandler::PulseCounterHandler() : m_taskHandle()
+PulseCounterHandler::PulseCounterHandler() : m_taskHandle(), m_counterPulses(0), m_multPulses(0)
 {
 }
 
@@ -232,13 +232,15 @@ void PulseCounterHandler::_run()
             }
             if (evt.status & PCNT_EVT_ZERO)
             {
+                m_multPulses++;
                 LOG_INFO("ZERO EVT");
             }
         }
         else
         {
             pcnt_get_counter_value(pcnt_unit, &count);
-            LOG_INFO("Current counter value :%d", count);
+            m_counterPulses = m_multPulses * PCNT_H_LIM_VAL + count;
+            LOG_INFO("Current counter value :%lu", m_counterPulses);
         }
     }
 }
