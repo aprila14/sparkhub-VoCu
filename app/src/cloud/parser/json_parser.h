@@ -71,6 +71,7 @@ namespace json_parser
         float pressureSensorValue;
         std::string getFirmwareVersion() const;
         std::string getCurrentLocalTime() const;
+        uint32_t    msgCounter;
     };
 
     struct TRepeatDaysOfWeek
@@ -132,20 +133,6 @@ namespace json_parser
         TFrameData frameData;
     };
 
-
-
-struct TDeviceStatus
-{
-    bool        isWiFiConnected;
-    bool        isBleConnected;
-    uint32_t    currentTimeFromStartupMs;
-    char        firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];
-    char        currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
-    float       pressureSensorValue;
-    std::string getFirmwareVersion() const;
-    std::string getCurrentLocalTime() const;
-    uint32_t    msgCounter;
-};
 
 
 struct TDeviceProvisioningInfo
