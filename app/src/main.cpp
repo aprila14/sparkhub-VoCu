@@ -117,9 +117,9 @@ void initCommonGlobalModules()
                                        // the variable declaration
     static BleController bleController(&bleuartDriver);
 
-    static CloudController cloudController;
-
     static PulseCounterHandler pulseCounterHandler;
+
+    static CloudController cloudController(pulseCounterHandler);
 
     // create and run app controller
     static app::AppController appController(&wifiController, &bleController, &cloudController, &ntpClient);

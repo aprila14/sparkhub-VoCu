@@ -10,13 +10,14 @@
 #include "esp_event.h"
 #include "json_parser.h"
 #include "protocol_types.h"
+#include "pulse_counter.h"
 
 class MqttClientController;
 
 class CloudController
 {
 public:
-    CloudController();
+    CloudController(PulseCounterHandler& pulseCounterHandler);
     ~CloudController() = default;
 
     void runTask();
@@ -120,6 +121,8 @@ private:
     DeviceTwinsController        m_deviceTwinsController;
 
     std::string m_deviceStatusTopic;
+
+    PulseCounterHandler& m_pulseCounterHandler;
 };
 
 #endif // CLOUDCONTROLLER_H
