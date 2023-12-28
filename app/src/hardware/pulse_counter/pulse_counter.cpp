@@ -20,10 +20,9 @@ namespace
  *   - reaches 'l_lim' value or 'h_lim' value,
  *   - will be reset to zero.
  */
-constexpr int16_t PCNT_H_LIM_VAL     = 10;
-constexpr int16_t PCNT_L_LIM_VAL     = -10;
-constexpr int16_t PCNT_THRESH1_VAL   = 5;
-constexpr int16_t PCNT_THRESH0_VAL   = -5;
+constexpr int16_t PCNT_H_LIM_VAL     = 1000;
+constexpr int16_t PCNT_THRESH1_VAL   = 500;
+constexpr int16_t PCNT_THRESH0_VAL   = -500;
 constexpr int     PCNT_INPUT_SIG_IO  = 4; // Pulse Input GPIO
 constexpr int     PCNT_INPUT_CTRL_IO = 5; // Control GPIO HIGH=count up, LOW=count down
 
@@ -65,15 +64,20 @@ void PulseCounterHandler::run(void* pObject)
  */
 static void IRAM_ATTR pulseCounterIntrHandler(void* arg)
 {
-    pcnt_unit_t* pcnt_unit = (pcnt_unit_t*)arg;
-    TPcntEvt     evt       = {};
+    pcnt_unit_t*  pcntUnit               = (pcnt_unit_t*)arg;
+    TPcntEvt      evt                    = {};
+    portBASE_TYPE highPriorityTaskAwoken = pdFALSE;
 
-    if (pcnt_unit != nullptr)
+    if (pcntUnit != nullptr)
     {
-        evt.unit = (*pcnt_unit);
+        evt.unit = (*pcntUnit);
         // Save the PCNT event type that caused an interrupt
-        pcnt_get_event_status((*pcnt_unit), &evt.status);
-        xQueueSendFromISR(pcntEvtQueue, &evt, NULL);
+        pcnt_get_event_status((*pcntUnit), &evt.status);
+        xQueueSendFromISR(pcntEvtQueue, &evt, &highPriorityTaskAwoken);
+        if (highPriorityTaskAwoken == pdTRUE)
+        {
+            portYIELD_FROM_ISR();
+        }
     }
 }
 
@@ -155,7 +159,6 @@ void PulseCounterHandler::initiatePulseCounter(pcnt_unit_t unit)
 
     // Set the maximum and minimum limit values to watch
     pcnt_config.counter_h_lim = PCNT_H_LIM_VAL;
-    pcnt_config.counter_l_lim = PCNT_L_LIM_VAL;
 
     // Initialize PCNT unit
     pcnt_unit_config(&pcnt_config);
@@ -173,7 +176,6 @@ void PulseCounterHandler::initiatePulseCounter(pcnt_unit_t unit)
     // Enable events on zero, maximum and minimum limit values
     pcnt_event_enable(unit, PCNT_EVT_ZERO);
     pcnt_event_enable(unit, PCNT_EVT_H_LIM);
-    pcnt_event_enable(unit, PCNT_EVT_L_LIM);
 
     // Initialize PCNT's counter
     pcnt_counter_pause(unit);
@@ -185,6 +187,11 @@ void PulseCounterHandler::initiatePulseCounter(pcnt_unit_t unit)
 
     // Everything is set up, now go to counting
     pcnt_counter_resume(unit);
+}
+
+uint32_t PulseCounterHandler::getPulseCounterValue() const
+{
+    return m_counterPulses;
 }
 
 void PulseCounterHandler::_run()
@@ -221,10 +228,6 @@ void PulseCounterHandler::_run()
             if (evt.status & PCNT_EVT_THRES_0)
             {
                 LOG_INFO("THRES0 EVT");
-            }
-            if (evt.status & PCNT_EVT_L_LIM)
-            {
-                LOG_INFO("L_LIM EVT");
             }
             if (evt.status & PCNT_EVT_H_LIM)
             {
