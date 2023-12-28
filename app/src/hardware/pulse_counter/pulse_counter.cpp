@@ -7,6 +7,7 @@ static const char* LOG_TAG = "PulseCounter";
 #include "freertos/task.h"
 #include "defines.h"
 #include "esp_attr.h"
+#include "sleep.h"
 
 #if IS_DEBUG_BUILD
 #include "driver/ledc.h"
@@ -20,11 +21,16 @@ namespace
  *   - reaches 'l_lim' value or 'h_lim' value,
  *   - will be reset to zero.
  */
-constexpr int16_t PCNT_H_LIM_VAL     = 1000;
-constexpr int16_t PCNT_THRESH1_VAL   = 500;
-constexpr int16_t PCNT_THRESH0_VAL   = -500;
-constexpr int     PCNT_INPUT_SIG_IO  = 4; // Pulse Input GPIO
-constexpr int     PCNT_INPUT_CTRL_IO = 5; // Control GPIO HIGH=count up, LOW=count down
+constexpr int16_t PCNT_H_LIM_VAL    = 1000;
+constexpr int16_t PCNT_THRESH1_VAL  = 500;
+constexpr int16_t PCNT_THRESH0_VAL  = -500;
+constexpr int     PCNT_INPUT_SIG_IO = 4; // Pulse Input GPIO
+
+// Any pulses lasting shorter than PCNT_INPUT_FILTER_VALUE will be ignored when the filter is enabled
+constexpr uint16_t PCNT_INPUT_FILTER_VALUE = 100;
+
+constexpr uint32_t PCNT_EVENT_QUEUE_WAIT_TIME_MS = 1000;
+constexpr uint32_t PCNT_EVENT_QUEUE_SIZE         = 10;
 
 xQueueHandle pcntEvtQueue = {}; // A queue to handle pulse counter events
 } // namespace
@@ -145,7 +151,6 @@ void PulseCounterHandler::initiatePulseCounter(pcnt_unit_t unit)
 
     // Set PCNT input signal and control GPIOs
     pcnt_config.pulse_gpio_num = PCNT_INPUT_SIG_IO;
-    pcnt_config.ctrl_gpio_num  = PCNT_INPUT_CTRL_IO;
     pcnt_config.channel        = PCNT_CHANNEL_0;
     pcnt_config.unit           = unit;
 
@@ -164,7 +169,10 @@ void PulseCounterHandler::initiatePulseCounter(pcnt_unit_t unit)
     pcnt_unit_config(&pcnt_config);
 
     // Configure and enable the input filter
-    pcnt_set_filter_value(unit, 100);
+    static_assert(
+        1023 >= PCNT_INPUT_FILTER_VALUE,
+        "Warning!, filter value is a 10-bit value, so the maximum should be limited to 1023.");
+    pcnt_set_filter_value(unit, PCNT_INPUT_FILTER_VALUE);
     pcnt_filter_enable(unit);
 
     // Set threshold 0 and 1 values and enable events to watch
@@ -208,7 +216,7 @@ void PulseCounterHandler::_run()
 #endif // IS_DEBUG_BUILD
 
     // Initialize PCNT event queue and PCNT functions
-    pcntEvtQueue = xQueueCreate(10, sizeof(TPcntEvt));
+    pcntEvtQueue = xQueueCreate(PCNT_EVENT_QUEUE_SIZE, sizeof(TPcntEvt));
     initiatePulseCounter(pcnt_unit);
 
     while (1)
@@ -216,7 +224,7 @@ void PulseCounterHandler::_run()
         /* Wait for the event information passed from PCNT's interrupt handler.
          * Once received, decode the event type and print it on the serial monitor.
          */
-        res = xQueueReceive(pcntEvtQueue, &evt, 1000 / portTICK_PERIOD_MS);
+        res = xQueueReceive(pcntEvtQueue, &evt, MS_TO_TICKS(PCNT_EVENT_QUEUE_WAIT_TIME_MS));
         if (res == pdTRUE)
         {
             pcnt_get_counter_value(pcnt_unit, &count);
