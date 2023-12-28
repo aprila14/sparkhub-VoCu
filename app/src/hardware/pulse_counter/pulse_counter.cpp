@@ -18,7 +18,7 @@ namespace
 /*
  * An interrupt will be triggered when the counter value:
  *   - reaches 'thresh1' or 'thresh0' value,
- *   - reaches 'l_lim' value or 'h_lim' value,
+ *   - reaches 'h_lim' value,
  *   - will be reset to zero.
  */
 constexpr int16_t PCNT_H_LIM_VAL    = 1000;
@@ -98,14 +98,10 @@ static void IRAM_ATTR pulseCounterIntrHandler(void* arg)
  * Functionality of GPIOs used in this example:
  *   - GPIO18 - output pin of a sample 1 Hz pulse generator,
  *   - GPIO4 - pulse input pin,
- *   - GPIO5 - control input pin.
  *
  * Load example, open a serial port to view the message printed on your screen.
  *
  * To do this test, you should connect GPIO18 with GPIO4.
- * GPIO5 is the control signal, you can leave it floating with internal pull up,
- * or connect it to ground. If left floating, the count value will be increasing.
- * If you connect GPIO5 to GND, the count value will be decreasing.
  */
 
 #define LEDC_OUTPUT_IO 18 // Output GPIO of a sample 1 Hz pulse generator
