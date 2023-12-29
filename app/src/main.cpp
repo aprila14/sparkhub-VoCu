@@ -160,9 +160,16 @@ extern "C"
         // TODO - consider adding here "quick reset", before initializing other modules,
         // to have a reliable method of resetting the device configuration, before initializing other modules
 
-        initCommonGlobalModules();
+        //initCommonGlobalModules();
 
-        app::pAppController->runTask();
+        //app::pAppController->runTask();
+
+        static PulseCounterHandler pulseCounterHandler;
+
+        pulseCounterHandler.runTask();
+
+
+
 
 #if USE_CONSOLE
         console::runConsoleControl();
