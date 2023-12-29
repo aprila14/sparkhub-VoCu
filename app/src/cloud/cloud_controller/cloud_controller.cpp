@@ -21,7 +21,7 @@ namespace
 
 constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
 constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
-constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 1800 * 1000; // every 0.5 hour
+constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 8 * 60 * 60 * 1000; // every 8 hour
 constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD     = 60 * 1000;    // every 1 minute
 constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
 constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE                 = -1;
