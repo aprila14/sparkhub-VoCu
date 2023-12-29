@@ -15,6 +15,8 @@ public:
 
     uint32_t getPulseCounterValue() const;
 
+    float getTotalFlowInLitres() const;
+
 #if !TESTING
 private:
 #endif
@@ -26,6 +28,8 @@ private:
     TaskHandle_t m_taskHandle; // handle to runTask
 
     uint32_t m_counterPulses;
+
+    float totalLitres;
 
     uint32_t m_multPulses;
 };

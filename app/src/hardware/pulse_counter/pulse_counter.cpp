@@ -25,7 +25,8 @@ constexpr int16_t PCNT_H_LIM_VAL    = 1000;
 constexpr int16_t PCNT_THRESH1_VAL  = 500;
 constexpr int16_t PCNT_THRESH0_VAL  = -500;
 constexpr int     PCNT_INPUT_SIG_IO = 4; // Pulse Input GPIO
-constexpr int pulse_per_litre = 2580; //pulses per litre from the datasheet digmesa nano flex
+constexpr int PULSE_PER_LITRE = 2580; //pulses per litre from the datasheet digmesa nano flex
+constexpr int SENSOR_CALIBRATION_FACTOR = 1.098;
 
 // Any pulses lasting shorter than PCNT_INPUT_FILTER_VALUE will be ignored when the filter is enabled
 constexpr uint16_t PCNT_INPUT_FILTER_VALUE = 100;
@@ -200,6 +201,11 @@ uint32_t PulseCounterHandler::getPulseCounterValue() const
     return m_counterPulses;
 }
 
+float PulseCounterHandler::getTotalFlowInLitres() const
+{
+    return totalLitres;
+}
+
 void PulseCounterHandler::_run()
 {
     LOG_INFO("run bottom started...");
@@ -219,7 +225,7 @@ void PulseCounterHandler::_run()
     initiatePulseCounter(pcnt_unit);
     int64_t previous_time_ms = 0;
     float flowLitres = 0;
-    float totalLitres = 0;
+    totalLitres = 0;
     uint32_t DeltaCounterPulses = 0;
     uint32_t m_counterPulsesPrevious = 0;
     float flowRate = 0;
@@ -265,14 +271,14 @@ void PulseCounterHandler::_run()
             if(m_counterPulses >= m_counterPulsesPrevious)
             {
                 DeltaCounterPulses = m_counterPulses - m_counterPulsesPrevious;
-                flowLitres = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) / float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) / float(pulse_per_litre); //in Liter per sampling rate
+                flowLitres = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) / float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) / float(PULSE_PER_LITRE) * float(SENSOR_CALIBRATION_FACTOR); //in Liter per sampling rate
                 m_counterPulsesPrevious = m_counterPulses;
             }
 
             if(m_counterPulses < m_counterPulsesPrevious)
             {
                 DeltaCounterPulses = m_counterPulses+PCNT_H_LIM_VAL - m_counterPulsesPrevious;
-                flowLitres = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) / float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) / float(pulse_per_litre); //in Liter per sampling rate
+                flowLitres = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) / float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) / float(PULSE_PER_LITRE) * float(SENSOR_CALIBRATION_FACTOR); //in Liter per sampling rate
                 m_counterPulsesPrevious = m_counterPulses;
             }
 

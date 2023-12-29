@@ -69,7 +69,7 @@ struct TDeviceStatus
     char        firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];
     char        currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
     float       pressureSensorValue;
-    uint32_t    flowMeterValue;
+    float       flowMeterValue;
     std::string getFirmwareVersion() const;
     std::string getCurrentLocalTime() const;
 };

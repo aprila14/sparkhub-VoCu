@@ -206,7 +206,7 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     deviceStatus.isBelowPressureAlarmThreshold = isBelowPressureAlarm;
     deviceStatus.currentTimeFromStartupMs      = commons::getCurrentTimestampMs();
     deviceStatus.pressureSensorValue           = getAvgPressureSensorValue();
-    deviceStatus.flowMeterValue                = m_pulseCounterHandler.getPulseCounterValue();
+    deviceStatus.flowMeterValue                = m_pulseCounterHandler.getTotalFlowInLitres();
     // update DeviceTwin
 
     strcpy(

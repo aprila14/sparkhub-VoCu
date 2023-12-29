@@ -48,8 +48,8 @@ static void configureConnectionToLteModem()
 {
     LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
     TWiFiCredentials newWifiCredentials;
-    newWifiCredentials.setSsid("4G UFI-4205");
-    newWifiCredentials.setPassword("1234567890");
+    newWifiCredentials.setSsid("Marty14");
+    newWifiCredentials.setPassword("livefreeordie");
     pConfig->setWifiCredentials(newWifiCredentials);
 }
 
@@ -160,13 +160,13 @@ extern "C"
         // TODO - consider adding here "quick reset", before initializing other modules,
         // to have a reliable method of resetting the device configuration, before initializing other modules
 
-        //initCommonGlobalModules();
+        initCommonGlobalModules();
 
-        //app::pAppController->runTask();
+        app::pAppController->runTask();
 
-        static PulseCounterHandler pulseCounterHandler;
+        //static PulseCounterHandler pulseCounterHandler;
 
-        pulseCounterHandler.runTask();
+        //pulseCounterHandler.runTask();
 
 
 
