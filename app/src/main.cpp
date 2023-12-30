@@ -48,8 +48,8 @@ static void configureConnectionToLteModem()
 {
     LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
     TWiFiCredentials newWifiCredentials;
-    newWifiCredentials.setSsid("Marty14");
-    newWifiCredentials.setPassword("livefreeordie");
+    newWifiCredentials.setSsid("Marty Router King");
+    newWifiCredentials.setPassword("mk1441bl");
     pConfig->setWifiCredentials(newWifiCredentials);
 }
 
