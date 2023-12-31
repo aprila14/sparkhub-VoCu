@@ -3,7 +3,6 @@ static const char* LOG_TAG = "CloudController";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
 #include "cloud_controller.h"
-
 #include "adc_pressure.h"
 #include "app_controller.h"
 #include "cloud_config.h"
@@ -27,9 +26,10 @@ constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffse
 constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE                 = -1;
 constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS                    = 1000;
 constexpr float PRESSUREALARMTHRESHOLD                                = 3.7;
-bool               firstTimePressureAlarmDetected                     = true;
-bool               isBelowPressureAlarm                               = false;
-uint32_t           TimeLastUpdateDeviceStatus                         = commons::getCurrentTimestampMs();
+bool firstTimePressureAlarmDetected                                   = true;
+bool isBelowPressureAlarm                                             = false;
+uint32_t TimeLastUpdateDeviceStatus                                    = commons::getCurrentTimestampMs();
+
 
 
 
@@ -163,15 +163,18 @@ void CloudController::_run()
 
 void CloudController::perform()
 {
-    LOG_INFO("CheckPressureValueBelowThreshold");
+    uint32_t time2 = commons::getCurrentTimestampMs();
     CheckPressureValueBelowThreshold();
     SLEEP_MS(SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD);
 
     if ((commons::getCurrentTimestampMs() - TimeLastUpdateDeviceStatus) > SLEEP_TIME_BETWEEN_SENDING_MESSAGES)
     {
-        LOG_INFO("updateDeviceStatus");
+        LOG_INFO("SLEEP_TIME_BETWEEN_SENDING_MESSAGES reached; calling updateDeviceStatus() function");
+        uint32_t current_time = commons::getCurrentTimestampMs();
+        uint32_t time_between_two_messages_InMIN = (current_time - TimeLastUpdateDeviceStatus) / (1000*60); //in minutes
+        LOG_INFO("time_between_two_messages: %d min", time_between_two_messages_InMIN);
         updateDeviceStatus();
-        uint32_t TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
+        TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
     }
 }
 
@@ -181,10 +184,10 @@ void CloudController::CheckPressureValueBelowThreshold()
     float avgPressureSensorValue = getAvgPressureSensorValue();
     if (avgPressureSensorValue < PRESSUREALARMTHRESHOLD)
     {
-        LOG_INFO("Pressure is below alarm threshold; no updateDeviceStatus");
+        LOG_INFO("Pressure is below alarm threshold; NOT calling updateDeviceStatus() function");
         if (firstTimePressureAlarmDetected == true)
         {
-            LOG_INFO("Detect first time Pressure Alarm (belowPressureThreshold); updateDeviceStatus");
+            LOG_INFO("Detect first time Pressure Alarm (belowPressureThreshold); calling updateDeviceStatus() function");
             isBelowPressureAlarm = true;
             updateDeviceStatus();
             firstTimePressureAlarmDetected = false;
