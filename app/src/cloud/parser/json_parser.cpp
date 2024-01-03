@@ -797,6 +797,19 @@ bool parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrat
     return true;
 }
 
+cJSON* parseDeviceTwinDesired(cJSON* pInputJson)
+{
+    if (pInputJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no input JSON data");
+        return nullptr;
+    }
+
+    cJSON* pDeviceTwinDesiredJson = cJSON_GetObjectItemCaseSensitive(pInputJson, DEVICE_TWIN_DESIRED_KEY);
+
+    return pDeviceTwinDesiredJson;
+}
+
 /***** REPORTED DEVICE TWINS *******/
 
 cJSON* initiateReportedJson()

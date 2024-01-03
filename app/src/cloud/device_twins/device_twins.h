@@ -22,6 +22,8 @@ private:
 
     void        subscribeDeviceTwinTopics();
     std::string buildReportedTopic(int32_t requestId);
+    std::string buildGetTopic(int32_t requestId);
+    std::string prepareEmptyJsonMessage();
     void        handleDeviceTwinMessage(const json_parser::TMessage& message);
     void        handleDeviceTwinResponse();
 
@@ -31,9 +33,10 @@ private:
 
     void reportFlowMeterCalibrationValue(const float& flowMeterCalibrationValue);
 
+    void publishGetDeviceTwinRequest();
+
     TaskHandle_t m_taskHandle; // handle to runTask
 
-    uint32_t m_reportedFieldFlags;
     uint32_t m_desiredFieldFlags;
     uint32_t m_requestId;
 

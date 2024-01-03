@@ -3,6 +3,7 @@
 
 namespace json_parser
 {
+constexpr char DEVICE_TWIN_DESIRED_KEY[]    = "desired";
 constexpr char DEVICE_UPDATE_KEY[]          = "deviceUpdate";
 constexpr char FLOW_METER_CALIBRATION_KEY[] = "flowMeterCalibration";
 }; // namespace json_parser
