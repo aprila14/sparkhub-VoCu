@@ -216,7 +216,8 @@ std::string prepareReportedMessage(cJSON* pReportedJson);
 
 std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData);
 
-bool parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrationValue);
+bool        parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrationValue);
+std::string prepareFlowMeterCalibrationReport(const float& flowMeterCalibrationValue);
 
 
 #if TESTING

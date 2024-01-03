@@ -197,6 +197,8 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
         if (json_parser::parseFlowMeterCalibrationValue(pInputJson, &flowMeterCalibrationValue))
         {
             LOG_INFO("Flow meter calibration value received %f", flowMeterCalibrationValue);
+
+            reportFlowMeterCalibrationValue(flowMeterCalibrationValue);
         }
         else
         {
@@ -277,6 +279,24 @@ void DeviceTwinsController::reportDeviceUpdateStatus(EOtaAgentState state, const
     if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), deviceUpdateStatusReportedMessage))
     {
         LOG_ERROR("Could not send firmware info reported message");
+        return;
+    }
+}
+
+void DeviceTwinsController::reportFlowMeterCalibrationValue(const float& flowMeterCalibrationValue)
+{
+    const std::string flowMeterCalibrationReportedMessage =
+        json_parser::prepareFlowMeterCalibrationReport(flowMeterCalibrationValue);
+
+    if (flowMeterCalibrationReportedMessage == std::string(""))
+    {
+        LOG_ERROR("Error while preparing flow meter calibration reported message");
+        return;
+    }
+
+    if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), flowMeterCalibrationReportedMessage))
+    {
+        LOG_ERROR("Could not send flow meter calibration reported message");
         return;
     }
 }

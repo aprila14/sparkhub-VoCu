@@ -465,6 +465,37 @@ std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, 
     return deviceUpdateReport;
 }
 
+std::string prepareFlowMeterCalibrationReport(const float& flowMeterCalibrationValue)
+{
+    cJSON* pFlowMeterCalibrationJson = cJSON_CreateObject();
+    if (pFlowMeterCalibrationJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) flow meter calibration JSON");
+        return std::string("");
+    }
+
+    if (!cJSON_AddNumberToObject(pFlowMeterCalibrationJson, FLOW_METER_CALIBRATION_KEY, flowMeterCalibrationValue))
+    {
+        LOG_ERROR("Could not add flow meter calibration valuer to JSON");
+        cJSON_Delete(pFlowMeterCalibrationJson);
+        return std::string("");
+    }
+
+    char* flowMeterCalibrationReportCString = cJSON_Print(pFlowMeterCalibrationJson);
+    if (flowMeterCalibrationReportCString == nullptr)
+    {
+        LOG_ERROR("Error while preparing flowMeterCalibrationReportCString");
+        cJSON_Delete(pFlowMeterCalibrationJson);
+        return std::string("");
+    }
+
+    const std::string flowMeterCalibrationReport = std::string(flowMeterCalibrationReportCString);
+    free(flowMeterCalibrationReportCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+    cJSON_Delete(pFlowMeterCalibrationJson);
+
+    return flowMeterCalibrationReport;
+}
+
 bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo)
 {
     cJSON* pDataJson = nullptr;

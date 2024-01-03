@@ -29,6 +29,8 @@ private:
     void
     reportInitialDeviceUpdateStatus(EOtaAgentState state, const TWorkflowData& workflowData, const TUpdateId& updateId);
 
+    void reportFlowMeterCalibrationValue(const float& flowMeterCalibrationValue);
+
     TaskHandle_t m_taskHandle; // handle to runTask
 
     uint32_t m_reportedFieldFlags;
