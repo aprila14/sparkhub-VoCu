@@ -92,6 +92,9 @@ void DeviceTwinsController::_run()
     TWorkflowData workflowData = pConfig->getWorkflowData();
     reportDeviceUpdateStatus(EOtaAgentState::OTA_AGENT_STATE_IDLE, workflowData);
 
+    const float flowMeterCalibrationValueFromFlash = pConfig->getFlowMeterCalibrationValue();
+    reportFlowMeterCalibrationValue(flowMeterCalibrationValueFromFlash);
+
     while (true)
     {
         if (!m_pMqttClientController->checkIfMessageBufferIsEmpty())
