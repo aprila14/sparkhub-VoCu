@@ -8,6 +8,7 @@
 #include "mqtt_client_controller.h"
 #include "mutex.h"
 #include "ntp_client.h"
+#include "pulse_counter.h"
 #include "wifi_controller.h"
 
 namespace app
@@ -17,10 +18,11 @@ class AppController
 {
 public:
     AppController(
-        WiFiController*  pwifiController,
-        BleController*   pBleController,
-        CloudController* pCloudController,
-        NtpClient*       pNtpClient);
+        WiFiController*      pwifiController,
+        BleController*       pBleController,
+        CloudController*     pCloudController,
+        NtpClient*           pNtpClient,
+        PulseCounterHandler* pPulseCounterHandler);
 
     void runTask();
 
@@ -29,10 +31,11 @@ public:
         EEventExecutionType executionType = EEventExecutionType::SYNCHRONOUS,
         TEventData*         pData         = nullptr);
 
-    WiFiController*  getWiFiController();
-    BleController*   getBleController();
-    CloudController* getCloudController() const;
-    NtpClient*       getNtpClient() const;
+    WiFiController*      getWiFiController();
+    BleController*       getBleController();
+    CloudController*     getCloudController() const;
+    NtpClient*           getNtpClient() const;
+    PulseCounterHandler* getPulseCounterHandler() const;
 
 #if !TESTING
 private:
@@ -65,14 +68,16 @@ private:
     bool executeEvent_cloudControllerConnectionLost() const;
     bool executeEvent_cloudControllerSetCredentials() const;
     bool executeEvent_otaPerform();
+    bool executeEvent_calibrateFlowMeter(const float flowMeterCalibrationValue);
 
     QueueHandle_t m_eventsQueue;
     TaskHandle_t  m_taskHandle;
 
-    WiFiController*  m_pWifiController;
-    BleController*   m_pBleController;
-    CloudController* m_pCloudController;
-    NtpClient*       m_pNtpClient;
+    WiFiController*      m_pWifiController;
+    BleController*       m_pBleController;
+    CloudController*     m_pCloudController;
+    NtpClient*           m_pNtpClient;
+    PulseCounterHandler* m_pPulseCounterHandler;
 };
 
 // We deliberately have a globa pointer,

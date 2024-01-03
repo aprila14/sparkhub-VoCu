@@ -25,16 +25,18 @@ namespace app
 AppController* pAppController = nullptr;
 
 AppController::AppController(
-    WiFiController*  pwifiController,
-    BleController*   pBleController,
-    CloudController* pCloudController,
-    NtpClient*       pNtpClient) :
+    WiFiController*      pwifiController,
+    BleController*       pBleController,
+    CloudController*     pCloudController,
+    NtpClient*           pNtpClient,
+    PulseCounterHandler* pPulseCounterHandler) :
     m_eventsQueue(nullptr),
     m_taskHandle(nullptr),
     m_pWifiController(pwifiController),
     m_pBleController(pBleController),
     m_pCloudController(pCloudController),
-    m_pNtpClient(pNtpClient)
+    m_pNtpClient(pNtpClient),
+    m_pPulseCounterHandler(pPulseCounterHandler)
 {
     m_eventsQueue = xQueueCreate(EVENTS_QUEUE_SIZE, sizeof(TEventControl));
     assert(m_eventsQueue != nullptr);
@@ -150,6 +152,11 @@ NtpClient* AppController::getNtpClient() const
     return m_pNtpClient;
 }
 
+PulseCounterHandler* AppController::getPulseCounterHandler() const
+{
+    return m_pPulseCounterHandler;
+}
+
 bool AppController::executeEvent(AppController::TEventControl& eventControl)
 {
     bool result = false;
@@ -195,6 +202,9 @@ bool AppController::executeEvent(AppController::TEventControl& eventControl)
             break;
         case EEventType::OTA__PERFORM:
             result = executeEvent_otaPerform();
+            break;
+        case EEventType::CALIBRATE_FLOW_METER:
+            result = executeEvent_calibrateFlowMeter(eventControl.data.flowMeterCalibrationValue);
             break;
         default:
             assert(0); // all cases handled above
@@ -329,4 +339,16 @@ bool AppController::executeEvent_otaPerform() // NOLINT - we don't want to make 
 
     return true;
 }
+
+bool AppController::executeEvent_calibrateFlowMeter(const float flowMeterCalibrationValue)
+{
+    LOG_INFO("Perform flow meter calibration");
+
+    m_pPulseCounterHandler->setFlowMeterCalibrationValue(flowMeterCalibrationValue);
+
+    pConfig->setFlowMeterCalibrationValue(flowMeterCalibrationValue);
+
+    return true;
+}
+
 } // namespace app

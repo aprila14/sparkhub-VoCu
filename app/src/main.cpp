@@ -13,6 +13,7 @@ static const char* LOG_TAG = "Main";
 #include "defines.h"
 #include "hw_misc.h"
 #include "ntp_client.h"
+#include "pulse_counter.h"
 #include "reset_button_handler.h"
 #include "wifi_controller.h"
 
@@ -39,7 +40,6 @@ void temporaryDevelopmentCode()
         // pConfig->setCertificatePack(pCmdCertificate->certificates);
 
         // delete pCmdCertificate;
-
     }
 }
 #endif // IS_DEBUG_BUILD
@@ -117,10 +117,13 @@ void initCommonGlobalModules()
                                        // the variable declaration
     static BleController bleController(&bleuartDriver);
 
+    static PulseCounterHandler pulseCounterHandler;
+
     static CloudController cloudController;
 
     // create and run app controller
-    static app::AppController appController(&wifiController, &bleController, &cloudController, &ntpClient);
+    static app::AppController appController(
+        &wifiController, &bleController, &cloudController, &ntpClient, &pulseCounterHandler);
     app::pAppController = &appController;
 
     // ADC for pressure sensor
@@ -145,6 +148,7 @@ void initCommonGlobalModules()
         wifiController.loadCredentialsFromConfigNvsAndConnectIfSet();
         ntpClient.runTask();
         cloudController.runTask();
+        pulseCounterHandler.runTask();
     }
 }
 

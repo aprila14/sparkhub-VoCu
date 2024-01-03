@@ -15,6 +15,7 @@ namespace
 const std::string DEVICE_TWIN_UPDATE_TOPIC            = std::string("$iothub/twin/PATCH/properties/desired/#");
 const std::string DEVICE_TWIN_REPORTED_TOPIC_PREFIX   = std::string("$iothub/twin/PATCH/properties/reported/?$rid=");
 const std::string DEVICE_TWIN_REPORTED_RESPONSE_TOPIC = std::string("$iothub/twin/res/#");
+const std::string DEVICE_TWIN_GET_TOPIC               = std::string("$iothub/twin/GET/?$rid=");
 
 const char* OTA_SUCCESS_STRING      = "ota_success";
 const char* OTA_FAIL_STRING         = "ota_fail";
@@ -53,7 +54,6 @@ DeviceTwinsController::DeviceTwinsController(
     MqttClientController* mqttClientController,
     CloudController*      cloudController) :
     m_taskHandle(),
-    m_reportedFieldFlags(0),
     m_desiredFieldFlags(0),
     m_requestId(0),
     m_pMqttClientController(mqttClientController),
@@ -92,6 +92,12 @@ void DeviceTwinsController::_run()
     TWorkflowData workflowData = pConfig->getWorkflowData();
     reportDeviceUpdateStatus(EOtaAgentState::OTA_AGENT_STATE_IDLE, workflowData);
 
+    const float flowMeterCalibrationValueFromFlash = pConfig->getFlowMeterCalibrationValue();
+    reportFlowMeterCalibrationValue(flowMeterCalibrationValueFromFlash);
+
+    // publish empty message on the GET topic to be up to date in case there where any changes when device was offline
+    publishGetDeviceTwinRequest();
+
     while (true)
     {
         if (!m_pMqttClientController->checkIfMessageBufferIsEmpty())
@@ -116,23 +122,41 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
 {
     cJSON* pInputJson = json_parser::preprocessInputMessage(message.message);
 
+    cJSON* pDeviceTwinDesiredJson = nullptr;
+
     if (pInputJson == nullptr)
     {
         LOG_ERROR("Error while preprocessing input DeviceTwin message");
         return;
     }
 
-    if (json_parser::checkIfFieldExistsInGivenJson(pInputJson, json_parser::DEVICE_UPDATE_KEY))
+    if (json_parser::checkIfFieldExistsInGivenJson(pInputJson, json_parser::DEVICE_TWIN_DESIRED_KEY))
+    {
+        // in response to the GET request full Device Twin document is received,
+        // so we have to parse the "desired" key first
+        LOG_INFO("%s field found!", json_parser::DEVICE_TWIN_DESIRED_KEY);
+
+        pDeviceTwinDesiredJson = json_parser::parseDeviceTwinDesired(pInputJson);
+
+        if (pDeviceTwinDesiredJson == nullptr)
+        {
+            LOG_ERROR("Error while processing desired DeviceTwin message");
+            return;
+        }
+    }
+    else
+    {
+        // regular update notification from Device Twin is received, no "desired" key to parse
+        pDeviceTwinDesiredJson = pInputJson;
+    }
+
+    if (json_parser::checkIfFieldExistsInGivenJson(pDeviceTwinDesiredJson, json_parser::DEVICE_UPDATE_KEY))
     {
         LOG_INFO("%s field found!", json_parser::DEVICE_UPDATE_KEY);
 
         TDeviceUpdate deviceUpdateData = {};
 
-        if (!json_parser::parseDeviceUpdate(pInputJson, &deviceUpdateData))
-        {
-            LOG_ERROR("Error while parsing deviceUpdateData");
-        }
-        else
+        if (json_parser::parseDeviceUpdate(pDeviceTwinDesiredJson, &deviceUpdateData))
         {
             LOG_INFO("Device update data parsed properly");
 
@@ -186,8 +210,42 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
             }
             // decide if update shall be performed based on action
         }
+        else
+        {
+            LOG_ERROR("Error while parsing deviceUpdateData");
+        }
     }
 
+    if (json_parser::checkIfFieldExistsInGivenJson(pDeviceTwinDesiredJson, json_parser::FLOW_METER_CALIBRATION_KEY))
+    {
+        LOG_INFO("%s field found!", json_parser::FLOW_METER_CALIBRATION_KEY);
+
+        float flowMeterCalibrationValue = 0.0;
+
+        if (json_parser::parseFlowMeterCalibrationValue(pDeviceTwinDesiredJson, &flowMeterCalibrationValue))
+        {
+            LOG_INFO("Flow meter calibration value received %f", flowMeterCalibrationValue);
+
+            app::TEventData eventData           = {};
+            eventData.flowMeterCalibrationValue = flowMeterCalibrationValue;
+
+            const bool result = app::pAppController->addEvent(
+                app::EEventType::CALIBRATE_FLOW_METER, app::EEventExecutionType::SYNCHRONOUS, &eventData);
+
+            if (result)
+            {
+                reportFlowMeterCalibrationValue(flowMeterCalibrationValue);
+            }
+            else
+            {
+                LOG_ERROR("Error during flow meter calibration");
+            }
+        }
+        else
+        {
+            LOG_ERROR("Error while parsing flow meter calibration value");
+        }
+    }
 
     // Add handling new fields here, under separate ifs
 
@@ -196,22 +254,25 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
     LOG_INFO("handleDeviceTwinMessage, end");
 }
 
-void DeviceTwinsController::handleDeviceTwinResponse()
+std::string DeviceTwinsController::prepareEmptyJsonMessage()
 {
     cJSON* pReportedJson = cJSON_CreateObject();
 
     if (pReportedJson == NULL)
     {
         LOG_ERROR("Not possible to create reported JSON");
-        return;
+        return std::string("");
     }
 
-    if (m_reportedFieldFlags > 0)
-    {
-    }
-
-    std::string reportedMessage = json_parser::prepareReportedMessage(pReportedJson);
+    const std::string reportedMessage = json_parser::prepareReportedMessage(pReportedJson);
     cJSON_Delete(pReportedJson);
+
+    return reportedMessage;
+}
+
+void DeviceTwinsController::handleDeviceTwinResponse()
+{
+    const std::string reportedMessage = prepareEmptyJsonMessage();
 
     if (reportedMessage == std::string(""))
     {
@@ -228,6 +289,11 @@ void DeviceTwinsController::handleDeviceTwinResponse()
 std::string DeviceTwinsController::buildReportedTopic(int32_t requestId)
 {
     return DEVICE_TWIN_REPORTED_TOPIC_PREFIX + std::to_string(requestId);
+}
+
+std::string DeviceTwinsController::buildGetTopic(int32_t requestId)
+{
+    return DEVICE_TWIN_GET_TOPIC + std::to_string(requestId);
 }
 
 void DeviceTwinsController::reportDeviceUpdateStatus(EOtaAgentState state, const TWorkflowData& workflowData)
@@ -262,6 +328,41 @@ void DeviceTwinsController::reportDeviceUpdateStatus(EOtaAgentState state, const
     if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), deviceUpdateStatusReportedMessage))
     {
         LOG_ERROR("Could not send firmware info reported message");
+        return;
+    }
+}
+
+void DeviceTwinsController::reportFlowMeterCalibrationValue(const float& flowMeterCalibrationValue)
+{
+    const std::string flowMeterCalibrationReportedMessage =
+        json_parser::prepareFlowMeterCalibrationReport(flowMeterCalibrationValue);
+
+    if (flowMeterCalibrationReportedMessage == std::string(""))
+    {
+        LOG_ERROR("Error while preparing flow meter calibration reported message");
+        return;
+    }
+
+    if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), flowMeterCalibrationReportedMessage))
+    {
+        LOG_ERROR("Could not send flow meter calibration reported message");
+        return;
+    }
+}
+
+void DeviceTwinsController::publishGetDeviceTwinRequest()
+{
+    const std::string reportedMessage = prepareEmptyJsonMessage();
+
+    if (reportedMessage == std::string(""))
+    {
+        LOG_ERROR("Error while preparing get device twin message");
+        return;
+    }
+
+    if (!m_pMqttClientController->sendMessage(buildGetTopic(++m_requestId), reportedMessage))
+    {
+        LOG_ERROR("Could not send get device twin message");
         return;
     }
 }

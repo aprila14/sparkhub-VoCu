@@ -17,7 +17,6 @@ static const char* LOG_TAG = "CloudController";
 namespace
 {
 
-
 constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
 constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
 constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 8 * 60 * 60 * 1000; // every 8 hour
@@ -29,8 +28,6 @@ constexpr float PRESSUREALARMTHRESHOLD                                = 3.7;
 bool firstTimePressureAlarmDetected                                   = true;
 bool isBelowPressureAlarm                                             = false;
 uint32_t TimeLastUpdateDeviceStatus                                    = commons::getCurrentTimestampMs();
-
-
 
 
 } // unnamed namespace
@@ -149,7 +146,7 @@ void CloudController::_run()
 
 
     // Adding some delay to allow mqttClientController to start
-    SLEEP_MS(SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER);
+    SLEEP_MS(SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER_MS);
     m_deviceTwinsController.runTask();
 
     LOG_INFO("Cloud controller initiated!");
@@ -165,16 +162,18 @@ void CloudController::perform()
 {
     uint32_t time2 = commons::getCurrentTimestampMs();
     CheckPressureValueBelowThreshold();
-    SLEEP_MS(SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD);
+    SLEEP_MS(SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD_MS);
 
-    if ((commons::getCurrentTimestampMs() - TimeLastUpdateDeviceStatus) > SLEEP_TIME_BETWEEN_SENDING_MESSAGES)
+    if ((commons::getCurrentTimestampMs() - timeLastUpdateDeviceStatusMs) > SLEEP_TIME_BETWEEN_SENDING_MESSAGES_MS)
     {
         LOG_INFO("SLEEP_TIME_BETWEEN_SENDING_MESSAGES reached; calling updateDeviceStatus() function");
         uint32_t current_time = commons::getCurrentTimestampMs();
         uint32_t time_between_two_messages_InMIN = (current_time - TimeLastUpdateDeviceStatus) / (1000*60); //in minutes
         LOG_INFO("time_between_two_messages: %d min", time_between_two_messages_InMIN);
         updateDeviceStatus();
+
         TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
+
     }
 }
 
@@ -213,7 +212,7 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     deviceStatus.isBelowPressureAlarmThreshold = isBelowPressureAlarm;
     deviceStatus.currentTimeFromStartupMs      = commons::getCurrentTimestampMs();
     deviceStatus.pressureSensorValue           = getAvgPressureSensorValue();
-    // update DeviceTwin
+    deviceStatus.flowMeterValue                = app::pAppController->getPulseCounterHandler()->getTotalFlowInLitres();
 
     strcpy(
         deviceStatus.currentLocalTime,

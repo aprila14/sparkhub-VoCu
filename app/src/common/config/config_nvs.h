@@ -11,15 +11,16 @@ namespace ConfigKeyName
 {
 
 // make sure this names are unique
-constexpr const char* BLE_CONFIGURATION_STATUS     = "ble-conf";
-constexpr const char* WIFI_CREDENTIALS             = "wifi-cr";
-constexpr const char* CLOUD_CERTIFICATES           = "cloud-cert";
-constexpr const char* CLOUD_CREDENTIALS            = "cloud-cr";
-constexpr const char* OTA_UPDATE_LINK              = "ota-link";
-constexpr const char* CERTIFICATES                 = "cert-pack";
-constexpr const char* DEVICE_PROVISIONING_STATUS   = "dev-prov";
-constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY = "work-id";
-constexpr const char* UPDDATE_ID_NVS_KEY           = "upd-id";
+constexpr const char* BLE_CONFIGURATION_STATUS       = "ble-conf";
+constexpr const char* WIFI_CREDENTIALS               = "wifi-cr";
+constexpr const char* CLOUD_CERTIFICATES             = "cloud-cert";
+constexpr const char* CLOUD_CREDENTIALS              = "cloud-cr";
+constexpr const char* OTA_UPDATE_LINK                = "ota-link";
+constexpr const char* CERTIFICATES                   = "cert-pack";
+constexpr const char* DEVICE_PROVISIONING_STATUS     = "dev-prov";
+constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY   = "work-id";
+constexpr const char* UPDDATE_ID_NVS_KEY             = "upd-id";
+constexpr const char* FLOW_METER_CALIBRATION_NVS_KEY = "flow-cal";
 
 } // namespace ConfigKeyName
 
@@ -78,6 +79,9 @@ public:
     virtual const TUpdateId& getUpdateId();
     virtual void             setUpdateId(const TUpdateId& updateId);
 
+    virtual float getFlowMeterCalibrationValue() const;
+    virtual void  setFlowMeterCalibrationValue(float flowMeterCalibrationValue);
+
 #if !TESTING
 private:
 #endif
@@ -108,6 +112,8 @@ private:
     TWiFiCredentials        m_wiFiCredentials        = {};
     TCloudCredentials       m_cloudCredentials       = {};
     TOtaUpdateLink          m_otaUpdateLink          = {};
+
+    float m_flowMeterCalibrationValue = 0;
 
     TCertificatePack               m_certificatePack = {};
     ECloudDeviceProvisioningStatus m_deviceProvisioningStatus =

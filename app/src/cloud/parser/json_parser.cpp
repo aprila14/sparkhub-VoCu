@@ -5,6 +5,7 @@ static const char* LOG_TAG = "jsonParser";
 #include "json_parser.h"
 
 #include "json_parser_defines.h"
+#include <float.h>
 
 #include <cctype>
 
@@ -21,24 +22,15 @@ extern const char* DEVICE_PROVISIONING_MODEL_ID;
 namespace json_parser
 {
 
-const char* DEVICE_UPDATE_KEY = "deviceUpdate";
-
 #if !TESTING // directive added to avoid double declaration of function
 static bool        processResponse(cJSON* pDataJson, TResponse* pOutput);
 static bool        processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
-static EMsgMethod  extractMsgMethod(const std::string& inputMessage);
 static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
 static cJSON*      dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
-static std::string getStatusReportString(const TDeviceStatus& deviceStatus);
 static std::string getResponseString(const TResponse& responseData);
-static std::string getConnectionString(bool status);
-static std::string getBooleanString(bool status);
 static std::string getOtaUpdateLinkString(const TOtaUpdateLink& otaUpdateLink);
 
 #endif
-
-static std::string getConnectionString(bool status);
-static std::string getBooleanString(bool status);
 
 
 bool checkIfFieldExistsInGivenJson(cJSON* inputJson, const char* keyword)
@@ -53,73 +45,6 @@ bool checkIfFieldExistsInGivenJson(cJSON* inputJson, const char* keyword)
     return true;
 }
 /***** JSON TO STRUCTURE *****/
-
-/**
- * @brief processStatusReport - function parsing StatusReport message in a cJSON format into TDeviceStatus structure
- * @param pDataJson - input cJSON object with a data JSON containing message payload
- * @param pOutput - TDeviceStatus structure with the extracted data
- * @return boolean value representing success of the operation
- */
-
-
-bool processStatusReport(cJSON* pDataJson, TDeviceStatus* pOutput)
-{
-    cJSON* pWifiConnectionStateJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "wifiConnectionState");
-    cJSON* pBleConnectionStateJson  = cJSON_GetObjectItemCaseSensitive(pDataJson, "bleConnectionState");
-
-    cJSON* pBelowPressureAlarmThresholdJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "isBelowPressureAlarmThreshold");
-    cJSON* pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
-    cJSON* pCurrentTimeMsJson       = cJSON_GetObjectItemCaseSensitive(pDataJson, "currentTimeMs");
-    cJSON* pFirmwareVersionJson     = cJSON_GetObjectItemCaseSensitive(pDataJson, "firmwareVersion");
-
-    if (pWifiConnectionStateJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no wifiConnectionState or wrong format");
-        return false;
-    }
-
-    if (pBleConnectionStateJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no bleConnectionState or wrong format");
-        return false;
-    }
-
-
-    if (pBelowPressureAlarmThresholdJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no pBelowPressureThresholdJson or wrong format");
-        return false;
-    }
-
-    if (pLightIntensityLevelJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no lightIntensityLevel or wrong format");
-        return false;
-    }
-
-    if (pCurrentTimeMsJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no currentTimeMs or wrong format");
-        return false;
-    }
-
-    if (pFirmwareVersionJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no firmwareVersion or wrong format");
-        return false;
-    }
-
-    std::string firmware = pFirmwareVersionJson->valuestring;
-
-    pOutput->isWiFiConnected          = cJSON_IsTrue(pWifiConnectionStateJson);
-    pOutput->isBleConnected           = cJSON_IsTrue(pBleConnectionStateJson);
-    pOutput->isBelowPressureAlarmThreshold           = cJSON_IsTrue(pBelowPressureAlarmThresholdJson);    
-    pOutput->currentTimeFromStartupMs = static_cast<uint32_t>(pCurrentTimeMsJson->valueint);
-    strcpy(pOutput->firmwareVersion, firmware.c_str());
-
-    return true;
-
-}
 
 /**
  * @brief processResponse - function parsing any of the response messages (e.g. response to Heartbeat message) into
@@ -223,54 +148,6 @@ bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvi
     cJSON_Delete(pDeviceProvisioningJson);
 
     return true;
-}
-
-/**
- * @brief extractMsgMethod - function recognizing message method (e.g. RPC Command, or message from the widget) based on
- * the provided std::string with a message in JSON format
- * @param inputMessage - std::string containing message to identify
- * @return EMsgMethod with the method recognized by the function
- */
-
-EMsgMethod extractMsgMethod(const std::string& inputMessage)
-{
-    cJSON* pMessageJson = preprocessInputMessage(inputMessage);
-
-    if (pMessageJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON");
-        return EMsgMethod::MSG_METHOD_FAILED;
-    }
-
-    cJSON* pMethodJson = cJSON_GetObjectItemCaseSensitive(pMessageJson, "method");
-
-    if (pMethodJson == nullptr)
-    {
-        LOG_INFO("Could not parse JSON, no method or wrong format");
-        cJSON_Delete(pMessageJson);
-        return EMsgMethod::MSG_METHOD_FAILED;
-    }
-
-    std::string methodString = std::string(pMethodJson->valuestring);
-
-    cJSON_Delete(pMessageJson);
-
-    if (methodString == "rpcCommand")
-    {
-        return EMsgMethod::MSG_METHOD_RPC_COMMAND;
-    }
-    else if (methodString == "setLightIntensity")
-    {
-        return EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY;
-    }
-    else if (methodString == "getLightIntensity")
-    {
-        return EMsgMethod::MSG_METHOD_GET_LIGHT_INTENSITY;
-    }
-    else
-    {
-        return EMsgMethod::MSG_METHOD_UNKNOWN;
-    }
 }
 
 /**
@@ -588,6 +465,37 @@ std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, 
     return deviceUpdateReport;
 }
 
+std::string prepareFlowMeterCalibrationReport(const float& flowMeterCalibrationValue)
+{
+    cJSON* pFlowMeterCalibrationJson = cJSON_CreateObject();
+    if (pFlowMeterCalibrationJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) flow meter calibration JSON");
+        return std::string("");
+    }
+
+    if (!cJSON_AddNumberToObject(pFlowMeterCalibrationJson, FLOW_METER_CALIBRATION_KEY, flowMeterCalibrationValue))
+    {
+        LOG_ERROR("Could not add flow meter calibration valuer to JSON");
+        cJSON_Delete(pFlowMeterCalibrationJson);
+        return std::string("");
+    }
+
+    char* flowMeterCalibrationReportCString = cJSON_Print(pFlowMeterCalibrationJson);
+    if (flowMeterCalibrationReportCString == nullptr)
+    {
+        LOG_ERROR("Error while preparing flowMeterCalibrationReportCString");
+        cJSON_Delete(pFlowMeterCalibrationJson);
+        return std::string("");
+    }
+
+    const std::string flowMeterCalibrationReport = std::string(flowMeterCalibrationReportCString);
+    free(flowMeterCalibrationReportCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+    cJSON_Delete(pFlowMeterCalibrationJson);
+
+    return flowMeterCalibrationReport;
+}
+
 bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo)
 {
     cJSON* pDataJson = nullptr;
@@ -849,6 +757,59 @@ bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate)
     return true;
 }
 
+bool parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrationValue)
+{
+    if (pInputJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no input JSON data");
+        return false;
+    }
+
+    if (pFlowMeterCalibrationValue == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no output parameter");
+        return false;
+    }
+
+    cJSON* pFlowMeterCalibrationJson = cJSON_GetObjectItemCaseSensitive(pInputJson, FLOW_METER_CALIBRATION_KEY);
+    if (pFlowMeterCalibrationJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no flow meter calibration data");
+        return false;
+    }
+
+    if (!cJSON_IsNumber(pFlowMeterCalibrationJson))
+    {
+        LOG_WARNING("Flow meter calibration value is not a number");
+        return false;
+    }
+
+    if (pFlowMeterCalibrationJson->valuedouble < -FLT_MAX || pFlowMeterCalibrationJson->valuedouble > FLT_MAX)
+    {
+        LOG_WARNING("Flow meter calibration value out of range");
+        return false;
+    }
+
+    (*pFlowMeterCalibrationValue) = pFlowMeterCalibrationJson->valuedouble;
+
+    LOG_INFO("Parsing flow meter calibration value correct");
+
+    return true;
+}
+
+cJSON* parseDeviceTwinDesired(cJSON* pInputJson)
+{
+    if (pInputJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no input JSON data");
+        return nullptr;
+    }
+
+    cJSON* pDeviceTwinDesiredJson = cJSON_GetObjectItemCaseSensitive(pInputJson, DEVICE_TWIN_DESIRED_KEY);
+
+    return pDeviceTwinDesiredJson;
+}
+
 /***** REPORTED DEVICE TWINS *******/
 
 cJSON* initiateReportedJson()
@@ -950,6 +911,14 @@ cJSON* deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter
         return nullptr;
     }
 
+    cJSON* pFlowMeterValueJson = cJSON_CreateNumber(deviceStatus.flowMeterValue);
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "flowMeterValue", pFlowMeterValueJson)))
+    {
+        LOG_INFO("Cannot add flowMeterValue JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
     cJSON* pOutputJson = cJSON_CreateObject();
     if (!(cJSON_AddItemToObject(pOutputJson, "status", pDeviceStatusJson)))
     {
@@ -1012,19 +981,6 @@ cJSON* dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCoun
 
 /***** STRING GET FUNCTIONS FOR FRAME PRINTING *****/
 
-std::string getStatusReportString(const TDeviceStatus& deviceStatus)
-{
-    std::string statusReportString =
-        "wifiConnectionState: " + getBooleanString(deviceStatus.isWiFiConnected) + "\n" +
-        "bleConnectionState: " + getBooleanString(deviceStatus.isBleConnected) + "\n" +
-        "BelowPressureAlarmThreshold: " + getBooleanString(deviceStatus.isBelowPressureAlarmThreshold) + "\n" +
-        "currentTimeFromStartupMs: " + std::to_string(deviceStatus.currentTimeFromStartupMs) + "\n" +
-        "currentLocalTime: " + deviceStatus.currentLocalTime + "\n" +
-        "firmwareVersion: " + deviceStatus.firmwareVersion + "\n";
-
-    return statusReportString;
-}
-
 std::string getResponseString(const TResponse& responseData)
 {
     std::string responseString = responseData.ACK ? "true" : "false";
@@ -1051,64 +1007,6 @@ std::string TDeviceStatus::getCurrentLocalTime() const
     std::string output(currentLocalTime);
 
     return output;
-}
-
-/***** HELPER FUNCTIONS *****/
-
-std::string getMsgMethodString(EMsgMethod msgMethod)
-{
-    switch (msgMethod)
-    {
-        case EMsgMethod::MSG_METHOD_FAILED:
-            return std::string("MSG_METHOD_FAILED");
-        case EMsgMethod::MSG_METHOD_GET_LIGHT_INTENSITY:
-            return std::string("MSG_METHOD_GET_LIGHT_INTENSITY");
-        case EMsgMethod::MSG_METHOD_RPC_COMMAND:
-            return std::string("MSG_METHOD_RPC_COMMAND");
-        case EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY:
-            return std::string("MSG_METHOD_SET_LIGHT_INTENSITY");
-        case EMsgMethod::MSG_METHOD_UNKNOWN:
-            return std::string("MSG_METHOD_UNKNOWN");
-        default:
-            return std::string("MSG_METHOD_ERROR");
-    }
-}
-
-std::string getMsgCodeString(EMsgCode msgCode)
-{
-    switch (msgCode)
-    {
-        case EMsgCode::MSG_HEARTBEAT:
-            return std::string("MSG_HEARTBEAT");
-        case EMsgCode::MSG_HEARTBEAT_RESPONSE:
-            return std::string("MSG_HEARTBEAT_RESPONSE");
-        case EMsgCode::MSG_STATUS_REPORT:
-            return std::string("MSG_STATUS_REPORT");
-        case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
-            return std::string("MSG_STATUS_REPORT_RESPONSE");
-        case EMsgCode::MSG_OTA_UPDATE_LINK:
-            return std::string("MSG_OTA_UPDATE_LINK");
-        case EMsgCode::MSG_OTA_UPDATE_LINK_RESPONSE:
-            return std::string("MSG_OTA_UPDATE_LINK_RESPONSE");
-        default:
-            return std::string("MSG_UNKNOWN_MESSAGE");
-    }
-}
-
-std::string getConnectionString(bool status)
-{
-    if (status)
-        return std::string("connected");
-    else
-        return std::string("not connected");
-}
-
-std::string getBooleanString(bool status)
-{
-    if (status)
-        return std::string("true");
-    else
-        return std::string("false");
 }
 
 } // namespace json_parser
