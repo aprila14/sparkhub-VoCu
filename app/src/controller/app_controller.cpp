@@ -340,6 +340,9 @@ bool AppController::executeEvent_calibrateFlowMeter(const float flowMeterCalibra
     LOG_INFO("Perform flow meter calibration");
 
     m_pPulseCounterHandler->setFlowMeterCalibrationValue(flowMeterCalibrationValue);
+
+    pConfig->setFlowMeterCalibrationValue(flowMeterCalibrationValue);
+
     return true;
 }
 

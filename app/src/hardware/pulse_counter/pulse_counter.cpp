@@ -6,6 +6,7 @@ static const char* LOG_TAG = "PulseCounter";
 
 #include "freertos/task.h"
 #include "commons.h"
+#include "config_nvs.h"
 #include "defines.h"
 #include "esp_attr.h"
 #include "sleep.h"
@@ -49,6 +50,9 @@ typedef struct
 
 PulseCounterHandler::PulseCounterHandler() : m_taskHandle(), m_counterPulses(0), m_multPulses(0)
 {
+    m_flowMeterCalibrationValue = pConfig->getFlowMeterCalibrationValue();
+
+    LOG_INFO("Flow meter calibration value from NVS %f", m_flowMeterCalibrationValue);
 }
 
 void PulseCounterHandler::runTask()
