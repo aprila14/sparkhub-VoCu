@@ -48,7 +48,7 @@ typedef struct
     uint32_t    status; // information on the event type that caused the interrupt
 } TPcntEvt;
 
-PulseCounterHandler::PulseCounterHandler() : m_taskHandle(), m_counterPulses(0), m_multPulses(0)
+PulseCounterHandler::PulseCounterHandler() : m_taskHandle(), m_counterPulses(0), m_totalLitres(0.0), m_multPulses(0)
 {
     m_flowMeterCalibrationValue = pConfig->getFlowMeterCalibrationValue();
 
@@ -208,7 +208,7 @@ uint32_t PulseCounterHandler::getPulseCounterValue() const
 
 float PulseCounterHandler::getTotalFlowInLitres() const
 {
-    return totalLitres;
+    return m_totalLitres;
 }
 
 float PulseCounterHandler::getFlowMeterCalibrationValue() const
@@ -238,9 +238,8 @@ void PulseCounterHandler::_run()
     // Initialize PCNT event queue and PCNT functions
     pcntEvtQueue = xQueueCreate(PCNT_EVENT_QUEUE_SIZE, sizeof(TPcntEvt));
     initiatePulseCounter(pcnt_unit);
-    int64_t previous_time_ms         = 0;
-    float   flowLitres               = 0;
-    totalLitres                      = 0;
+    int64_t  previous_time_ms        = 0;
+    float    flowLitres              = 0;
     uint32_t DeltaCounterPulses      = 0;
     uint32_t m_counterPulsesPrevious = 0;
     float    flowRate                = 0;
@@ -312,10 +311,10 @@ void PulseCounterHandler::_run()
 
             previous_time_ms = commons::getCurrentTimestampMs();
 
-            totalLitres = totalLitres + flowLitres; // litres
+            m_totalLitres = m_totalLitres + flowLitres; // litres
 
             LOG_INFO("flowLitres :%.6f", flowLitres);
-            LOG_INFO("totalLitres :%.6f", totalLitres);
+            LOG_INFO("totalLitres :%.6f", m_totalLitres);
 
             flowLitres = 0;
         }

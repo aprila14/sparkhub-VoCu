@@ -33,7 +33,7 @@ private:
 
     uint32_t m_counterPulses;
 
-    float totalLitres;
+    float m_totalLitres;
 
     float m_flowMeterCalibrationValue;
 

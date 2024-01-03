@@ -132,6 +132,8 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
 
     if (json_parser::checkIfFieldExistsInGivenJson(pInputJson, json_parser::DEVICE_TWIN_DESIRED_KEY))
     {
+        // in response to the GET request full Device Twin document is received,
+        // so we have to parse the "desired" key first
         LOG_INFO("%s field found!", json_parser::DEVICE_TWIN_DESIRED_KEY);
 
         pDeviceTwinDesiredJson = json_parser::parseDeviceTwinDesired(pInputJson);
@@ -144,6 +146,7 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
     }
     else
     {
+        // regular update notification from Device Twin is received, no "desired" key to parse
         pDeviceTwinDesiredJson = pInputJson;
     }
 
