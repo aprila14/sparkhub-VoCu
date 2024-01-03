@@ -152,6 +152,11 @@ NtpClient* AppController::getNtpClient() const
     return m_pNtpClient;
 }
 
+PulseCounterHandler* AppController::getPulseCounterHandler() const
+{
+    return m_pPulseCounterHandler;
+}
+
 bool AppController::executeEvent(AppController::TEventControl& eventControl)
 {
     bool result = false;

@@ -33,14 +33,13 @@ int64_t            timeLastUpdateDeviceStatusMs                          = commo
 
 } // unnamed namespace
 
-CloudController::CloudController(PulseCounterHandler& pulseCounterHandler) :
+CloudController::CloudController() :
     m_taskHandle(),
     m_msgCounter(0),
     m_connectionStatus(ECloudConnectionStatus::CLOUD_STATUS_NOT_CONFIGURED),
     m_mqttClientController(this),
     m_deviceProvisioningController(&this->m_mqttClientController),
-    m_deviceTwinsController(&this->m_mqttClientController, this),
-    m_pulseCounterHandler(pulseCounterHandler)
+    m_deviceTwinsController(&this->m_mqttClientController, this)
 {
     m_semaphoreCredentialsReady    = xSemaphoreCreateBinary();
     m_semaphoreWifiConnectionReady = xSemaphoreCreateBinary();
@@ -206,8 +205,7 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     deviceStatus.isBelowPressureAlarmThreshold = isBelowPressureAlarm;
     deviceStatus.currentTimeFromStartupMs      = commons::getCurrentTimestampMs();
     deviceStatus.pressureSensorValue           = getAvgPressureSensorValue();
-    deviceStatus.flowMeterValue                = m_pulseCounterHandler.getTotalFlowInLitres();
-    // update DeviceTwin
+    deviceStatus.flowMeterValue                = app::pAppController->getPulseCounterHandler()->getTotalFlowInLitres();
 
     strcpy(
         deviceStatus.currentLocalTime,

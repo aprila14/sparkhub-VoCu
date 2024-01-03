@@ -31,10 +31,11 @@ public:
         EEventExecutionType executionType = EEventExecutionType::SYNCHRONOUS,
         TEventData*         pData         = nullptr);
 
-    WiFiController*  getWiFiController();
-    BleController*   getBleController();
-    CloudController* getCloudController() const;
-    NtpClient*       getNtpClient() const;
+    WiFiController*      getWiFiController();
+    BleController*       getBleController();
+    CloudController*     getCloudController() const;
+    NtpClient*           getNtpClient() const;
+    PulseCounterHandler* getPulseCounterHandler() const;
 
 #if !TESTING
 private:

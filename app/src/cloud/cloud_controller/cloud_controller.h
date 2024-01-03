@@ -17,7 +17,7 @@ class MqttClientController;
 class CloudController
 {
 public:
-    CloudController(PulseCounterHandler& pulseCounterHandler);
+    CloudController();
     ~CloudController() = default;
 
     void runTask();
@@ -121,8 +121,6 @@ private:
     DeviceTwinsController        m_deviceTwinsController;
 
     std::string m_deviceStatusTopic;
-
-    PulseCounterHandler& m_pulseCounterHandler;
 };
 
 #endif // CLOUDCONTROLLER_H

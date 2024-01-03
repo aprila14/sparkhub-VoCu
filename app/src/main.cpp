@@ -119,7 +119,7 @@ void initCommonGlobalModules()
 
     static PulseCounterHandler pulseCounterHandler;
 
-    static CloudController cloudController(pulseCounterHandler);
+    static CloudController cloudController;
 
     // create and run app controller
     static app::AppController appController(
