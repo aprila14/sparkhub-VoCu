@@ -3,8 +3,9 @@ static const char* LOG_TAG = "PulseCounter";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
 #include "pulse_counter.h"
-#include "commons.h"
+
 #include "freertos/task.h"
+#include "commons.h"
 #include "defines.h"
 #include "esp_attr.h"
 #include "sleep.h"
@@ -21,12 +22,12 @@ namespace
  *   - reaches 'h_lim' value,
  *   - will be reset to zero.
  */
-constexpr int16_t PCNT_H_LIM_VAL    = 1000;
-constexpr int16_t PCNT_THRESH1_VAL  = 500;
-constexpr int16_t PCNT_THRESH0_VAL  = -500;
-constexpr int     PCNT_INPUT_SIG_IO = 4; // Pulse Input GPIO
-constexpr int PULSE_PER_LITRE = 2580; //pulses per litre from the datasheet digmesa nano flex
-constexpr int SENSOR_CALIBRATION_FACTOR = 1.098;
+constexpr int16_t PCNT_H_LIM_VAL            = 1000;
+constexpr int16_t PCNT_THRESH1_VAL          = 500;
+constexpr int16_t PCNT_THRESH0_VAL          = -500;
+constexpr int     PCNT_INPUT_SIG_IO         = 4;    // Pulse Input GPIO
+constexpr int     PULSE_PER_LITRE           = 2580; // pulses per litre from the datasheet digmesa nano flex
+constexpr float   SENSOR_CALIBRATION_FACTOR = 1.098;
 
 // Any pulses lasting shorter than PCNT_INPUT_FILTER_VALUE will be ignored when the filter is enabled
 constexpr uint16_t PCNT_INPUT_FILTER_VALUE = 100;
@@ -223,12 +224,12 @@ void PulseCounterHandler::_run()
     // Initialize PCNT event queue and PCNT functions
     pcntEvtQueue = xQueueCreate(PCNT_EVENT_QUEUE_SIZE, sizeof(TPcntEvt));
     initiatePulseCounter(pcnt_unit);
-    int64_t previous_time_ms = 0;
-    float flowLitres = 0;
-    totalLitres = 0;
-    uint32_t DeltaCounterPulses = 0;
+    int64_t previous_time_ms         = 0;
+    float   flowLitres               = 0;
+    totalLitres                      = 0;
+    uint32_t DeltaCounterPulses      = 0;
     uint32_t m_counterPulsesPrevious = 0;
-    float flowRate = 0;
+    float    flowRate                = 0;
 
     while (1)
     {
@@ -268,39 +269,41 @@ void PulseCounterHandler::_run()
             LOG_INFO("Current counter value :%lu", m_counterPulses);
 
 
-            if(m_counterPulses >= m_counterPulsesPrevious)
+            if (m_counterPulses >= m_counterPulsesPrevious)
             {
                 DeltaCounterPulses = m_counterPulses - m_counterPulsesPrevious;
-                flowLitres = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) / float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) / float(PULSE_PER_LITRE) * float(SENSOR_CALIBRATION_FACTOR); //in Liter per sampling rate
+                flowLitres         = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) /
+                             float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) /
+                             float(PULSE_PER_LITRE) * float(SENSOR_CALIBRATION_FACTOR); // in Liter per sampling rate
                 m_counterPulsesPrevious = m_counterPulses;
             }
 
-            if(m_counterPulses < m_counterPulsesPrevious)
+            if (m_counterPulses < m_counterPulsesPrevious)
             {
-                DeltaCounterPulses = m_counterPulses+PCNT_H_LIM_VAL - m_counterPulsesPrevious;
-                flowLitres = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) / float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) / float(PULSE_PER_LITRE) * float(SENSOR_CALIBRATION_FACTOR); //in Liter per sampling rate
+                DeltaCounterPulses = m_counterPulses + PCNT_H_LIM_VAL - m_counterPulsesPrevious;
+                flowLitres         = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) /
+                             float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) /
+                             float(PULSE_PER_LITRE) * float(SENSOR_CALIBRATION_FACTOR); // in Liter per sampling rate
                 m_counterPulsesPrevious = m_counterPulses;
             }
 
-            //float flowRate = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) / float(commons::getCurrentTimestampMs() - previous_time_ms) * float(m_counterPulses) / float(pulse_per_litre); //in Millilitres per  milliseconds
+            // float flowRate = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) / float(commons::getCurrentTimestampMs() -
+            // previous_time_ms) * float(m_counterPulses) / float(pulse_per_litre); //in Millilitres per  milliseconds
 
-            //LOG_INFO("flowRate :%.6f", flowRate);
-       
-            
-            //LOG_INFO("flowRate :%.6f", flowRate);
-            //flowLitres = flowRate/1000 * float(commons::getCurrentTimestampMs() - previous_time_ms); //Litres          
-            
+            // LOG_INFO("flowRate :%.6f", flowRate);
+
+
+            // LOG_INFO("flowRate :%.6f", flowRate);
+            // flowLitres = flowRate/1000 * float(commons::getCurrentTimestampMs() - previous_time_ms); //Litres
+
             previous_time_ms = commons::getCurrentTimestampMs();
 
-            totalLitres = totalLitres + flowLitres; //litres
+            totalLitres = totalLitres + flowLitres; // litres
 
             LOG_INFO("flowLitres :%.6f", flowLitres);
             LOG_INFO("totalLitres :%.6f", totalLitres);
 
             flowLitres = 0;
-
-
-
         }
     }
 }

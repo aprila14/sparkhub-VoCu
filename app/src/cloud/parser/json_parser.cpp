@@ -5,6 +5,7 @@ static const char* LOG_TAG = "jsonParser";
 #include "json_parser.h"
 
 #include "json_parser_defines.h"
+#include <float.h>
 
 #include <cctype>
 
@@ -20,8 +21,6 @@ extern const char* DEVICE_PROVISIONING_MODEL_ID;
 
 namespace json_parser
 {
-
-const char* DEVICE_UPDATE_KEY = "deviceUpdate";
 
 #if !TESTING // directive added to avoid double declaration of function
 static bool        processResponse(cJSON* pDataJson, TResponse* pOutput);
@@ -723,6 +722,46 @@ bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate)
     strncpy(pDeviceUpdate->fileUrl, pUrlJson->valuestring, strlen(pUrlJson->valuestring));
 
     LOG_INFO("Parsing Device Update was correct");
+
+    return true;
+}
+
+bool parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrationValue)
+{
+    if (pInputJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no input JSON data");
+        return false;
+    }
+
+    if (pFlowMeterCalibrationValue == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no output parameter");
+        return false;
+    }
+
+    cJSON* pFlowMeterCalibrationJson = cJSON_GetObjectItemCaseSensitive(pInputJson, FLOW_METER_CALIBRATION_KEY);
+    if (pFlowMeterCalibrationJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no flow meter calibration data");
+        return false;
+    }
+
+    if (!cJSON_IsNumber(pFlowMeterCalibrationJson))
+    {
+        LOG_WARNING("Flow meter calibration value is not a number");
+        return false;
+    }
+
+    if (pFlowMeterCalibrationJson->valuedouble < -FLT_MAX || pFlowMeterCalibrationJson->valuedouble > FLT_MAX)
+    {
+        LOG_WARNING("Flow meter calibration value out of range");
+        return false;
+    }
+
+    (*pFlowMeterCalibrationValue) = pFlowMeterCalibrationJson->valuedouble;
+
+    LOG_INFO("Parsing flow meter calibration value correct");
 
     return true;
 }

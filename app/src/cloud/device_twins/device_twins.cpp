@@ -128,11 +128,7 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
 
         TDeviceUpdate deviceUpdateData = {};
 
-        if (!json_parser::parseDeviceUpdate(pInputJson, &deviceUpdateData))
-        {
-            LOG_ERROR("Error while parsing deviceUpdateData");
-        }
-        else
+        if (json_parser::parseDeviceUpdate(pInputJson, &deviceUpdateData))
         {
             LOG_INFO("Device update data parsed properly");
 
@@ -186,8 +182,27 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
             }
             // decide if update shall be performed based on action
         }
+        else
+        {
+            LOG_ERROR("Error while parsing deviceUpdateData");
+        }
     }
 
+    if (json_parser::checkIfFieldExistsInGivenJson(pInputJson, json_parser::FLOW_METER_CALIBRATION_KEY))
+    {
+        LOG_INFO("%s field found!", json_parser::FLOW_METER_CALIBRATION_KEY);
+
+        float flowMeterCalibrationValue = 0.0;
+
+        if (json_parser::parseFlowMeterCalibrationValue(pInputJson, &flowMeterCalibrationValue))
+        {
+            LOG_INFO("Flow meter calibration value received %f", flowMeterCalibrationValue);
+        }
+        else
+        {
+            LOG_ERROR("Error while parsing flow meter calibration value");
+        }
+    }
 
     // Add handling new fields here, under separate ifs
 
