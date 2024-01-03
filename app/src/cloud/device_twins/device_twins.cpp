@@ -198,7 +198,20 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
         {
             LOG_INFO("Flow meter calibration value received %f", flowMeterCalibrationValue);
 
-            reportFlowMeterCalibrationValue(flowMeterCalibrationValue);
+            app::TEventData eventData           = {};
+            eventData.flowMeterCalibrationValue = flowMeterCalibrationValue;
+
+            const bool result = app::pAppController->addEvent(
+                app::EEventType::CALIBRATE_FLOW_METER, app::EEventExecutionType::SYNCHRONOUS, &eventData);
+
+            if (result)
+            {
+                reportFlowMeterCalibrationValue(flowMeterCalibrationValue);
+            }
+            else
+            {
+                LOG_ERROR("Error during flow meter calibration");
+            }
         }
         else
         {

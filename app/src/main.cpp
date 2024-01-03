@@ -122,7 +122,8 @@ void initCommonGlobalModules()
     static CloudController cloudController(pulseCounterHandler);
 
     // create and run app controller
-    static app::AppController appController(&wifiController, &bleController, &cloudController, &ntpClient);
+    static app::AppController appController(
+        &wifiController, &bleController, &cloudController, &ntpClient, &pulseCounterHandler);
     app::pAppController = &appController;
 
     // ADC for pressure sensor
@@ -163,13 +164,6 @@ extern "C"
         initCommonGlobalModules();
 
         app::pAppController->runTask();
-
-        //static PulseCounterHandler pulseCounterHandler;
-
-        //pulseCounterHandler.runTask();
-
-
-
 
 #if USE_CONSOLE
         console::runConsoleControl();

@@ -17,6 +17,10 @@ public:
 
     float getTotalFlowInLitres() const;
 
+    float getFlowMeterCalibrationValue() const;
+
+    void setFlowMeterCalibrationValue(float flowMeterCalibration);
+
 #if !TESTING
 private:
 #endif
@@ -30,6 +34,8 @@ private:
     uint32_t m_counterPulses;
 
     float totalLitres;
+
+    float m_flowMeterCalibrationValue;
 
     uint32_t m_multPulses;
 };

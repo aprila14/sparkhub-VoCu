@@ -207,6 +207,16 @@ float PulseCounterHandler::getTotalFlowInLitres() const
     return totalLitres;
 }
 
+float PulseCounterHandler::getFlowMeterCalibrationValue() const
+{
+    return m_flowMeterCalibrationValue;
+}
+
+void PulseCounterHandler::setFlowMeterCalibrationValue(float flowMeterCalibration)
+{
+    m_flowMeterCalibrationValue = flowMeterCalibration;
+}
+
 void PulseCounterHandler::_run()
 {
     LOG_INFO("run bottom started...");
