@@ -17,17 +17,17 @@ static const char* LOG_TAG = "CloudController";
 namespace
 {
 
-constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER = 1000;
+constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER_MS = 1000;
 constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
-constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES                = 8 * 60 * 60 * 1000; // every 8 hour
-constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD     = 60 * 1000;    // every 1 minute
+constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES_MS             = 8 * 60 * 60 * 1000; // every 8 hour
+constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD_MS  = 60 * 1000;    // every 1 minute
 constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
 constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE                 = -1;
 constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS                    = 1000;
 constexpr float PRESSUREALARMTHRESHOLD                                = 3.7;
 bool firstTimePressureAlarmDetected                                   = true;
 bool isBelowPressureAlarm                                             = false;
-uint32_t TimeLastUpdateDeviceStatus                                    = commons::getCurrentTimestampMs();
+uint32_t timeLastUpdateDeviceStatusMs                                 = commons::getCurrentTimestampMs();
 
 
 } // unnamed namespace
@@ -160,7 +160,6 @@ void CloudController::_run()
 
 void CloudController::perform()
 {
-    uint32_t time2 = commons::getCurrentTimestampMs();
     CheckPressureValueBelowThreshold();
     SLEEP_MS(SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD_MS);
 
@@ -168,11 +167,11 @@ void CloudController::perform()
     {
         LOG_INFO("SLEEP_TIME_BETWEEN_SENDING_MESSAGES reached; calling updateDeviceStatus() function");
         uint32_t current_time = commons::getCurrentTimestampMs();
-        uint32_t time_between_two_messages_InMIN = (current_time - TimeLastUpdateDeviceStatus) / (1000*60); //in minutes
+        uint32_t time_between_two_messages_InMIN = (current_time - timeLastUpdateDeviceStatusMs) / (1000*60); //in minutes
         LOG_INFO("time_between_two_messages: %d min", time_between_two_messages_InMIN);
         updateDeviceStatus();
 
-        TimeLastUpdateDeviceStatus = commons::getCurrentTimestampMs();
+        timeLastUpdateDeviceStatusMs = commons::getCurrentTimestampMs();
 
     }
 }

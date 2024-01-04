@@ -28,7 +28,6 @@ constexpr int16_t PCNT_THRESH1_VAL          = 500;
 constexpr int16_t PCNT_THRESH0_VAL          = -500;
 constexpr int     PCNT_INPUT_SIG_IO         = 4;    // Pulse Input GPIO
 constexpr int     PULSE_PER_LITRE           = 2580; // pulses per litre from the datasheet digmesa nano flex
-constexpr float   SENSOR_CALIBRATION_FACTOR = 1.098;
 
 // Any pulses lasting shorter than PCNT_INPUT_FILTER_VALUE will be ignored when the filter is enabled
 constexpr uint16_t PCNT_INPUT_FILTER_VALUE = 100;
@@ -252,6 +251,9 @@ void PulseCounterHandler::_run()
 
         int64_t current_time_ms = commons::getCurrentTimestampMs();
 
+        //get calibration factor from device-twin
+        float FlowMeterCalibrationValue = PulseCounterHandler::getFlowMeterCalibrationValue();
+
         res = xQueueReceive(pcntEvtQueue, &evt, MS_TO_TICKS(PCNT_EVENT_QUEUE_WAIT_TIME_MS));
         if (res == pdTRUE)
         {
@@ -287,7 +289,7 @@ void PulseCounterHandler::_run()
                 DeltaCounterPulses = m_counterPulses - m_counterPulsesPrevious;
                 flowLitres         = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) /
                              float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) /
-                             float(PULSE_PER_LITRE) * float(SENSOR_CALIBRATION_FACTOR); // in Liter per sampling rate
+                             float(PULSE_PER_LITRE) * FlowMeterCalibrationValue; // in Liter per sampling rate
                 m_counterPulsesPrevious = m_counterPulses;
             }
 
@@ -296,7 +298,7 @@ void PulseCounterHandler::_run()
                 DeltaCounterPulses = m_counterPulses + PCNT_H_LIM_VAL - m_counterPulsesPrevious;
                 flowLitres         = float(PCNT_EVENT_QUEUE_WAIT_TIME_MS) /
                              float(commons::getCurrentTimestampMs() - previous_time_ms) * float(DeltaCounterPulses) /
-                             float(PULSE_PER_LITRE) * float(SENSOR_CALIBRATION_FACTOR); // in Liter per sampling rate
+                             float(PULSE_PER_LITRE) * FlowMeterCalibrationValue; // in Liter per sampling rate
                 m_counterPulsesPrevious = m_counterPulses;
             }
 
@@ -312,6 +314,8 @@ void PulseCounterHandler::_run()
             previous_time_ms = commons::getCurrentTimestampMs();
 
             m_totalLitres = m_totalLitres + flowLitres; // litres
+
+            LOG_INFO("FlowMeterCalibrationValue :%.6f", FlowMeterCalibrationValue);
 
             LOG_INFO("flowLitres :%.6f", flowLitres);
             LOG_INFO("totalLitres :%.6f", m_totalLitres);
