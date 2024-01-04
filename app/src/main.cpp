@@ -17,7 +17,7 @@ static const char *LOG_TAG = "Main";
 #include "reset_button_handler.h"
 #include "wifi_controller.h"
 #include "cloud_config.h"
-#include "adc_pressure.h"
+#include "adc_VoCu.h"
 
 #if IS_DEBUG_BUILD
 // TCloudCertificatePack newCloudCertificates;
@@ -34,8 +34,8 @@ void temporaryDevelopmentCode()
     {
         LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
         TWiFiCredentials newWifiCredentials;
-        newWifiCredentials.setSsid("Marty Router King");
-        newWifiCredentials.setPassword("mk1441bl");
+        newWifiCredentials.setSsid("Marty14");
+        newWifiCredentials.setPassword("livefreeordie");
         pConfig->setWifiCredentials(newWifiCredentials);
     }
 
@@ -69,6 +69,8 @@ void initCommonGlobalModules()
 #if IS_DEBUG_BUILD
     temporaryDevelopmentCode();
 #endif
+
+
 
     // create modules
     static WiFiController wifiController;
@@ -106,6 +108,8 @@ void initCommonGlobalModules()
     cloudController.runTask();
 }
 
+
+
 extern "C"
 {
 
@@ -115,9 +119,17 @@ extern "C"
         // TODO - consider adding here "quick reset", before initializing other modules,
         // to have a reliable method of resetting the device configuration, before initializing other modules
 
-        initCommonGlobalModules();
+        //initCommonGlobalModules();
 
-        app::pAppController->runTask();
+        // ADC for pressure sensor
+        adcInit();  
+        while(true)
+        {
+            float SumOfSparklingWatervalue = SumOfSparklingWater();
+            float TotalTimeCoolingIsRunning = TimeCoolingIsRunning();
+        }
+
+        //app::pAppController->runTask();
 
 #if USE_CONSOLE
         console::runConsoleControl();

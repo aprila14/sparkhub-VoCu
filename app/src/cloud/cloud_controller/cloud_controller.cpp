@@ -11,17 +11,21 @@ static const char *LOG_TAG = "CloudController";
 #include "protocol_types.h"
 #include "sleep.h"
 #include "cloud_config.h"
-#include "adc_pressure.h"
+#include "adc_VoCu.h"
+
+#include "math.h"
 
 #include <memory>
 
 namespace
 {
-    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 1800 * 1000; // every 0.5 hour
-    constexpr uint32_t SLEEP_TIME_BETWEEN_READADCVALUE_MESSAGES = 10; // every 10ms
+    constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES = 1 * 1000; // every 10 seconds
+    constexpr uint32_t SLEEP_TIME_BETWEEN_READADCVALUE_MESSAGES = 1000; // every 10 ms
     constexpr uint16_t LOCAL_TIME_OFFSET = UtcOffset::OFFSET_UTC_2;
     constexpr int8_t MQTT_CONNECTION_WAIT_TIME_INFINITE = -1;
     constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS = 1000;
+    constexpr uint16_t SAMPLING_FREQUENCY = 500; // 500ms (10Hz)
+
 
     void _heartbeatWatchdogTimerCallback(TimerHandle_t timerHandle)
     {
@@ -130,28 +134,49 @@ void CloudController::_run()
     xTimerStart(m_heartbeatWatchdogTimer, 0);
     m_mqttClientController.runTask();
 
+
+    constexpr uint32_t TIME_BETWEEN_SENDING_MESSAGES = 5 * 1000; // every 5 seconds
+    uint32_t TIME_COUNTER = 0; // 
+
     while (true)
     {
-        perform();
+        //perform();
         listenToADCInput();
+        //LOG_INFO("TIME_BETWEEN_SENDING_MESSAGES %lu", TIME_BETWEEN_SENDING_MESSAGES);
+        //LOG_INFO("TIME_COUNTER %lu", TIME_COUNTER);
+        if(TIME_BETWEEN_SENDING_MESSAGES < TIME_COUNTER)
+        {
+
+            //perform();
+            TIME_COUNTER = 0;
+
+        }
+
+        TIME_COUNTER = TIME_COUNTER + 1;
+        //LOG_INFO("TIME_COUNTER %lu", TIME_COUNTER);
+        SLEEP_MS(SAMPLING_FREQUENCY);
+
     }
 }
 
 void CloudController::perform()
 {
     updateDeviceStatus();
-    SLEEP_MS(SLEEP_TIME_BETWEEN_SENDING_MESSAGES);
+    //SLEEP_MS(SLEEP_TIME_BETWEEN_SENDING_MESSAGES);
 }
 
 void CloudController::listenToADCInput()
 {
-    updateTotalSumOfLiters();
-    SLEEP_MS(SLEEP_TIME_BETWEEN_READADCVALUE_MESSAGES);
+    get3RMSCurrentDataPoints();
+    //SLEEP_MS(SLEEP_TIME_BETWEEN_READADCVALUE_MESSAGES);
+
+
 }
 
-void CloudController::updateTotalSumOfLiters()
+void CloudController::updateSparklingWaterAndCoolingData()
 {
-    ExecuteUpdateTotalSumOfLiters();
+    SumOfSparklingWater();
+    TimeCoolingIsRunning();
 }
 
 
@@ -162,7 +187,8 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     deviceStatus.isWiFiConnected = app::pAppController->getWiFiController()->getConnectionStatus();
     deviceStatus.isBleConnected = app::pAppController->getBleController()->isClientConnected();
     deviceStatus.currentTimeFromStartupMs = commons::getCurrentTimestampMs();
-    deviceStatus.totalSumOfLiters = getTotalSumOfLiters();
+    deviceStatus.totalSumOfLiters = SumOfSparklingWater();
+    //deviceStatus.totalTimeCoolingIsRunning = TimeCoolingIsRunning();
 
     strcpy(deviceStatus.currentLocalTime, app::pAppController->getNtpClient()->getCurrentLocalTimeString(LOCAL_TIME_OFFSET));
     strcpy(deviceStatus.firmwareVersion, PROJECT_VER);
@@ -172,6 +198,8 @@ void CloudController::updateDeviceStatus() // NOLINT - we don't want to make it 
     m_msgCounter++;
     m_mqttClientController.sendMessage(m_deviceStatusTopic, deviceStatusMessage);
 }
+
+
 
 void CloudController::setConnectionStatus(ECloudConnectionStatus status)
 {
