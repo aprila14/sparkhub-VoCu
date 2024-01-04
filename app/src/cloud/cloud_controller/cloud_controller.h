@@ -10,6 +10,7 @@
 #include "esp_event.h"
 #include "json_parser.h"
 #include "protocol_types.h"
+#include "pulse_counter.h"
 
 class MqttClientController;
 

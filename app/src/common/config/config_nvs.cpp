@@ -27,6 +27,7 @@ bool ConfigNvs::init()
     getStruct(m_certificatePack, ConfigKeyName::CERTIFICATES);
     getStruct(m_workflowData, ConfigKeyName::UPDATE_WORKFLOW_DATA_NVS_KEY);
     getStruct(m_updateId, ConfigKeyName::UPDDATE_ID_NVS_KEY);
+    getStruct(m_flowMeterCalibrationValue, ConfigKeyName::FLOW_METER_CALIBRATION_NVS_KEY);
 
     return true;
 }
@@ -89,6 +90,16 @@ const TWiFiCredentials& ConfigNvs::getWifiCredentials()
 void ConfigNvs::setWifiCredentials(const TWiFiCredentials& wifiCredentials)
 {
     setStruct(m_wiFiCredentials, wifiCredentials, ConfigKeyName::WIFI_CREDENTIALS);
+}
+
+float ConfigNvs::getFlowMeterCalibrationValue() const
+{
+    return m_flowMeterCalibrationValue;
+}
+
+void ConfigNvs::setFlowMeterCalibrationValue(float flowMeterCalibrationValue)
+{
+    setStruct(m_flowMeterCalibrationValue, flowMeterCalibrationValue, ConfigKeyName::FLOW_METER_CALIBRATION_NVS_KEY);
 }
 
 const TCloudCredentials& ConfigNvs::getCloudCredentials()
@@ -297,14 +308,15 @@ void ConfigNvs::resetAllConfigurationFields()
 {
     // default values for the configuration:
 
-    m_bleConfigurationStatus   = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
-    m_wiFiCredentials          = TWiFiCredentials();
-    m_cloudCredentials         = TCloudCredentials();
-    m_otaUpdateLink            = TOtaUpdateLink();
-    m_certificatePack          = TCertificatePack();
-    m_deviceProvisioningStatus = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
-    m_workflowData             = TWorkflowData();
-    m_updateId                 = TUpdateId();
+    m_bleConfigurationStatus    = EBleConfigurationStatus::BLE_CONFIGURATION_STATUS_INIT;
+    m_wiFiCredentials           = TWiFiCredentials();
+    m_cloudCredentials          = TCloudCredentials();
+    m_otaUpdateLink             = TOtaUpdateLink();
+    m_certificatePack           = TCertificatePack();
+    m_deviceProvisioningStatus  = ECloudDeviceProvisioningStatus::PROVISIONING_STATUS_INIT;
+    m_workflowData              = TWorkflowData();
+    m_updateId                  = TUpdateId();
+    m_flowMeterCalibrationValue = 0.0;
 }
 
 template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)
