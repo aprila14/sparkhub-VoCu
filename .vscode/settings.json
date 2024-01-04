@@ -1,8 +1,8 @@
 {
     "idf.adapterTargetName": "esp32",
-    "idf.portWin": "COM14",
     "files.associations": {
         "*.py": "python",
+        "algorithm": "cpp",
         "xutility": "cpp"
     }
 }

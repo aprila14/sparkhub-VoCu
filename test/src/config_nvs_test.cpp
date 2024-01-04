@@ -29,7 +29,8 @@ TEST(ConfigNvs, init_ok)
     nvs_get_u8_IgnoreAndReturn(ESP_OK);
     nvs_get_u8_StubWithCallback([](nvs_handle_t, const char*, uint8_t* out_value, int) {
         *out_value = 1;
-        return ESP_OK; });
+        return ESP_OK;
+    });
 
     // getWifiCredentials
     TWiFiCredentials wifiCredentials;
@@ -37,11 +38,12 @@ TEST(ConfigNvs, init_ok)
     wifiCredentials.setSsid("ssid");
     nvs_get_blob_IgnoreAndReturn(ESP_OK);
     nvs_get_blob_StubWithCallback([](nvs_handle_t, const char*, void* out_value, size_t*, int) {
-        TWiFiCredentials wifiCredentials;  // unfortunaltely our lambda cannot capture, so just copy it
+        TWiFiCredentials wifiCredentials; // unfortunaltely our lambda cannot capture, so just copy it
         wifiCredentials.setPassword("pass");
         wifiCredentials.setSsid("ssid");
         ::memcpy(out_value, &wifiCredentials, sizeof(wifiCredentials));
-        return ESP_OK;});
+        return ESP_OK;
+    });
 
 
     // INIT
@@ -123,15 +125,11 @@ TEST(ConfigNvs, resetAll)
 
     ConfigNvs configNvs2;
     configNvs2.m_configurationFinishedState = true;
-    configNvs2.m_lastLightBrightness = 111;
     configNvs2.m_wiFiCredentials.setPassword("aaaa");
 
     nvs_erase_all_IgnoreAndReturn(ESP_OK);
     configNvs2.resetConfig();
 
     ASSERT_EQ(configNvs2.m_configurationFinishedState, configNvs1.m_configurationFinishedState);
-    ASSERT_EQ(configNvs2.m_lastLightBrightness, configNvs1.m_lastLightBrightness);
     ASSERT_EQ(configNvs2.m_wiFiCredentials, configNvs1.m_wiFiCredentials);
-
 }
-

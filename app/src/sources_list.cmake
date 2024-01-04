@@ -7,12 +7,8 @@ set(NOT_TESTABLE_APPLICATION_FILES
 
 set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/main.cpp
-    ${SRC_DIR}/hardware/hardware_definitions.h
     ${SRC_DIR}/hardware/reset_button_handler.h
     ${SRC_DIR}/hardware/reset_button_handler.cpp
-    ${SRC_DIR}/hardware/light/led_control.cpp
-    ${SRC_DIR}/hardware/light/led_control.h
-    ${SRC_DIR}/hardware/light/light_control_interface.h
     ${SRC_DIR}/wifi/wifi_controller.cpp
     ${SRC_DIR}/wifi/wifi_controller.h
     ${SRC_DIR}/common/hw_misc.cpp
@@ -62,11 +58,17 @@ set(TESTABLE_APPLICATION_FILES
     ${SRC_DIR}/cloud/parser/json_parser.h
     ${SRC_DIR}/cloud/parser/json_parser.cpp
 
-    ${SRC_DIR}/hardware/light/led_indicator.cpp
-    ${SRC_DIR}/hardware/light/led_indicator.h
+    ${SRC_DIR}/cloud/device_provisioning/device_provisioning.cpp
+    ${SRC_DIR}/cloud/device_provisioning/device_provisioning.h
 
-    ${SRC_DIR}/hardware/adc_pressure/adc_VoCu.cpp
-    ${SRC_DIR}/hardware/adc_pressure/adc_VoCu.h
+    ${SRC_DIR}/cloud/device_twins/device_twins.cpp
+    ${SRC_DIR}/cloud/device_twins/device_twins.h
+
+    ${SRC_DIR}/hardware/adc_pressure/adc_pressure.cpp
+    ${SRC_DIR}/hardware/adc_pressure/adc_pressure.h
+
+    ${SRC_DIR}/hardware/pulse_counter/pulse_counter.cpp
+    ${SRC_DIR}/hardware/pulse_counter/pulse_counter.h
 )
 
 set(NOT_TESTABLE_APPLICATION_INCLUDE_DIRS
@@ -83,8 +85,8 @@ set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/common/os
     ${SRC_DIR}/common/config
     ${SRC_DIR}/hardware
-    ${SRC_DIR}/hardware/light
     ${SRC_DIR}/hardware/adc_pressure
+    ${SRC_DIR}/hardware/pulse_counter
     ${SRC_DIR}/wifi/
     ${SRC_DIR}/ble/
     ${SRC_DIR}/ble/driver/ # we don't want this file in tests, because we have software mocks for it?
@@ -95,4 +97,6 @@ set(TESTABLE_APPLICATION_INCLUDE_DIRS
     ${SRC_DIR}/cloud/mqtt_client_controller/
     ${SRC_DIR}/cloud/ntp_client/
     ${SRC_DIR}/cloud/parser/
+    ${SRC_DIR}/cloud/device_provisioning/
+    ${SRC_DIR}/cloud/device_twins/
 )

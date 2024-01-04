@@ -55,7 +55,10 @@ COPY app/misc/ble-nimble-patch-1.patch /modules/app/misc/ble-nimble-patch-1.patc
 RUN peru sync && cd app/externals && unzip esp-idf.zip && mv esp-idf-v4.4.3 esp-idf
 RUN cd app/externals/esp-idf/components/bt/host/nimble/nimble && dos2unix /modules/app/misc/ble-nimble-patch-1.patch && git apply /modules/app/misc/ble-nimble-patch-1.patch
 
-# Jenkins user UID
+# Add azure CLI
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash && rm -rf /var/lib/apt/lists/* && az extension add -n azure-iot
+
+# Host user UID
 ARG UID
 ARG USER_TO_USE_FOR_RUN
 
@@ -64,7 +67,10 @@ RUN useradd --create-home --home-dir=/home/$USER_TO_USE_FOR_RUN --shell /bin/bas
 USER ${USER_TO_USE_FOR_RUN}
 
 WORKDIR /modules/app/externals/esp-idf
+
+# Install ESP-IDF
 RUN ./install.sh && rm -rf /var/lib/apt/lists/*
+
 # to avoid detected dubious ownership in repository error
 RUN git config --global --add safe.directory /modules/app/externals/esp-idf
 

@@ -1,1162 +1,1012 @@
 // Please keep these 2 lines at the beginning of each cpp module
-static const char *LOG_TAG = "jsonParser";
+static const char* LOG_TAG = "jsonParser";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
 #include "json_parser.h"
+
+#include "json_parser_defines.h"
+#include <float.h>
 
 #include <cctype>
 
 // #include "esp_heap_caps.h"
 
+namespace
+{
+uint32_t MAX_MANIFEST_STRING_LENGTH  = 1024U;
+uint32_t MAX_UPDATE_ID_STRING_LENGTH = 150;
+} // unnamed namespace
+
+extern const char* DEVICE_PROVISIONING_MODEL_ID;
+
 namespace json_parser
 {
 
 #if !TESTING // directive added to avoid double declaration of function
-    static cJSON *preprocessInputMessage(const std::string &inputMessage);
-    static bool parseJsonRpcCommand(const std::string &inputMessage, TFrame *pFrame);
-    static cJSON *dataJsonToRpcCommandJson(cJSON *pDataJson, EMsgCode msgCode, uint32_t msgCounter);
-    static cJSON *deviceStatusToJson(const TDeviceStatus &deviceStatus);
-    static cJSON *heartbeatToJson(const THeartbeat &heartbeatStruct);
-    static bool processSetLightIntensityLevel(cJSON *pDataJson, TSetLightLevel *pOutput);
-    static bool parseWidgetSetLightIntensityLevelCommand(std::string inputMessage, TSetLightLevel *pOutput);
-    static bool processHeartbeat(cJSON *pDataJson, THeartbeat *pOutput);
-    static bool processGetLightIntensityLevel(cJSON *pDataJson, TSetLightLevel *pOutput);
-    static bool processResponse(cJSON *pDataJson, TResponse *pOutput);
-    static bool processOtaUpdateLink(cJSON *pDataJson, TOtaUpdateLink *pOutput);
-    static bool processTimeSlotsList(cJSON *pDataJson, TTimeSlotsList *pOutput);
-    static bool processTimeSlotsListResponse(cJSON *pDataJson, TTimeSlotsListResponse *pOutput);
-    static bool getDataJsonAndInitFrame(const std::string &inputMessage, TFrame *pFrame, cJSON **ppDataJson);
-    static EMsgMethod extractMsgMethod(const std::string &inputMessage);
-    static cJSON *preprocessInputMessage(const std::string &inputMessage);
-    static cJSON *deviceStatusToJson(const TDeviceStatus &deviceStatus);
-    static cJSON *heartbeatToJson(const THeartbeat &heartbeatStruct);
-    static cJSON *widgetGetLightLevelToJson(const TSetLightLevel &lightLevelStruct);
-    static cJSON *widgetSetLightLevelToJson(const TSetLightLevel &lightLevelStruct);
-    static cJSON *dataJsonToParamsJson(cJSON *pDataJson, EMsgCode msgCode, uint32_t msgCounter);
-    static cJSON *dataJsonToRpcCommandJson(cJSON *pDataJson, EMsgCode msgCode, uint32_t msgCounter);
-    static std::string getLightIntensityString(const TSetLightLevel &setLightLevelData);
-    static std::string getStatusReportString(const TDeviceStatus &deviceStatus);
-    static std::string getHeartbeatString(const THeartbeat &heartbeatData);
-    static std::string getResponseString(const TResponse &responseData);
-    static std::string getMsgCodeString(EMsgCode msgCode);
-    static std::string getConnectionString(bool status);
-    static std::string getBooleanString(bool status);
-    static std::string getOtaUpdateLinkString(const TOtaUpdateLink &otaUpdateLink);
-    // static std::string getTimeSlotsListString(const TTimeSlotsList& timeSlotsList);
+static bool        processResponse(cJSON* pDataJson, TResponse* pOutput);
+static bool        processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
+static cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
+static cJSON*      dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter);
+static std::string getResponseString(const TResponse& responseData);
+static std::string getOtaUpdateLinkString(const TOtaUpdateLink& otaUpdateLink);
 
-    int32_t extractTimeInMinutesFromString(const std::string timeString);
 #endif
 
-    // helper functions defined in the end of the file
-    static std::string getMsgCodeString(EMsgCode msgCode);
-    static std::string getConnectionString(bool status);
-    static std::string getBooleanString(bool status);
 
-    /***** JSON TO STRUCTURE *****/
+bool checkIfFieldExistsInGivenJson(cJSON* inputJson, const char* keyword)
+{
+    cJSON* searchedJson = cJSON_GetObjectItemCaseSensitive(inputJson, keyword);
 
-    /**
-     * @brief processSetLightIntensityLevel - function parsing setLightIntensityLevel message in cJSON format into the TSetLightLevel structure
-     * @param pDataJson - input cJSON object with a data JSON containing the payload of the message
-     * @param pOutput - TSetLightLevel structure with the extracted data
-     * @return boolean value representing success of the operation
-     */
-    bool processSetLightIntensityLevel(cJSON *pDataJson, TSetLightLevel *pOutput)
+    if (searchedJson == nullptr)
     {
-        cJSON *pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
-
-        if (pLightIntensityLevelJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no lightIntensityLevel data");
-            return false;
-        }
-
-        pOutput->lightIntensityLevel = (uint8_t)pLightIntensityLevelJson->valueint;
-
-        return true;
+        return false;
     }
 
-    /**
-     * @brief parseWidgetSetLightIntensityLevelCommand - function parsing the input SetLightLevel message from the widget directly into
-     * TSetLightLevel structure
-     * @param inputMessage - std::string containing message to parse and analyze
-     * @param pOutput - TSetLighLevelStructure with the extracted data
-     * @return boolean value representing success of the operation
-     */
+    return true;
+}
+/***** JSON TO STRUCTURE *****/
 
-    bool parseWidgetSetLightIntensityLevelCommand(std::string inputMessage, TSetLightLevel *pOutput)
+/**
+ * @brief processResponse - function parsing any of the response messages (e.g. response to Heartbeat message) into
+ * TResponse structure All response messages have the same structure, therefore they do not need separate functions for
+ * parsing
+ * @param pDataJson - cJSON* object containing the payload of the message
+ * @param pOutput - pointer to TReponse structure containing extracted payload
+ * @return boolean value representing succes of the operation
+ */
+
+bool processResponse(cJSON* pDataJson, TResponse* pOutput)
+{
+    cJSON* pAckJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "ACK");
+
+    if (pAckJson == nullptr)
     {
-        cJSON *pMessageJson = preprocessInputMessage(inputMessage);
-
-        if (pMessageJson == nullptr)
-        {
-            LOG_INFO("Could not preproccess Widget SetLightIntensityLevel command, wrong format or an error occured during parsing");
-            return false;
-        }
-
-        cJSON *pParamsJson = cJSON_GetObjectItemCaseSensitive(pMessageJson, "params");
-        if (pParamsJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no params data or wrong format");
-            cJSON_Delete(pMessageJson);
-            return false;
-        }
-        pOutput->lightIntensityLevel = pParamsJson->valueint;
-
-        cJSON_Delete(pMessageJson);
-        return true;
+        LOG_INFO("Could not parse JSON, no ACK or wrong format");
+        return false;
     }
 
-    /**
-     * @brief processStatusReport - function parsing StatusReport message in a cJSON format into TDeviceStatus structure
-     * @param pDataJson - input cJSON object with a data JSON containing message payload
-     * @param pOutput - TDeviceStatus structure with the extracted data
-     * @return boolean value representing success of the operation
-     */
+    pOutput->ACK = cJSON_IsTrue(pAckJson);
 
-    bool processStatusReport(cJSON *pDataJson, TDeviceStatus *pOutput)
+    return true;
+}
+
+
+/**
+ * @brief processOtaUpdateLink - function parsing message with a link from which OTA shall be performed
+ * @param pDataJson - cJSON* object containing the payload of the message
+ * @param pOutput - pointer to TOtaUpdateLink structure containing extracted payload
+ * @return boolean value representing success of the operation
+ */
+static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput)
+{
+    cJSON* pOtaUpdateLinkJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "otaUpdateLink");
+
+    if (pOtaUpdateLinkJson == nullptr)
     {
-        cJSON *pWifiConnectionStateJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "wifiConnectionState");
-        cJSON *pBleConnectionStateJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "bleConnectionState");
-        cJSON *pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
-        cJSON *pCurrentTimeMsJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "currentTimeMs");
-        cJSON *pFirmwareVersionJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "firmwareVersion");
-
-        if (pWifiConnectionStateJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no wifiConnectionState or wrong format");
-            return false;
-        }
-
-        if (pBleConnectionStateJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no bleConnectionState or wrong format");
-            return false;
-        }
-
-        if (pLightIntensityLevelJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no lightIntensityLevel or wrong format");
-            return false;
-        }
-
-        if (pCurrentTimeMsJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no currentTimeMs or wrong format");
-            return false;
-        }
-
-        if (pFirmwareVersionJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no firmwareVersion or wrong format");
-            return false;
-        }
-
-        std::string firmware = pFirmwareVersionJson->valuestring;
-
-        pOutput->isWiFiConnected = cJSON_IsTrue(pWifiConnectionStateJson);
-        pOutput->isBleConnected = cJSON_IsTrue(pBleConnectionStateJson);
-        pOutput->lightIntensityLevel = static_cast<uint8_t>(pLightIntensityLevelJson->valueint);
-        pOutput->currentTimeFromStartupMs = static_cast<uint32_t>(pCurrentTimeMsJson->valueint);
-        strcpy(pOutput->firmwareVersion, firmware.c_str());
-
-        return true;
+        LOG_INFO("Could not parse Json, no OtaUpdateLink or wrong format");
+        return false;
     }
 
-    /**
-     * @brief processHeartbeat - function responsible for processing heartbeat message. Function added to enable handling of full protocol, it
-     * should not be needed in ESP32 (since cloud should not send that message)
-     * @param pDataJson - cJSON* object containing payload of the message
-     * @param pOutput - pointer to THeartbeat structure containing extracted payload
-     * @return boolean value - true if JSON was parsed correctly
-     */
-    bool processHeartbeat(cJSON *pDataJson, THeartbeat *pOutput)
+    strcpy(pOutput->firmwareLink, pOtaUpdateLinkJson->valuestring);
+
+    return true;
+}
+
+/***** FRAME INTERPRETATION *****/
+
+bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* info, cJSON** dataJson)
+{
+    cJSON* pDeviceProvisioningJson = preprocessInputMessage(inputMessage);
+
+    if (pDeviceProvisioningJson == nullptr)
     {
-        cJSON *pHeartbeatJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "heartbeat");
-
-        if (pHeartbeatJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no heartbeat or wrong format");
-            return false;
-        }
-
-        pOutput->heartbeat = cJSON_IsTrue(pHeartbeatJson);
-
-        return true;
+        LOG_INFO("Could not parse JSON");
+        return false;
     }
 
-    /**
-     * @brief processGetLightIntensityLevel - function parsing getLightIntensityLevel message in cJSON format into the TSetLightLevel structure.
-     * Note: This function was planned only to standardize the data flow in the program, the message content is not relevant in
-     * that case
-     * @param pDataJson - cJSON* object containing the payload of the message
-     * @param pOutput - pointer to TSetLightLevel structure containing extracted payload
-     * @return success of the operation
-     */
-    bool processGetLightIntensityLevel(cJSON *pDataJson, TSetLightLevel *pOutput)
+    cJSON* pOperationIdJson = cJSON_GetObjectItemCaseSensitive(pDeviceProvisioningJson, "operationId");
+
+    if (pOperationIdJson == nullptr)
     {
-        cJSON *pLightIntensityLevelJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "lightIntensityLevel");
+        LOG_INFO("Could not parse JSON, no operation id or wrong format");
+        cJSON_Delete(pDeviceProvisioningJson);
+        return false;
+    }
+    cJSON* pStatusJson = cJSON_GetObjectItemCaseSensitive(pDeviceProvisioningJson, "status");
 
-        if (pLightIntensityLevelJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no lightIntensityLevel or wrong GetLightIntensityLevel frame format");
-            return false;
-        }
-
-        pOutput->lightIntensityLevel = pLightIntensityLevelJson->valueint;
-
-        return true;
+    if (pStatusJson == nullptr)
+    {
+        LOG_INFO("Could not parse JSON, no status or wrong format");
+        cJSON_Delete(pDeviceProvisioningJson);
+        return false;
     }
 
-    /**
-     * @brief processResponse - function parsing any of the response messages (e.g. response to Heartbeat message) into TResponse structure
-     * All response messages have the same structure, therefore they do not need separate functions for parsing
-     * @param pDataJson - cJSON* object containing the payload of the message
-     * @param pOutput - pointer to TReponse structure containing extracted payload
-     * @return boolean value representing succes of the operation
-     */
+    cJSON* pRegistrationStateJson = cJSON_GetObjectItemCaseSensitive(pDeviceProvisioningJson, "registrationState");
 
-    bool processResponse(cJSON *pDataJson, TResponse *pOutput)
+    if (pRegistrationStateJson != nullptr)
     {
-        cJSON *pAckJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "ACK");
+        cJSON* pAssignedHubJson = cJSON_GetObjectItemCaseSensitive(pRegistrationStateJson, "assignedHub");
 
-        if (pAckJson == nullptr)
+        if (pAssignedHubJson != nullptr)
         {
-            LOG_INFO("Could not parse JSON, no ACK or wrong format");
-            return false;
+            LOG_INFO("assignedHub present in JSON");
+            info->assignedHub = std::string(pAssignedHubJson->valuestring);
         }
 
-        pOutput->ACK = cJSON_IsTrue(pAckJson);
+        cJSON* pDeviceIdJson = cJSON_GetObjectItemCaseSensitive(pRegistrationStateJson, "deviceId");
 
-        return true;
-    }
-
-    /**
-     * @brief processOtaUpdateLink - function parsing message with a link from which OTA shall be performed
-     * @param pDataJson - cJSON* object containing the payload of the message
-     * @param pOutput - pointer to TOtaUpdateLink structure containing extracted payload
-     * @return boolean value representing success of the operation
-     */
-    static bool processOtaUpdateLink(cJSON *pDataJson, TOtaUpdateLink *pOutput)
-    {
-        cJSON *pOtaUpdateLinkJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "otaUpdateLink");
-
-        if (pOtaUpdateLinkJson == nullptr)
+        if (pDeviceIdJson != nullptr)
         {
-            LOG_INFO("Could not parse Json, no OtaUpdateLink or wrong format");
-            return false;
-        }
-
-        strcpy(pOutput->firmwareLink, pOtaUpdateLinkJson->valuestring);
-
-        return true;
-    }
-
-    static bool processTimeSlotsList(cJSON *pDataJson, TTimeSlotsList *pOutput)
-    {
-        LOG_INFO("Processing TimeSlotsList message"); // TODO add parsing the incoming TimeSlotsList message here
-
-        cJSON *timeSlotJson = nullptr;
-        cJSON *timeSlotsListJson = cJSON_GetObjectItemCaseSensitive(pDataJson, "timeSlots");
-
-        if (timeSlotsListJson == nullptr)
-        {
-            LOG_INFO("Could not parse Json, no timeSlots or wrong format");
-            return false;
-        }
-
-        TTimeSlotsList timeSlotsList = {};
-
-        cJSON_ArrayForEach(timeSlotJson, timeSlotsListJson)
-        {
-            cJSON *idJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "id");
-            if (idJson == nullptr)
-            {
-                LOG_INFO("Could not parse Json, no id in timeslot or wrong format");
-                return false;
-            }
-
-            cJSON *fromJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "from");
-            if (fromJson == nullptr)
-            {
-                LOG_INFO("Could not parse Json, 'from' time not specified or wrong format");
-                return false;
-            }
-
-            cJSON *toJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "to");
-            if (toJson == nullptr)
-            {
-                LOG_INFO("Could not parse Json, 'to' time not specified or wrong format");
-                return false;
-            }
-
-            cJSON *lightLvlJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "lightLvl");
-            if (lightLvlJson == nullptr)
-            {
-                LOG_INFO("Could not parse Json, light level not specified or wrong format");
-                return false;
-            }
-
-            cJSON *daysowJson = cJSON_GetObjectItemCaseSensitive(timeSlotJson, "daysow");
-            if (daysowJson == nullptr)
-            {
-                LOG_INFO("Could not parse Json, days of week not specified or wrong format");
-                return false;
-            }
-
-            cJSON *dayOfWeekJson = nullptr;
-
-            TSingleTimer singleTimer = {};
-
-            cJSON_ArrayForEach(dayOfWeekJson, daysowJson)
-            {
-                if (dayOfWeekJson == nullptr)
-                {
-                    LOG_INFO("Unexpected nullptr found while iterating through daysOfWeek array");
-                    return false;
-                }
-                // singleTimer.days |= (1 << dayOfWeekJson->valueint);
-            }
-
-            singleTimer.lightLevel = lightLvlJson->valueint;
-            singleTimer.startMinuteOfDay = extractTimeInMinutesFromString(std::string(fromJson->valuestring));
-            singleTimer.endMinuteOfDay = extractTimeInMinutesFromString(std::string(toJson->valuestring));
-            pOutput->timersList.timers[idJson->valueint] = singleTimer;
-        }
-
-        return true;
-    }
-
-    static bool processTimeSlotsListResponse(cJSON *pDataJson, TTimeSlotsListResponse *pOutput)
-    {
-        LOG_INFO("Processing TimeSlotsList response"); // TODO add processing of TimeSlotsList response here
-
-        return true;
-    }
-    /***** FRAME INTERPRETATION *****/
-
-    /**
-     * @brief getDataJsonAndInitFrame - function extracting the dataJson - payload of the message with the message-type-specific data
-     * and initializing the generic fields of the frame - msgCode and msgCounter
-     * NOTE: after executing this function, it is it's user responsibility to free the memory allocated for dataJson object after it
-     * will no longer be used - remember to call cJSON_Delete(dataJson)
-     * @param inputMessage - std::string with the message to be parsed
-     * @param pFrame - pointer to TFrame structure to store extracted data
-     * @param ppDataJson - pointer to cJSON* object to store extracted dataJson object
-     * @return boolean value representing success of the operation
-     */
-
-    bool getDataJsonAndInitFrame(const std::string &inputMessage, TFrame *pFrame, cJSON **ppDataJson)
-    {
-        cJSON *pRpcJson = preprocessInputMessage(inputMessage);
-
-        if (pRpcJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON");
-            return false;
-        }
-
-        cJSON *pFrameJson = cJSON_GetObjectItemCaseSensitive(pRpcJson, "params");
-
-        if (pFrameJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no params or wrong format");
-            cJSON_Delete(pRpcJson);
-            return false;
-        }
-        cJSON *pMsgCodeJson = cJSON_GetObjectItemCaseSensitive(pFrameJson, "msgCode");
-
-        if (pMsgCodeJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no msgCode or wrong format");
-            cJSON_Delete(pRpcJson);
-            return false;
-        }
-        cJSON *pMsgCounterJson = cJSON_GetObjectItemCaseSensitive(pFrameJson, "msgCounter");
-
-        if (pMsgCounterJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no msgCounter or wrong format");
-            cJSON_Delete(pRpcJson);
-            return false;
-        }
-        *ppDataJson = cJSON_DetachItemFromObjectCaseSensitive(pFrameJson, "data");
-
-        if (*ppDataJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no dataJson or wrong format");
-            cJSON_Delete(pRpcJson);
-            return false;
-        }
-
-        pFrame->msgCode = static_cast<EMsgCode>(pMsgCodeJson->valueint);
-        pFrame->msgCounter = pMsgCounterJson->valueint;
-
-        cJSON_Delete(pRpcJson);
-        return true;
-    }
-
-    /**
-     * @brief extractMsgMethod - function recognizing message method (e.g. RPC Command, or message from the widget) based on the
-     * provided std::string with a message in JSON format
-     * @param inputMessage - std::string containing message to identify
-     * @return EMsgMethod with the method recognized by the function
-     */
-
-    EMsgMethod extractMsgMethod(const std::string &inputMessage)
-    {
-        cJSON *pMessageJson = preprocessInputMessage(inputMessage);
-
-        if (pMessageJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON");
-            return EMsgMethod::MSG_METHOD_FAILED;
-        }
-
-        cJSON *pMethodJson = cJSON_GetObjectItemCaseSensitive(pMessageJson, "method");
-
-        if (pMethodJson == nullptr)
-        {
-            LOG_INFO("Could not parse JSON, no method or wrong format");
-            cJSON_Delete(pMessageJson);
-            return EMsgMethod::MSG_METHOD_FAILED;
-        }
-
-        std::string methodString = std::string(pMethodJson->valuestring);
-
-        cJSON_Delete(pMessageJson);
-
-        if (methodString == "rpcCommand")
-        {
-            return EMsgMethod::MSG_METHOD_RPC_COMMAND;
-        }
-        else if (methodString == "setLightIntensity")
-        {
-            return EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY;
-        }
-        else if (methodString == "getLightIntensity")
-        {
-            return EMsgMethod::MSG_METHOD_GET_LIGHT_INTENSITY;
-        }
-        else
-        {
-            return EMsgMethod::MSG_METHOD_UNKNOWN;
+            LOG_INFO("deviceId present in JSON");
+            info->deviceId = std::string(pDeviceIdJson->valuestring);
         }
     }
 
-    EMsgMethod extractMethodAndFillFrame(std::string newMessage, TFrame *pFrame)
+    info->operationId = std::string(pOperationIdJson->valuestring);
+    info->status      = std::string(pStatusJson->valuestring);
+
+    cJSON_Delete(pDeviceProvisioningJson);
+
+    return true;
+}
+
+/**
+ * @brief preprocessInputMessage - function parsing the message in json format into cJSON* object and checking for
+ * errors. NOTE: after executing this function, it is it's user responsibility to free the memory allocated for returned
+ * cJSON object after it will no longer be used - remember to call cJSON_Delete(returnedCjsonObject)
+ * @param inputMessage - std::string with message in the JSON format
+ * @return cJSON* object with the parsed message
+ */
+
+cJSON* preprocessInputMessage(const std::string& inputMessage)
+{
+    cJSON* pInputMessageJson = cJSON_Parse(inputMessage.c_str());
+
+    if (pInputMessageJson == nullptr)
     {
-        EMsgMethod msgMethod = extractMsgMethod(newMessage);
-
-        switch (msgMethod)
+        const char* pJsonError = cJSON_GetErrorPtr();
+        if (pJsonError)
         {
-        case EMsgMethod::MSG_METHOD_RPC_COMMAND:
-        {
-            bool success = parseJsonRpcCommand(newMessage, pFrame);
-            if (!success)
-            {
-                LOG_INFO("It was not possible to parse the incoming Rpc Command");
-                return EMsgMethod::MSG_METHOD_FAILED;
-            }
-
-            break;
+            LOG_ERROR("Error parsing JSON occurred before %p", pJsonError);
+            return nullptr;
         }
-
-        case EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY:
-        {
-            bool success = parseWidgetSetLightIntensityLevelCommand(newMessage, &(pFrame->frameData.setLightLevelStruct));
-            if (!success)
-            {
-                LOG_INFO("Could not parse message or wrong format");
-                return EMsgMethod::MSG_METHOD_FAILED;
-            }
-            break;
-        }
-
-        default:
-        {
-            break;
-        }
-        }
-
-        return msgMethod;
     }
 
-    /**
-     * @brief preprocessInputMessage - function parsing the message in json format into cJSON* object and checking for errors.
-     * NOTE: after executing this function, it is it's user responsibility to free the memory allocated for returned cJSON object after it
-     * will no longer be used - remember to call cJSON_Delete(returnedCjsonObject)
-     * @param inputMessage - std::string with message in the JSON format
-     * @return cJSON* object with the parsed message
-     */
+    return pInputMessageJson;
+}
 
-    cJSON *preprocessInputMessage(const std::string &inputMessage)
+/***** MESSAGE PREPARATION *****/
+
+std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus& deviceStatus, uint32_t msgCounter)
+{
+    cJSON* pDeviceStatusJson = deviceStatusToJson(deviceStatus, msgCounter);
+
+    if (pDeviceStatusJson == nullptr)
     {
-        cJSON *pInputMessageJson = cJSON_Parse(inputMessage.c_str());
-
-        if (pInputMessageJson == nullptr)
-        {
-            const char *pJsonError = cJSON_GetErrorPtr();
-            if (pJsonError)
-            {
-                LOG_ERROR("Error parsing JSON occured before %p", pJsonError);
-                return nullptr;
-            }
-        }
-
-        return pInputMessageJson;
+        LOG_INFO("Error while preparing deviceStatusDataJson in prepareDeviceStatusMessage()");
+        return "";
     }
 
-    /**
-     * @brief parseJsonRpcCommand - function filling the TFrame structure based on the inputMessage, assuming, it contains
-     * RPC command
-     * @param inputMessage - std::string with input message to analyze
-     * @param pFrame - structure for storing the extracted data
-     * @return boolean value representing the success of the operation
-     */
-    bool parseJsonRpcCommand(const std::string &inputMessage, TFrame *pFrame)
+    char* pDeviceStatusJsonCString = cJSON_Print(pDeviceStatusJson);
+    if (pDeviceStatusJsonCString == nullptr)
     {
-        cJSON *pDataJson = nullptr;
-        bool result = getDataJsonAndInitFrame(inputMessage, pFrame, &pDataJson);
-        if (!result)
+        LOG_INFO("Error while printing deviceStatusCommandJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return std::string("");
+    }
+    std::string deviceStatusMessage = std::string(pDeviceStatusJsonCString);
+    free(pDeviceStatusJsonCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+    cJSON_Delete(pDeviceStatusJson);
+
+    return deviceStatusMessage;
+}
+
+std::string
+prepareDeviceCreateProvisioningMessage(char (&deviceId)[prot::cloud_set_credentials::CLOUD_DEVICE_ID_LENGTH])
+{
+    cJSON* pDeviceProvisioningDataJson = cJSON_CreateObject();
+
+    cJSON* pRegistrationIdJson = cJSON_CreateString(deviceId);
+    if (!(cJSON_AddItemToObject(pDeviceProvisioningDataJson, "registrationId", pRegistrationIdJson)))
+    {
+        LOG_INFO("Cannot add registrationId JSON to pDeviceProvisioningDataJson");
+        cJSON_Delete(pDeviceProvisioningDataJson);
+        return std::string("");
+    }
+
+    if (pDeviceProvisioningDataJson == nullptr)
+    {
+        LOG_INFO("Error while preparing pDeviceProvisioningDataJson");
+        return std::string("");
+    }
+
+    char* pDeviceProvisioningDataJsonCString = cJSON_Print(pDeviceProvisioningDataJson);
+    if (pDeviceProvisioningDataJsonCString == nullptr)
+    {
+        LOG_INFO("Error while printing pDeviceProvisioningDataJson");
+        cJSON_Delete(pDeviceProvisioningDataJson);
+        return std::string("");
+    }
+    std::string deviceCreateProvisioningMessage = std::string(pDeviceProvisioningDataJsonCString);
+    free(pDeviceProvisioningDataJsonCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+    cJSON_Delete(pDeviceProvisioningDataJson);
+
+    return deviceCreateProvisioningMessage;
+}
+
+cJSON* prepareInstalledUpdateIdJson(const TUpdateId& updateId)
+{
+    char installedUpdateIdCString[MAX_UPDATE_ID_STRING_LENGTH];
+
+    if (sprintf(
+            installedUpdateIdCString,
+            "{\"provider\":\"%s\",\"name\":\"%s\",\"version\":\"%s\"}",
+            updateId.providerName,
+            updateId.updateName,
+            updateId.firmwareVersion) < 0)
+    {
+        LOG_ERROR("Failed to prepare installedUpdateId string");
+        return nullptr;
+    }
+
+    cJSON* installedUpdateIdJson = cJSON_CreateString(installedUpdateIdCString);
+
+    if (installedUpdateIdJson == nullptr)
+    {
+        LOG_ERROR("Could not create installedUpdateIdJson");
+        return nullptr;
+    }
+
+    return installedUpdateIdJson;
+}
+
+cJSON* prepareDevicePropertiesJson()
+{
+    cJSON* pDevicePropertiesJson = cJSON_CreateObject();
+
+    if (pDevicePropertiesJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) DeviceUpdate report JSON");
+        return nullptr;
+    }
+
+    cJSON* pManufacturerJson = cJSON_CreateString("sparkhub");
+
+    if (!cJSON_AddItemToObject(pDevicePropertiesJson, "manufacturer", pManufacturerJson))
+    {
+        LOG_ERROR("Cannot add manufacturer string to DeviceUpdate report JSON");
+        cJSON_Delete(pDevicePropertiesJson);
+        return nullptr;
+    }
+
+    cJSON* pModelJson = cJSON_CreateString("sparkhub-iot-levelsense");
+
+    if (!cJSON_AddItemToObject(pDevicePropertiesJson, "model", pModelJson))
+    {
+        LOG_ERROR("Cannot add model string to DeviceUpdate report JSON");
+        cJSON_Delete(pDevicePropertiesJson);
+        return nullptr;
+    }
+
+    cJSON* pContractModelIdJson = cJSON_CreateString(DEVICE_PROVISIONING_MODEL_ID);
+
+    if (!cJSON_AddItemToObject(pDevicePropertiesJson, "contractModelId", pContractModelIdJson))
+    {
+        LOG_ERROR("Cannot add contract model id string to DeviceUpdate report JSON");
+        cJSON_Delete(pDevicePropertiesJson);
+        return nullptr;
+    }
+
+    cJSON* pAduVerJson = cJSON_CreateString("DU;agent/1.0.0");
+    if (!cJSON_AddItemToObject(pDevicePropertiesJson, "aduVer", pAduVerJson))
+    {
+        LOG_ERROR("Cannot add aduVer string to DeviceUpdate report JSON");
+        cJSON_Delete(pDevicePropertiesJson);
+        return nullptr;
+    }
+
+    return pDevicePropertiesJson;
+}
+
+cJSON* prepareAgentJson(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData)
+{
+    cJSON* pAgentJson = cJSON_CreateObject();
+    if (pAgentJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) Agent JSON");
+        return nullptr;
+    }
+
+    cJSON* pDevicePropertiesJson = prepareDevicePropertiesJson();
+    if (pDevicePropertiesJson == nullptr)
+    {
+        LOG_ERROR("Could not create DeviceProperties JSON");
+        return nullptr;
+    }
+
+    if (!cJSON_AddItemToObject(pAgentJson, "deviceProperties", pDevicePropertiesJson))
+    {
+        LOG_ERROR("Could not add deviceProperties JSON to Agent JSON");
+        cJSON_Delete(pAgentJson);
+        return nullptr;
+    }
+
+    if (workflowData.workflowId[0] != 0)
+    {
+        cJSON* pWorkflowJson = cJSON_CreateObject();
+        if (pWorkflowJson == nullptr)
         {
-            LOG_INFO("Error has occured while extracting frame");
-            if (pDataJson != nullptr)
-            {
-                cJSON_Delete(pDataJson);
-            }
-            return false;
+            LOG_ERROR("Could not allocate memory for (empty) workflow JSON");
+            return nullptr;
         }
 
-        switch (pFrame->msgCode)
+        cJSON* pWorkflowIdJson = cJSON_CreateString(workflowData.workflowId);
+        if (!cJSON_AddItemToObject(pWorkflowJson, "id", pWorkflowIdJson))
         {
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL:
-        {
-            bool result = processSetLightIntensityLevel(pDataJson, &(pFrame->frameData.setLightLevelStruct));
-            cJSON_Delete(pDataJson);
-            if (!result)
-            {
-                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
-                return false;
-            }
-            break;
+            LOG_ERROR("Could not add workflow id to workflow JSON");
+            cJSON_Delete(pWorkflowJson);
+            cJSON_Delete(pWorkflowIdJson);
+            return nullptr;
         }
 
-        case EMsgCode::MSG_STATUS_REPORT:
+        if (!cJSON_AddNumberToObject(pWorkflowJson, "action", static_cast<uint8_t>(workflowData.deviceUpdateAction)))
         {
-            bool result = processStatusReport(pDataJson, &(pFrame->frameData.deviceStatusStruct));
-            cJSON_Delete(pDataJson);
-            if (!result)
-            {
-                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
-                return false;
-            }
-            break;
+            LOG_ERROR("Could not add action to workflow JSON");
+            cJSON_Delete(pWorkflowJson);
+            return nullptr;
         }
 
-        case EMsgCode::MSG_HEARTBEAT:
+        if (!cJSON_AddItemToObject(pAgentJson, "workflow", pWorkflowJson))
         {
-            bool result = processHeartbeat(pDataJson, &(pFrame->frameData.heartbeatStruct));
-            cJSON_Delete(pDataJson);
-            if (!result)
-            {
-                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
-                return false;
-            }
-            break;
+            LOG_ERROR("Could not add workflow JSON to agent JSON");
+            cJSON_Delete(pWorkflowJson);
+            return nullptr;
         }
+    }
 
-        case EMsgCode::MSG_GET_LIGHT_INTENSITY_LEVEL:
-        {
-            bool result = processGetLightIntensityLevel(pDataJson, &(pFrame->frameData.setLightLevelStruct));
-            cJSON_Delete(pDataJson);
-            if (!result)
-            {
-                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
-                return false;
-            }
-            break;
-        }
+    cJSON* pCompatPropertyNames = cJSON_CreateString("manufacturer,model");
 
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE:
-        case EMsgCode::MSG_HEARTBEAT_RESPONSE:
-        case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
-        {
-            bool result = processResponse(pDataJson, &(pFrame->frameData.responseStruct));
-            cJSON_Delete(pDataJson);
-            if (!result)
-            {
-                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
-                return false;
-            }
-            break;
-        }
+    if (!cJSON_AddItemToObject(pAgentJson, "compatPropertyNames", pCompatPropertyNames))
+    {
+        LOG_ERROR("Could not add compatPropertyNames JSON to Agent JSON");
+        cJSON_Delete(pAgentJson);
+        cJSON_Delete(pCompatPropertyNames);
+        return nullptr;
+    }
 
-        case EMsgCode::MSG_OTA_UPDATE_LINK:
-        {
-            LOG_INFO("About to process OTA_UPDATE_LINK"); // TODO complete processing OTA_UPDATE_LINK message
-            bool result = processOtaUpdateLink(pDataJson, &(pFrame->frameData.otaUpdateLinkStruct));
-            cJSON_Delete(pDataJson);
-            if (!result)
-            {
-                LOG_INFO("Error while processing %s", getMsgCodeString(pFrame->msgCode).c_str());
-                return false;
-            }
-            break;
-        }
+    if (!cJSON_AddNumberToObject(pAgentJson, "state", state))
+    {
+        LOG_ERROR("Could not add state to Agent JSON");
+        cJSON_Delete(pAgentJson);
+        return nullptr;
+    }
 
-        case EMsgCode::MSG_TIME_SLOTS_LIST:
-        {
-            LOG_INFO("About to process TIME_SLOTS_LIST");
-            bool result = processTimeSlotsList(pDataJson, &(pFrame->frameData.timeSlotsList));
-            cJSON_Delete(pDataJson);
-            break;
-        }
+    cJSON* installedUpdateIdJson = prepareInstalledUpdateIdJson(updateId);
+    if (installedUpdateIdJson == nullptr)
+    {
+        LOG_ERROR("Could not prepare installedUpdateIdJson");
+        cJSON_Delete(pAgentJson);
+        return nullptr;
+    }
 
-        case EMsgCode::MSG_TIME_SLOTS_LIST_RESPONSE:
-        {
-            LOG_INFO("About to process TIME_SLOTS_LIST_RESPONSE");
-            cJSON_Delete(pDataJson);
-            break;
-        }
-        default:
+    if (!cJSON_AddItemToObject(pAgentJson, "installedUpdateId", installedUpdateIdJson))
+    {
+        LOG_ERROR("Could not add installedUpdateIdJson to agentJson");
+        cJSON_Delete(pAgentJson);
+        return nullptr;
+    }
+
+    return pAgentJson;
+}
+
+
+std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData)
+
+{
+    cJSON* pDeviceUpdateJson = cJSON_CreateObject();
+
+    if (pDeviceUpdateJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) DeviceUpdate report JSON");
+        return std::string("");
+    }
+
+    cJSON* pAgentJson = prepareAgentJson(updateId, state, workflowData);
+    if (pAgentJson == nullptr)
+    {
+        LOG_ERROR("Did not manage to prepare Agent JSON");
+        cJSON_Delete(pDeviceUpdateJson);
+        return nullptr;
+    }
+
+    if (!cJSON_AddItemToObject(pDeviceUpdateJson, "agent", pAgentJson))
+    {
+        LOG_ERROR("Did not manage to add Agent JSON to deviceUpdate JSON");
+        cJSON_Delete(pDeviceUpdateJson);
+        return nullptr;
+    }
+
+    cJSON* pUnknownParameterJson = cJSON_CreateString("c");
+    if (!cJSON_AddItemToObject(pDeviceUpdateJson, "__t", pUnknownParameterJson))
+    {
+        LOG_ERROR("Cannot add unknown parameter (__t)  to DeviceUpdate report JSON");
+        cJSON_Delete(pDeviceUpdateJson);
+        return std::string("");
+    }
+
+    cJSON* pDeviceUpdateReportJson = cJSON_CreateObject();
+    if (pDeviceUpdateReportJson == nullptr)
+    {
+        LOG_ERROR("Failed to create (empty) DeviceUpdateReport JSON");
+        cJSON_Delete(pDeviceUpdateJson);
+        return std::string("");
+    }
+
+    if (!cJSON_AddItemToObject(pDeviceUpdateReportJson, "deviceUpdate", pDeviceUpdateJson))
+    {
+        LOG_ERROR("Failed to add pDeviceUpdateJson to pDeviceUpdateReportJson");
+        cJSON_Delete(pDeviceUpdateJson);
+        cJSON_Delete(pDeviceUpdateReportJson);
+        return std::string("");
+    }
+
+    char* deviceUpdateReportCString = cJSON_Print(pDeviceUpdateReportJson);
+    if (deviceUpdateReportCString == nullptr)
+    {
+        LOG_ERROR("Error while preparing deviceUpdateReportCString");
+        cJSON_Delete(pDeviceUpdateJson);
+        return std::string("");
+    }
+
+    std::string deviceUpdateReport = std::string(deviceUpdateReportCString);
+    free(deviceUpdateReportCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+    cJSON_Delete(pDeviceUpdateReportJson);
+
+    return deviceUpdateReport;
+}
+
+std::string prepareFlowMeterCalibrationReport(const float& flowMeterCalibrationValue)
+{
+    cJSON* pFlowMeterCalibrationJson = cJSON_CreateObject();
+    if (pFlowMeterCalibrationJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) flow meter calibration JSON");
+        return std::string("");
+    }
+
+    if (!cJSON_AddNumberToObject(pFlowMeterCalibrationJson, FLOW_METER_CALIBRATION_KEY, flowMeterCalibrationValue))
+    {
+        LOG_ERROR("Could not add flow meter calibration valuer to JSON");
+        cJSON_Delete(pFlowMeterCalibrationJson);
+        return std::string("");
+    }
+
+    char* flowMeterCalibrationReportCString = cJSON_Print(pFlowMeterCalibrationJson);
+    if (flowMeterCalibrationReportCString == nullptr)
+    {
+        LOG_ERROR("Error while preparing flowMeterCalibrationReportCString");
+        cJSON_Delete(pFlowMeterCalibrationJson);
+        return std::string("");
+    }
+
+    const std::string flowMeterCalibrationReport = std::string(flowMeterCalibrationReportCString);
+    free(flowMeterCalibrationReportCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+    cJSON_Delete(pFlowMeterCalibrationJson);
+
+    return flowMeterCalibrationReport;
+}
+
+bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo)
+{
+    cJSON* pDataJson = nullptr;
+    bool   result    = getDataJsonDeviceProvisioning(inputMessage, pDeviceProvisioningInfo, &pDataJson);
+    if (!result)
+    {
+        LOG_INFO("Error has occured while extracting frame");
+        if (pDataJson != nullptr)
         {
             cJSON_Delete(pDataJson);
-            LOG_INFO("Unknown command received: %d", pFrame->msgCode);
-            return false;
         }
-        }
-
-        return true;
+        return false;
     }
 
-    /***** MESSAGE PREPARATION *****/
+    return true;
+}
 
-    std::string prepareHeartbeatMessage(uint32_t msgCounter)
+bool parseUpdateManifest(cJSON* pInputJson, TUpdateManifest* pUpdateManifest)
+{
+    if (strlen(pInputJson->valuestring) > MAX_MANIFEST_STRING_LENGTH)
     {
-        json_parser::THeartbeat heartbeatStruct = {};
-        heartbeatStruct.heartbeat = true;
-
-        cJSON *pHeartbeatDataJson = heartbeatToJson(heartbeatStruct);
-
-        if (pHeartbeatDataJson == nullptr)
-        {
-            LOG_INFO("Error while preparing heartbatDataJson in prepareHeartbeatMessage()");
-            return std::string("");
-        }
-
-        cJSON *pHeartbeatCommandJson = dataJsonToRpcCommandJson(pHeartbeatDataJson, EMsgCode::MSG_HEARTBEAT, msgCounter);
-
-        if (pHeartbeatCommandJson == nullptr)
-        {
-            LOG_INFO("Error while preparing heartbeatCommandJson in prepareHeartbeatMessage()");
-            return std::string("");
-        }
-
-        char *pHeartbeatJsonCString = cJSON_Print(pHeartbeatCommandJson);
-        if (pHeartbeatJsonCString == nullptr)
-        {
-            LOG_INFO("Error while printing heartbeatCommandJson");
-            cJSON_Delete(pHeartbeatCommandJson);
-            return std::string("");
-        }
-
-        std::string heartbeatJsonString = std::string(pHeartbeatJsonCString);
-        free(pHeartbeatJsonCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
-        cJSON_Delete(pHeartbeatCommandJson);
-
-        return heartbeatJsonString;
+        LOG_ERROR(
+            "Manifest string length (%d) exceeds maximum length (%d)",
+            strlen(pInputJson->valuestring),
+            MAX_MANIFEST_STRING_LENGTH);
+        return false;
     }
 
-    std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus &deviceStatus, uint32_t msgCounter)
+    char manifestCString[MAX_MANIFEST_STRING_LENGTH];
+
+    strncpy(manifestCString, pInputJson->valuestring, strlen(pInputJson->valuestring));
+
+    cJSON* pUpdateManifestJson = cJSON_Parse(manifestCString);
+
+    if (pUpdateManifestJson == nullptr)
     {
-        cJSON *pDeviceStatusDataJson = deviceStatusToJson(deviceStatus);
-
-        if (pDeviceStatusDataJson == nullptr)
-        {
-            LOG_INFO("Error while preparing deviceStatusDataJson in prepareDeviceStatusMessage()");
-            return "";
-        }
-
-        cJSON *pDeviceStatusCommandDataJson = dataJsonToRpcCommandJson(pDeviceStatusDataJson, EMsgCode::MSG_STATUS_REPORT, msgCounter);
-
-        if (pDeviceStatusCommandDataJson == nullptr)
-        {
-            LOG_INFO("Error while preparing deviceStatusCommandJson in prepareDeviceStatusMessage()");
-            return "";
-        }
-
-        char *pDeviceStatusJsonCString = cJSON_Print(pDeviceStatusCommandDataJson);
-        if (pDeviceStatusJsonCString == nullptr)
-        {
-            LOG_INFO("Error while printing deviceStatusCommandJson");
-            cJSON_Delete(pDeviceStatusCommandDataJson);
-            return std::string("");
-        }
-        std::string deviceStatusMessage = std::string(pDeviceStatusJsonCString);
-        free(pDeviceStatusJsonCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
-        cJSON_Delete(pDeviceStatusCommandDataJson);
-
-        return deviceStatusMessage;
+        LOG_ERROR("Could not parse updateManifest JSON");
+        return false;
     }
 
-    /***** STRUCTURE TO JSON *****/
-
-    cJSON *deviceStatusToJson(const TDeviceStatus &deviceStatus)
+    cJSON* pUpdateIdJson = cJSON_GetObjectItemCaseSensitive(pUpdateManifestJson, "updateId");
+    if (pUpdateIdJson == nullptr)
     {
-        cJSON *pDeviceStatusJson = cJSON_CreateObject();
-        cJSON *pWifiConnectionStateJson = cJSON_CreateBool(deviceStatus.isWiFiConnected);
-        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "wifiConnectionState", pWifiConnectionStateJson)))
-        {
-            LOG_INFO("Cannot add wifiConnectionState JSON to deviceStatusJson");
-            cJSON_Delete(pDeviceStatusJson);
-            return nullptr;
-        }
-
-        cJSON *pBleConnectionStateJson = cJSON_CreateBool(deviceStatus.isBleConnected);
-        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "bleConnectionState", pBleConnectionStateJson)))
-        {
-            LOG_INFO("Cannot add bleConnectionState JSON to deviceStatusJson");
-            cJSON_Delete(pDeviceStatusJson);
-            return nullptr;
-        }
-
-        cJSON *pCurrentTimeFromStartupMsJson = cJSON_CreateNumber(deviceStatus.currentTimeFromStartupMs);
-        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentTimeFromStartupMs", pCurrentTimeFromStartupMsJson)))
-        {
-            LOG_INFO("Cannot add currentTimeMs JSON to deviceStatusJson");
-            cJSON_Delete(pDeviceStatusJson);
-            return nullptr;
-        }
-
-        cJSON *pFirmwareVersionJson = cJSON_CreateString(deviceStatus.getFirmwareVersion().c_str());
-        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "firmwareVersion", pFirmwareVersionJson)))
-        {
-            LOG_INFO("Cannot add firmwareVersion JSON to deviceStatusJson");
-            cJSON_Delete(pDeviceStatusJson);
-            return nullptr;
-        }
-
-        cJSON *pCurrentLocalTimeJson = cJSON_CreateString(deviceStatus.getCurrentLocalTime().c_str());
-        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentLocalTime", pCurrentLocalTimeJson)))
-        {
-            LOG_INFO("Cannot add currentLocalTime JSON to deviceStatusJson");
-            cJSON_Delete(pDeviceStatusJson);
-            return nullptr;
-        }
-
-        cJSON *pTotalSumOfLitersJson = cJSON_CreateNumber(deviceStatus.totalSumOfLiters);
-        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "totalSumOfLiters", pTotalSumOfLitersJson)))
-        {
-            LOG_INFO("Cannot add totalSumOfLiters JSON to deviceStatusJson");
-            cJSON_Delete(pDeviceStatusJson);
-            return nullptr;
-        }
-
-        
-        cJSON *ptotalTimeCoolingIsRunningJson = cJSON_CreateNumber(deviceStatus.totalTimeCoolingIsRunning);
-        if (!(cJSON_AddItemToObject(pDeviceStatusJson, "totalTimeCoolingIsRunning", ptotalTimeCoolingIsRunningJson)))
-        {
-            LOG_INFO("Cannot add totalTimeCoolingIsRunning JSON to deviceStatusJson");
-            cJSON_Delete(pDeviceStatusJson);
-            return nullptr;
-        }
-        
-
-        return pDeviceStatusJson;
+        LOG_ERROR("Could not find updateIdJson inside updateManifest JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    cJSON *heartbeatToJson(const THeartbeat &heartbeatStruct)
+    cJSON* pVersionJson = cJSON_GetObjectItemCaseSensitive(pUpdateIdJson, "version");
+    if (pVersionJson == nullptr)
     {
-        cJSON *pDataJson = cJSON_CreateObject();
-
-        if (pDataJson == nullptr)
-        {
-            LOG_INFO("Error while preparing heartbeatJson - heartbeatToJson");
-            return nullptr;
-        }
-
-        cJSON *pHeartbeatJson = cJSON_CreateBool(heartbeatStruct.heartbeat);
-
-        if (!(cJSON_AddItemToObject(pDataJson, "heartbeat", pHeartbeatJson)))
-        {
-            LOG_INFO("Cannot add heartbeat JSON to dataJson");
-            cJSON_Delete(pDataJson);
-            return nullptr;
-        }
-
-        return pDataJson;
+        LOG_ERROR("Could not find versionJson inside updateId JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    cJSON *widgetGetLightLevelToJson(const TSetLightLevel &lightLevelStruct)
+    if (strlen(pVersionJson->valuestring) > MAX_OTA_VERSION_STRING_LENGTH)
     {
-        cJSON *pLightIntensityJson = cJSON_CreateObject();
-
-        if (pLightIntensityJson == nullptr)
-        {
-            LOG_INFO("Error while creating lightIntensityJson - widgetGetLightLevelToJson()");
-            return nullptr;
-        }
-
-        cJSON *pParamsJson = cJSON_CreateNumber(lightLevelStruct.lightIntensityLevel);
-        cJSON *pMethodJson = cJSON_CreateString("getLightIntensity");
-
-        if (!(cJSON_AddItemToObject(pLightIntensityJson, "params", pParamsJson)))
-        {
-            LOG_INFO("Cannot add paramsJson to lightIntensityJson");
-            cJSON_Delete(pLightIntensityJson);
-            return nullptr;
-        }
-        if (!(cJSON_AddItemToObject(pLightIntensityJson, "method", pMethodJson)))
-        {
-            LOG_INFO("Cannot add methodJson to lightIntesnityJson");
-            cJSON_Delete(pLightIntensityJson);
-            return nullptr;
-        }
-
-        return pLightIntensityJson;
+        LOG_ERROR("Version string in update manifest is too long");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    cJSON *widgetSetLightLevelToJson(const TSetLightLevel &lightLevelStruct)
+    cJSON* pProviderJson = cJSON_GetObjectItemCaseSensitive(pUpdateIdJson, "provider");
+    if (pProviderJson == nullptr)
     {
-        cJSON *pLightIntensityJson = cJSON_CreateObject();
-
-        if (pLightIntensityJson == nullptr)
-        {
-            LOG_INFO("Error while creating lightIntensity Json - widgetSetLightLevelToJson()");
-            return nullptr;
-        }
-
-        cJSON *pParamsJson = cJSON_CreateNumber(lightLevelStruct.lightIntensityLevel);
-        cJSON *pMethodJson = cJSON_CreateString("setLightIntensity");
-
-        if (!(cJSON_AddItemToObject(pLightIntensityJson, "params", pParamsJson)))
-        {
-            LOG_INFO("Cannot add paramsJson to lightIntensityJson");
-            cJSON_Delete(pLightIntensityJson);
-            return nullptr;
-        }
-
-        if (!(cJSON_AddItemToObject(pLightIntensityJson, "method", pMethodJson)))
-        {
-            LOG_INFO("Cannot add methodJson to lightIntensityJson");
-            cJSON_Delete(pLightIntensityJson);
-            return nullptr;
-        }
-
-        return pLightIntensityJson;
+        LOG_ERROR("Could not find providerJson inside updateId JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    /**
-     * @brief dataJsonToParamsJson - function preparing paramsJSON based on provided dataJson, msgCode and msgCounter
-     * (see cloud communication protocol description for reference).
-     * NOTE: after calling the function, it is the user's responsibility to free the memory allocated for the returned
-     * cJSON* object. Call cJSON_Delete(returnedValue) after returned cJSON* will no longer be used
-     * @param pDataJson - cJSON* object with dataJson
-     * @param msgCode - msgCode to add to paramsJson
-     * @param msgCounter - message number to add to paramsJson
-     * @return cJSON* object with paramsJson.
-     */
-    cJSON *dataJsonToParamsJson(cJSON *pDataJson, EMsgCode msgCode, uint32_t msgCounter)
+    if (strlen(pProviderJson->valuestring) > MAX_PROVIDER_NAME_LENGTH)
     {
-        cJSON *pParamsJson = cJSON_CreateObject();
-
-        if (pParamsJson == nullptr)
-        {
-            LOG_INFO("Error while creating paramsJson - dataJsonToParamsJson()");
-            return nullptr;
-        }
-
-        if (!(cJSON_AddItemToObject(pParamsJson, "data", pDataJson)))
-        {
-            LOG_INFO("Cannot add dataJson to paramsJson");
-            cJSON_Delete(pParamsJson);
-            return nullptr;
-        }
-
-        cJSON *pMsgCodeJson = cJSON_CreateNumber(static_cast<int>(msgCode));
-        cJSON *pMsgCounterJson = cJSON_CreateNumber(msgCounter);
-
-        if (!(cJSON_AddItemToObject(pParamsJson, "msgCode", pMsgCodeJson)))
-        {
-            LOG_INFO("Cannot add msgCodeJson to paramsJson");
-            cJSON_Delete(pParamsJson);
-            return nullptr;
-        }
-
-        if (!(cJSON_AddItemToObject(pParamsJson, "msgCounter", pMsgCounterJson)))
-        {
-            LOG_INFO("Cannot add msgCounterJson to paramsJson");
-            cJSON_Delete(pParamsJson);
-            return nullptr;
-        }
-
-        return pParamsJson;
+        LOG_ERROR("Provider name in update manifest is too long");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    /**
-     * @brief dataJsonToRpcCommandJson - function creating RpcCommandJson (the most generic JSON in that protocol) from dataJson.
-     * NOTE: after calling the function, it is the user's responsibility to free the memory allocated for the returned
-     * cJSON* object. Call cJSON_Delete(returnedValue) after returned cJSON* will no longer be used
-     * @param pDataJson - cJSON* object with dataJson
-     * @param msgCode - msgCode to add to paramsJson
-     * @param msgCounter - msgCounter to add to paramsJson
-     * @return
-     */
-
-    cJSON *dataJsonToRpcCommandJson(cJSON *pDataJson, EMsgCode msgCode, uint32_t msgCounter)
+    cJSON* pNameJson = cJSON_GetObjectItemCaseSensitive(pUpdateIdJson, "name");
+    if (pNameJson == nullptr)
     {
-        cJSON *pParamsJson = dataJsonToParamsJson(pDataJson, msgCode, msgCounter);
-
-        if (pParamsJson == nullptr)
-        {
-            LOG_INFO("Error while creating paramsJson - dataJsonToRpcCommandJson()");
-            return nullptr;
-        }
-
-        cJSON *pRpcCommandJson = cJSON_CreateObject();
-
-        if (!(cJSON_AddItemToObject(pRpcCommandJson, "params", pParamsJson)))
-        {
-            LOG_INFO("Cannot add paramsJson to rpcCommandJson");
-            cJSON_Delete(pParamsJson);
-            cJSON_Delete(pRpcCommandJson);
-            return nullptr;
-        }
-
-        return pRpcCommandJson;
+        LOG_ERROR("Could not find nameJson inside updateId JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    /***** STRING GET FUNCTIONS FOR FRAME PRINTING *****/
-
-    std::string getLightIntensityString(const TSetLightLevel &setLightLevelData)
+    if (strlen(pNameJson->valuestring) > MAX_OTA_UPDATE_NAME_LENGTH)
     {
-        std::string output = "lightIntensityLevel: " + std::to_string(setLightLevelData.lightIntensityLevel) + "\n******************\n";
-        return output;
+        LOG_ERROR("Update name in update manifest is too long");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    std::string getStatusReportString(const TDeviceStatus &deviceStatus)
+    cJSON* pInstructionsJson = cJSON_GetObjectItemCaseSensitive(pUpdateManifestJson, "instructions");
+    if (pInstructionsJson == nullptr)
     {
-        std::string statusReportString = "wifiConnectionState: " + getBooleanString(deviceStatus.isWiFiConnected) + "\n" + "bleConnectionState: " + getBooleanString(deviceStatus.isBleConnected) + "\n" + "lightIntensityLevel: " + std::to_string(deviceStatus.lightIntensityLevel) + "\n" + "currentTimeFromStartupMs: " + std::to_string(deviceStatus.currentTimeFromStartupMs) + "\n" + "currentLocalTime: " + deviceStatus.currentLocalTime + "\n" + "firmwareVersion: " + deviceStatus.firmwareVersion + "\n";
-
-        return statusReportString;
+        LOG_ERROR("Could not find instructions inside updateManifest JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    std::string getHeartbeatString(const THeartbeat &heartbeatData)
+    cJSON* pStepsJson = cJSON_GetObjectItemCaseSensitive(pInstructionsJson, "steps");
+    if (pStepsJson == nullptr)
     {
-        std::string heartbeatString = heartbeatData.heartbeat ? "true" : "false";
-        std::string output = "heartbeat: " + heartbeatString + "\n******************\n";
-        return output;
+        LOG_ERROR("Could not find steps inside instructions JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    std::string getResponseString(const TResponse &responseData)
+    cJSON* pStepsArrayElement = cJSON_GetArrayItem(pStepsJson, 0);
+    if (pStepsArrayElement == nullptr)
     {
-        std::string responseString = responseData.ACK ? "true" : "false";
-        std::string output = "ACK: " + responseString + "\n******************\n";
-        return output;
+        LOG_ERROR("Could not find 0th element of the pStepsJson array");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    std::string getOtaUpdateLinkString(const TOtaUpdateLink &otaUpdateLink)
+    cJSON* pStepsFilesJson = cJSON_GetObjectItemCaseSensitive(pStepsArrayElement, "files");
+    if (pStepsFilesJson == nullptr)
     {
-        std::string output = "firmwareLink: " + std::string(otaUpdateLink.firmwareLink) + std::string("\n");
-
-        return output;
+        LOG_ERROR("Could not find files inside steps JSON");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    // std::string getTimeSlotsListString(const TTimeSlotsList& timeSlotsList)
-    // {
-    //     constexpr int8_t MAX_NUM_OF_TIMERS = 42;
-    //     std::string result("");
-
-    //     for (int i=0; i < MAX_NUM_OF_TIMERS; i++)
-    //     {
-    //         if (timeSlotsList.timersList.timers[i].lightLevel != 200)
-    //         {
-
-    //             result += std::string("Id: %d: \n"
-    //                                   "startMinuteOfDay: %d\n"
-    //                                   "endMinuteOfDay: %d\n"
-    //                                   "days: 0x%x\n"
-    //                                   "lightLevel: %d",
-    //                                   i,
-    //                                   timeSlotsList.timersList.timers[i].startMinuteOfDay,
-    //                                   timeSlotsList.timersList.timers[i].endMinuteOfDay,
-    //                                   timeSlotsList.timersList.timers[i].days,
-    //                                   timeSlotsList.timersList.timers[i].lightLevel);
-    //         }
-    //     }
-    //     LOG_INFO("Printing Time Slots List");
-    //     // TODO - decide if json_parser should get access to NVS to print the message
-    //     return result;
-    // }
-
-    std::string TDeviceStatus::getFirmwareVersion() const
+    cJSON* pStepsFilesArrayElement = cJSON_GetArrayItem(pStepsFilesJson, 0);
+    if (pStepsFilesArrayElement == nullptr)
     {
-        std::string output(firmwareVersion);
-
-        return output;
+        LOG_ERROR("Could not find 0th element of pStepsFilesJson array");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    std::string TDeviceStatus::getCurrentLocalTime() const
+    if (strlen(pStepsFilesArrayElement->valuestring) > MAX_FILE_KEY_LENGTH)
     {
-        std::string output(currentLocalTime);
-
-        return output;
+        LOG_ERROR("File key too long");
+        cJSON_Delete(pUpdateManifestJson);
+        return false;
     }
 
-    /***** FRAME PRINTING *****/
+    strncpy(pUpdateManifest->updateId.firmwareVersion, pVersionJson->valuestring, strlen(pVersionJson->valuestring));
+    strncpy(pUpdateManifest->updateId.providerName, pProviderJson->valuestring, strlen(pProviderJson->valuestring));
+    strncpy(pUpdateManifest->updateId.updateName, pNameJson->valuestring, strlen(pNameJson->valuestring));
 
-    void printFrame(const TFrame &frame)
+    strncpy(
+        pUpdateManifest->fileKey, pStepsFilesArrayElement->valuestring, strlen(pStepsFilesArrayElement->valuestring));
+
+    cJSON_Delete(pUpdateManifestJson);
+
+    LOG_INFO("Parsing update manifest was correct");
+
+    return true;
+}
+
+bool parseWorkflow(cJSON* pWorkflowJson, TWorkflowData* pWorkflowData)
+{
+    cJSON* pActionJson = cJSON_GetObjectItem(pWorkflowJson, "action");
+    if (pActionJson == nullptr)
     {
-        std::string dataString;
-
-        switch (frame.msgCode)
-        {
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL:
-            dataString = getLightIntensityString(frame.frameData.setLightLevelStruct);
-            break;
-
-        case EMsgCode::MSG_STATUS_REPORT:
-            dataString = getStatusReportString(frame.frameData.deviceStatusStruct);
-            break;
-
-        case EMsgCode::MSG_HEARTBEAT:
-            dataString = getHeartbeatString(frame.frameData.heartbeatStruct);
-            break;
-
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE:
-        case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
-        case EMsgCode::MSG_HEARTBEAT_RESPONSE:
-
-            dataString = getResponseString(frame.frameData.responseStruct);
-            break;
-
-        case EMsgCode::MSG_OTA_UPDATE_LINK:
-            dataString = getOtaUpdateLinkString(frame.frameData.otaUpdateLinkStruct);
-            break;
-        case EMsgCode::MSG_TIME_SLOTS_LIST:
-            // dataString = getTimeSlotsListString(frame.frameData.timeSlotsList);
-            break;
-        default:
-            LOG_INFO("Unknown message code, could not print the frame");
-        }
-
-        LOG_INFO("\n\n"
-                 "******************\n"
-                 "msgCounter: %d\n"
-                 "msgCode: %d\n"
-                 "%s",
-                 frame.msgCounter,
-                 frame.msgCode,
-                 dataString.c_str());
+        LOG_ERROR("Could not find action data in workflow JSON");
+        return false;
     }
 
-    /***** HELPER FUNCTIONS *****/
-
-    std::string getMsgMethodString(EMsgMethod msgMethod)
+    cJSON* pIdJson = cJSON_GetObjectItem(pWorkflowJson, "id");
+    if (pIdJson == nullptr)
     {
-        switch (msgMethod)
-        {
-        case EMsgMethod::MSG_METHOD_FAILED:
-            return std::string("MSG_METHOD_FAILED");
-        case EMsgMethod::MSG_METHOD_GET_LIGHT_INTENSITY:
-            return std::string("MSG_METHOD_GET_LIGHT_INTENSITY");
-        case EMsgMethod::MSG_METHOD_RPC_COMMAND:
-            return std::string("MSG_METHOD_RPC_COMMAND");
-        case EMsgMethod::MSG_METHOD_SET_LIGHT_INTENSITY:
-            return std::string("MSG_METHOD_SET_LIGHT_INTENSITY");
-        case EMsgMethod::MSG_METHOD_UNKNOWN:
-            return std::string("MSG_METHOD_UNKNOWN");
-        default:
-            return std::string("MSG_METHOD_ERROR");
-        }
+        LOG_ERROR("Could not find id in workflow JSON");
+        return false;
     }
 
-    std::string getMsgCodeString(EMsgCode msgCode)
+    EDeviceUpdateAction deviceUpdateAction = static_cast<EDeviceUpdateAction>(pActionJson->valueint);
+
+    if ((deviceUpdateAction != EDeviceUpdateAction::ACTION_DOWNLOAD) &&
+        (deviceUpdateAction != EDeviceUpdateAction::ACTION_CANCEL))
     {
-        switch (msgCode)
-        {
-        case EMsgCode::MSG_HEARTBEAT:
-            return std::string("MSG_HEARTBEAT");
-        case EMsgCode::MSG_HEARTBEAT_RESPONSE:
-            return std::string("MSG_HEARTBEAT_RESPONSE");
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL:
-            return std::string("MSG_SET_LIGHT_INTENSITY_LEVEL");
-        case EMsgCode::MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE:
-            return std::string("MSG_SET_LIGHT_INTENSITY_LEVEL_RESPONSE");
-        case EMsgCode::MSG_STATUS_REPORT:
-            return std::string("MSG_STATUS_REPORT");
-        case EMsgCode::MSG_STATUS_REPORT_RESPONSE:
-            return std::string("MSG_STATUS_REPORT_RESPONSE");
-        case EMsgCode::MSG_GET_LIGHT_INTENSITY_LEVEL:
-            return std::string("MSG_GET_LIGHT_INTENSITY_LEVEL");
-        case EMsgCode::MSG_GET_LIGHT_INTENSITY_LEVEL_RESPONSE:
-            return std::string("MSG_GET_LIGHT_INTENSITY_LEVEL_RESPONSE");
-        case EMsgCode::MSG_OTA_UPDATE_LINK:
-            return std::string("MSG_OTA_UPDATE_LINK");
-        case EMsgCode::MSG_OTA_UPDATE_LINK_RESPONSE:
-            return std::string("MSG_OTA_UPDATE_LINK_RESPONSE");
-        case EMsgCode::MSG_TIME_SLOTS_LIST:
-            return std::string("MSG_TIME_SLOTS_LIST");
-        case EMsgCode::MSG_TIME_SLOTS_LIST_RESPONSE:
-            return std::string("MSG_TIME_SLOTS_LIST_RESPONSE");
-        default:
-            return std::string("MSG_UNKNOWN_MESSAGE");
-        }
+        LOG_ERROR("Unrecognized workflow id obtained");
+        return false;
     }
 
-    std::string getConnectionString(bool status)
+    if (strlen(pIdJson->valuestring) > MAX_WORKFLOW_ID_LENGTH)
     {
-        if (status)
-            return std::string("connected");
-        else
-            return std::string("not connected");
+        LOG_ERROR("Received too long workflow id");
+        return false;
     }
 
-    std::string getBooleanString(bool status)
+    pWorkflowData->deviceUpdateAction = static_cast<EDeviceUpdateAction>(pActionJson->valueint);
+    strncpy(pWorkflowData->workflowId, pIdJson->valuestring, strlen(pIdJson->valuestring));
+
+    return true;
+}
+
+bool parseDeviceUpdate(cJSON* pInputJson, TDeviceUpdate* pDeviceUpdate)
+{
+    cJSON* pDeviceUpdateJson = cJSON_GetObjectItemCaseSensitive(pInputJson, DEVICE_UPDATE_KEY);
+
+    if (pDeviceUpdateJson == nullptr)
     {
-        if (status)
-            return std::string("true");
-        else
-            return std::string("false");
+        LOG_INFO("Could not parse JSON, no deviceUpdate data");
+        return false;
     }
 
-    int32_t extractRequestIdFromTopic(const std::string &topic)
+    cJSON* pServiceJson = cJSON_GetObjectItemCaseSensitive(pDeviceUpdateJson, "service");
+    if (pServiceJson == nullptr)
     {
-        int32_t requestId1 = 0;
-        int32_t requestId2 = 0;
-
-        int resultTopic1 = sscanf(topic.c_str(), "v1/devices/me/rpc/request/%10d", &requestId1); // NOLINT - we don't want exceptions handling
-        if (resultTopic1 > 0)
-        {
-            return requestId1;
-        }
-
-        int resultTopic2 = sscanf(topic.c_str(), "v1/devices/me/rpc/response/%10d", &requestId2); // NOLINT - we don't want exceptions handling
-        if (resultTopic2 > 0)
-        {
-            return requestId2;
-        }
-
-        return -1;
+        LOG_ERROR("Could not find service data inside deviceUpdate JSON");
+        return false;
     }
 
-    int32_t extractTimeInMinutesFromString(const std::string timeString)
+    cJSON* pWorkflowJson = cJSON_GetObjectItem(pServiceJson, "workflow");
+    if (pWorkflowJson == nullptr)
     {
-        int32_t hours = 0;
-        int32_t minutes = 0;
-        int32_t parseResult = sscanf(timeString.c_str(), "%2d:%2d", &hours, &minutes);
-
-        if (parseResult > 0)
-        {
-            return hours * 60 + minutes;
-        }
-        else
-        {
-            LOG_INFO("Parsing problem occured in extractTimeInMinutesFromString()");
-            return -1;
-        }
-
-        return 0;
+        LOG_ERROR("Could not find workflow data inside deviceUpdate JSON");
+        return false;
     }
+
+    if (!parseWorkflow(pWorkflowJson, &pDeviceUpdate->workflowData))
+    {
+        LOG_ERROR("Did not manage to parse workflow data in deviceUpdate JSON");
+        return false;
+    }
+
+    cJSON* pUpdateManifestJson = cJSON_GetObjectItemCaseSensitive(pServiceJson, "updateManifest");
+    if (pUpdateManifestJson == nullptr)
+    {
+        LOG_ERROR("Could not find updateManifest data inside deviceUpdate JSON");
+        return false;
+    }
+
+    if (!parseUpdateManifest(pUpdateManifestJson, &pDeviceUpdate->updateManifest))
+    {
+        LOG_ERROR("Did not manage to parse updateManifest");
+        return false;
+    }
+
+    cJSON* pFileUrlsJson = cJSON_GetObjectItemCaseSensitive(pServiceJson, "fileUrls");
+    if (pFileUrlsJson == nullptr)
+    {
+        LOG_ERROR("Did not manage to parse fileUrls JSON");
+        return false;
+    }
+
+    cJSON* pUrlJson = cJSON_GetObjectItemCaseSensitive(pFileUrlsJson, pDeviceUpdate->updateManifest.fileKey);
+    if (pUrlJson == nullptr)
+    {
+        LOG_ERROR("Did not manage to parse urlJson JSON");
+        return false;
+    }
+
+    if (strlen(pUrlJson->valuestring) > MAX_OTA_URL_LENGTH)
+    {
+        LOG_ERROR("File URL too long, length: %d, max length: %d", strlen(pUrlJson->valuestring), MAX_OTA_URL_LENGTH);
+        return false;
+    }
+
+    strncpy(pDeviceUpdate->fileUrl, pUrlJson->valuestring, strlen(pUrlJson->valuestring));
+
+    LOG_INFO("Parsing Device Update was correct");
+
+    return true;
+}
+
+bool parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrationValue)
+{
+    if (pInputJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no input JSON data");
+        return false;
+    }
+
+    if (pFlowMeterCalibrationValue == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no output parameter");
+        return false;
+    }
+
+    cJSON* pFlowMeterCalibrationJson = cJSON_GetObjectItemCaseSensitive(pInputJson, FLOW_METER_CALIBRATION_KEY);
+    if (pFlowMeterCalibrationJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no flow meter calibration data");
+        return false;
+    }
+
+    if (!cJSON_IsNumber(pFlowMeterCalibrationJson))
+    {
+        LOG_WARNING("Flow meter calibration value is not a number");
+        return false;
+    }
+
+    if (pFlowMeterCalibrationJson->valuedouble < -FLT_MAX || pFlowMeterCalibrationJson->valuedouble > FLT_MAX)
+    {
+        LOG_WARNING("Flow meter calibration value out of range");
+        return false;
+    }
+
+    (*pFlowMeterCalibrationValue) = pFlowMeterCalibrationJson->valuedouble;
+
+    LOG_INFO("Parsing flow meter calibration value correct");
+
+    return true;
+}
+
+cJSON* parseDeviceTwinDesired(cJSON* pInputJson)
+{
+    if (pInputJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no input JSON data");
+        return nullptr;
+    }
+
+    cJSON* pDeviceTwinDesiredJson = cJSON_GetObjectItemCaseSensitive(pInputJson, DEVICE_TWIN_DESIRED_KEY);
+
+    return pDeviceTwinDesiredJson;
+}
+
+/***** REPORTED DEVICE TWINS *******/
+
+cJSON* initiateReportedJson()
+{
+    cJSON* pOutJson = cJSON_CreateObject();
+
+    if (pOutJson == nullptr)
+    {
+        LOG_ERROR("Could not create pOutJson");
+        return nullptr;
+    }
+    cJSON* pReportedJson = cJSON_CreateObject();
+    if (pReportedJson == nullptr)
+    {
+        LOG_ERROR("Could not create pReportedJson");
+        return nullptr;
+    }
+
+    cJSON_AddItemToObject(pOutJson, "reported", pReportedJson);
+
+    return pOutJson;
+}
+
+std::string prepareReportedMessage(cJSON* pReportedJson)
+{
+    char* reportedMessageCString = cJSON_Print(pReportedJson);
+
+    if (reportedMessageCString == nullptr)
+    {
+        LOG_ERROR("Could not print reported JSON");
+        return std::string("");
+    }
+
+    std::string reportedMessage = std::string(reportedMessageCString);
+    free(reportedMessageCString);
+
+    return reportedMessage;
+}
+
+
+/***** STRUCTURE TO JSON *****/
+
+cJSON* deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter)
+{
+    cJSON* pDeviceStatusJson        = cJSON_CreateObject();
+    cJSON* pWifiConnectionStateJson = cJSON_CreateBool(deviceStatus.isWiFiConnected);
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "wifiConnectionState", pWifiConnectionStateJson)))
+    {
+        LOG_INFO("Cannot add wifiConnectionState JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
+    cJSON* pBleConnectionStateJson = cJSON_CreateBool(deviceStatus.isBleConnected);
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "bleConnectionState", pBleConnectionStateJson)))
+    {
+        LOG_INFO("Cannot add bleConnectionState JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
+    cJSON* pBelowPressureAlarmThresholdJson = cJSON_CreateBool(deviceStatus.isBelowPressureAlarmThreshold);
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "BelowPressureAlarmThreshold", pBelowPressureAlarmThresholdJson)))
+    {
+        LOG_INFO("Cannot add bleConnectionState JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
+    cJSON* pCurrentTimeFromStartupMsJson = cJSON_CreateNumber(deviceStatus.currentTimeFromStartupMs);
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentTimeFromStartupMs", pCurrentTimeFromStartupMsJson)))
+    {
+        LOG_INFO("Cannot add currentTimeMs JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
+    cJSON* pFirmwareVersionJson = cJSON_CreateString(deviceStatus.getFirmwareVersion().c_str());
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "firmwareVersion", pFirmwareVersionJson)))
+    {
+        LOG_INFO("Cannot add firmwareVersion JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
+    cJSON* pCurrentLocalTimeJson = cJSON_CreateString(deviceStatus.getCurrentLocalTime().c_str());
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "currentLocalTime", pCurrentLocalTimeJson)))
+    {
+        LOG_INFO("Cannot add currentLocalTime JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
+    cJSON* pPressureSensorValueJson = cJSON_CreateNumber(deviceStatus.pressureSensorValue);
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "pressureSensorValue", pPressureSensorValueJson)))
+    {
+        LOG_INFO("Cannot add pressureSensorValue JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
+    cJSON* pFlowMeterValueJson = cJSON_CreateNumber(deviceStatus.flowMeterValue);
+    if (!(cJSON_AddItemToObject(pDeviceStatusJson, "flowMeterValue", pFlowMeterValueJson)))
+    {
+        LOG_INFO("Cannot add flowMeterValue JSON to deviceStatusJson");
+        cJSON_Delete(pDeviceStatusJson);
+        return nullptr;
+    }
+
+    cJSON* pOutputJson = cJSON_CreateObject();
+    if (!(cJSON_AddItemToObject(pOutputJson, "status", pDeviceStatusJson)))
+    {
+        LOG_INFO("Cannot add deviceStatusJson to output JSON");
+        cJSON_Delete(pDeviceStatusJson);
+        cJSON_Delete(pOutputJson);
+        return nullptr;
+    }
+
+    return pOutputJson;
+}
+
+/**
+ * @brief dataJsonToParamsJson - function preparing paramsJSON based on provided dataJson, msgCode and msgCounter
+ * (see cloud communication protocol description for reference).
+ * NOTE: after calling the function, it is the user's responsibility to free the memory allocated for the returned
+ * cJSON* object. Call cJSON_Delete(returnedValue) after returned cJSON* will no longer be used
+ * @param pDataJson - cJSON* object with dataJson
+ * @param msgCode - msgCode to add to paramsJson
+ * @param msgCounter - message number to add to paramsJson
+ * @return cJSON* object with paramsJson.
+ */
+cJSON* dataJsonToParamsJson(cJSON* pDataJson, EMsgCode msgCode, uint32_t msgCounter)
+{
+    cJSON* pParamsJson = cJSON_CreateObject();
+
+    if (pParamsJson == nullptr)
+    {
+        LOG_INFO("Error while creating paramsJson - dataJsonToParamsJson()");
+        return nullptr;
+    }
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "data", pDataJson)))
+    {
+        LOG_INFO("Cannot add dataJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    cJSON* pMsgCodeJson    = cJSON_CreateNumber(static_cast<int>(msgCode));
+    cJSON* pMsgCounterJson = cJSON_CreateNumber(msgCounter);
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "msgCode", pMsgCodeJson)))
+    {
+        LOG_INFO("Cannot add msgCodeJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    if (!(cJSON_AddItemToObject(pParamsJson, "msgCounter", pMsgCounterJson)))
+    {
+        LOG_INFO("Cannot add msgCounterJson to paramsJson");
+        cJSON_Delete(pParamsJson);
+        return nullptr;
+    }
+
+    return pParamsJson;
+}
+
+
+/***** STRING GET FUNCTIONS FOR FRAME PRINTING *****/
+
+std::string getResponseString(const TResponse& responseData)
+{
+    std::string responseString = responseData.ACK ? "true" : "false";
+    std::string output         = "ACK: " + responseString + "\n******************\n";
+    return output;
+}
+
+std::string getOtaUpdateLinkString(const TOtaUpdateLink& otaUpdateLink)
+{
+    std::string output = "firmwareLink: " + std::string(otaUpdateLink.firmwareLink) + std::string("\n");
+
+    return output;
+}
+
+std::string TDeviceStatus::getFirmwareVersion() const
+{
+    std::string output(firmwareVersion);
+
+    return output;
+}
+
+std::string TDeviceStatus::getCurrentLocalTime() const
+{
+    std::string output(currentLocalTime);
+
+    return output;
+}
 
 } // namespace json_parser

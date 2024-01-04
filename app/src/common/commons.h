@@ -9,11 +9,11 @@ Preferably not related to internal libraries
 #include "defines.h"
 
 
-#include <string>
-#include <cstdint>
 #include "esp_err.h"
 #include "esp_heap_caps.h"
 #include "esp_system.h"
+#include <cstdint>
+#include <string>
 
 namespace commons
 {
@@ -32,11 +32,11 @@ int32_t convertUnsignedFloatToUint16(float humidity);
  * @brief get current timestamp in ms since ESP boot. Consider adding a separate function for the actual time
  * @return ms
  */
-int64_t getCurrentTimestampMs();  // Milliseconds since device power up
+int64_t getCurrentTimestampMs(); // Milliseconds since device power up
 
-int64_t getCurrentTimestampUs();  // us since device power up
+int64_t getCurrentTimestampUs(); // us since device power up
 
-uint32_t getCurrentTimestampS();  // seconds since device power up
+uint32_t getCurrentTimestampS(); // seconds since device power up
 
 bool isInRange(float value, float min, float max);
 
@@ -60,6 +60,6 @@ void waitUntilConsoleFinished();
 std::string dataArrayToHexStr(uint32_t maxSize, const uint8_t* pData, uint32_t dataLength);
 
 
-}  // namespace commons
+} // namespace commons
 
 #endif // COMMONS_H
