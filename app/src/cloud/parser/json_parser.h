@@ -19,6 +19,7 @@ constexpr uint8_t ALARM_RESPONSE_LENGTH       = 32;
 namespace json_parser
 {
 
+
 enum class EMsgCode : uint8_t
 {
     MSG_SET_LIGHT_INTENSITY_LEVEL          = 1,
@@ -59,6 +60,7 @@ struct TResponse
     bool ACK;
 };
 
+
 struct TDeviceStatus
 {
     bool        isWiFiConnected;
@@ -69,6 +71,7 @@ struct TDeviceStatus
     char        firmwareVersion[FIRMWARE_VERSION_LENGTH + 1];
     char        currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
     float       pressureSensorValue;
+    float       flowMeterValue;
     std::string getFirmwareVersion() const;
     std::string getCurrentLocalTime() const;
 };
@@ -215,18 +218,21 @@ std::string prepareReportedMessage(cJSON* pReportedJson);
 
 std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, const TWorkflowData& workflowData);
 
+bool        parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrationValue);
+std::string prepareFlowMeterCalibrationReport(const float& flowMeterCalibrationValue);
+
+cJSON* parseDeviceTwinDesired(cJSON* pInputJson);
+
 
 #if TESTING
 
 // functions that are needed for unit tests
-bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);
 bool        processResponse(cJSON* dataJson, TResponse* output);
 static bool processOtaUpdateLink(cJSON* pDataJson, TOtaUpdateLink* pOutput);
 cJSON*      preprocessInputMessage(const std::string& inputMessage);
 EMsgMethod  extractMsgMethod(const std::string& inputMessage);
 bool getDataJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* frame, cJSON** dataJson);
 
-bool        processStatusReport(cJSON* dataJson, TDeviceStatus* output);
 std::string prepareDeviceStatusMessage(const json_parser::TDeviceStatus& deviceStatus, uint32_t msgCounter);
 cJSON*      deviceStatusToJson(const TDeviceStatus& deviceStatus, uint32_t msgCounter);
 
