@@ -496,6 +496,37 @@ std::string prepareFlowMeterCalibrationReport(const float& flowMeterCalibrationV
     return flowMeterCalibrationReport;
 }
 
+std::string prepareADCCalibrationReport(const float& ADCCalibrationValue)
+{
+    cJSON* pADCCalibrationJson = cJSON_CreateObject();
+    if (pADCCalibrationJson == nullptr)
+    {
+        LOG_ERROR("Could not allocate memory for (empty) ADC calibration JSON");
+        return std::string("");
+    }
+
+    if (!cJSON_AddNumberToObject(pADCCalibrationJson, ADC_CALIBRATION_KEY, ADCCalibrationValue))
+    {
+        LOG_ERROR("Could not add ADC calibration valuer to JSON");
+        cJSON_Delete(pADCCalibrationJson);
+        return std::string("");
+    }
+
+    char* ADCCalibrationReportCString = cJSON_Print(pADCCalibrationJson);
+    if (ADCCalibrationReportCString == nullptr)
+    {
+        LOG_ERROR("Error while preparing ADCCalibrationReportCString");
+        cJSON_Delete(pADCCalibrationJson);
+        return std::string("");
+    }
+
+    const std::string ADCCalibrationReport = std::string(ADCCalibrationReportCString);
+    free(ADCCalibrationReportCString); // NOLINT memory allocated by cJSON_Print needs to be freed manually
+    cJSON_Delete(pADCCalibrationJson);
+
+    return ADCCalibrationReport;
+}
+
 bool parseJsonDeviceProvisioning(const std::string& inputMessage, TDeviceProvisioningInfo* pDeviceProvisioningInfo)
 {
     cJSON* pDataJson = nullptr;
@@ -793,6 +824,46 @@ bool parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrat
     (*pFlowMeterCalibrationValue) = pFlowMeterCalibrationJson->valuedouble;
 
     LOG_INFO("Parsing flow meter calibration value correct");
+
+    return true;
+}
+
+bool parseADCCalibrationValue(cJSON* pInputJson, float* pADCCalibrationValue)
+{
+    if (pInputJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no input JSON data");
+        return false;
+    }
+
+    if (pADCCalibrationValue == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no output parameter");
+        return false;
+    }
+
+    cJSON* pADCCalibrationJson = cJSON_GetObjectItemCaseSensitive(pInputJson, ADC_CALIBRATION_KEY);
+    if (pADCCalibrationJson == nullptr)
+    {
+        LOG_WARNING("Could not parse JSON, no ADC calibration data");
+        return false;
+    }
+
+    if (!cJSON_IsNumber(pADCCalibrationJson))
+    {
+        LOG_WARNING("ADC calibration value is not a number");
+        return false;
+    }
+
+    if (pADCCalibrationJson->valuedouble < -FLT_MAX || pADCCalibrationJson->valuedouble > FLT_MAX)
+    {
+        LOG_WARNING("ADC calibration value out of range");
+        return false;
+    }
+
+    (*pADCCalibrationValue) = pADCCalibrationJson->valuedouble;
+
+    LOG_INFO("Parsing ADC calibration value correct");
 
     return true;
 }

@@ -28,6 +28,7 @@ bool ConfigNvs::init()
     getStruct(m_workflowData, ConfigKeyName::UPDATE_WORKFLOW_DATA_NVS_KEY);
     getStruct(m_updateId, ConfigKeyName::UPDDATE_ID_NVS_KEY);
     getStruct(m_flowMeterCalibrationValue, ConfigKeyName::FLOW_METER_CALIBRATION_NVS_KEY);
+    getStruct(m_ADCCalibrationValue, ConfigKeyName::ADC_CALIBRATION_NVS_KEY);
 
     return true;
 }
@@ -100,6 +101,16 @@ float ConfigNvs::getFlowMeterCalibrationValue() const
 void ConfigNvs::setFlowMeterCalibrationValue(float flowMeterCalibrationValue)
 {
     setStruct(m_flowMeterCalibrationValue, flowMeterCalibrationValue, ConfigKeyName::FLOW_METER_CALIBRATION_NVS_KEY);
+}
+
+float ConfigNvs::getADCCalibrationValue() const
+{
+    return m_ADCCalibrationValue;
+}
+
+void ConfigNvs::setADCCalibrationValue(float ADCCalibrationValue)
+{
+    setStruct(m_ADCCalibrationValue, ADCCalibrationValue, ConfigKeyName::ADC_CALIBRATION_NVS_KEY);
 }
 
 const TCloudCredentials& ConfigNvs::getCloudCredentials()
@@ -317,6 +328,7 @@ void ConfigNvs::resetAllConfigurationFields()
     m_workflowData              = TWorkflowData();
     m_updateId                  = TUpdateId();
     m_flowMeterCalibrationValue = 0.0;
+    m_ADCCalibrationValue = 0.0;
 }
 
 template <typename T> void ConfigNvs::setStruct(T& variable, const T& newValue, const char* key)

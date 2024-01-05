@@ -247,6 +247,38 @@ void DeviceTwinsController::handleDeviceTwinMessage(const json_parser::TMessage&
         }
     }
 
+
+    if (json_parser::checkIfFieldExistsInGivenJson(pDeviceTwinDesiredJson, json_parser::ADC_CALIBRATION_KEY))
+    {
+        LOG_INFO("%s field found!", json_parser::ADC_CALIBRATION_KEY);
+
+        float ADCCalibrationValue = 0.0;
+
+        if (json_parser::parseADCCalibrationValue(pDeviceTwinDesiredJson, &ADCCalibrationValue))
+        {
+            LOG_INFO("ADC calibration value received %f", ADCCalibrationValue);
+
+            app::TEventData eventData           = {};
+            eventData.ADCCalibrationValue = ADCCalibrationValue;
+
+            const bool result = app::pAppController->addEvent(
+                app::EEventType::CALIBRATE_ADC, app::EEventExecutionType::SYNCHRONOUS, &eventData);
+
+            if (result)
+            {
+                reportADCCalibrationValue(ADCCalibrationValue);
+            }
+            else
+            {
+                LOG_ERROR("Error during ADC calibration");
+            }
+        }
+        else
+        {
+            LOG_ERROR("Error while parsing ADC calibration value");
+        }
+    }
+
     // Add handling new fields here, under separate ifs
 
     cJSON_Delete(pInputJson);
@@ -346,6 +378,24 @@ void DeviceTwinsController::reportFlowMeterCalibrationValue(const float& flowMet
     if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), flowMeterCalibrationReportedMessage))
     {
         LOG_ERROR("Could not send flow meter calibration reported message");
+        return;
+    }
+}
+
+void DeviceTwinsController::reportADCCalibrationValue(const float& ADCCalibrationValue)
+{
+    const std::string ADCCalibrationReportedMessage =
+        json_parser::prepareADCCalibrationReport(ADCCalibrationValue);
+
+    if (ADCCalibrationReportedMessage == std::string(""))
+    {
+        LOG_ERROR("Error while preparing ADC calibration reported message");
+        return;
+    }
+
+    if (!m_pMqttClientController->sendMessage(buildReportedTopic(++m_requestId), ADCCalibrationReportedMessage))
+    {
+        LOG_ERROR("Could not send ADC calibration reported message");
         return;
     }
 }

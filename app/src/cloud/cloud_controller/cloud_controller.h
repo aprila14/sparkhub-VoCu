@@ -68,6 +68,10 @@ public:
 
     const esp_mqtt_client_handle_t& getMqttClientHandle();
 
+    float getADCCalibrationValue() const;
+
+    void setADCCalibrationValue(float ADCCalibration);
+
 #if !TESTING
 private:
 #endif
@@ -121,6 +125,8 @@ private:
     DeviceTwinsController        m_deviceTwinsController;
 
     std::string m_deviceStatusTopic;
+
+    float m_ADCCalibrationValue;
 };
 
 #endif // CLOUDCONTROLLER_H

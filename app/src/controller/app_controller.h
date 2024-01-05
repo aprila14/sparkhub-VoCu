@@ -69,6 +69,7 @@ private:
     bool executeEvent_cloudControllerSetCredentials() const;
     bool executeEvent_otaPerform();
     bool executeEvent_calibrateFlowMeter(const float flowMeterCalibrationValue);
+    bool executeEvent_calibrateADC(const float ADCCalibrationValue);
 
     QueueHandle_t m_eventsQueue;
     TaskHandle_t  m_taskHandle;

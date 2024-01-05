@@ -33,6 +33,8 @@ private:
 
     void reportFlowMeterCalibrationValue(const float& flowMeterCalibrationValue);
 
+    void reportADCCalibrationValue(const float& ADCCalibrationValue);
+
     void publishGetDeviceTwinRequest();
 
     TaskHandle_t m_taskHandle; // handle to runTask

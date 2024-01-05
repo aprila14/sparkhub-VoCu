@@ -72,6 +72,7 @@ struct TDeviceStatus
     char        currentLocalTime[MAX_TIME_STRING_LENGTH + 1];
     float       pressureSensorValue;
     float       flowMeterValue;
+    float       ADCValue;
     std::string getFirmwareVersion() const;
     std::string getCurrentLocalTime() const;
 };
@@ -220,6 +221,9 @@ std::string prepareDeviceUpdateReport(const TUpdateId& updateId, uint8_t state, 
 
 bool        parseFlowMeterCalibrationValue(cJSON* pInputJson, float* pFlowMeterCalibrationValue);
 std::string prepareFlowMeterCalibrationReport(const float& flowMeterCalibrationValue);
+
+bool        parseADCCalibrationValue(cJSON* pInputJson, float* pADCCalibrationValue);
+std::string prepareADCCalibrationReport(const float& ADCCalibrationValue);
 
 cJSON* parseDeviceTwinDesired(cJSON* pInputJson);
 

@@ -21,7 +21,8 @@ enum class EEventType
     CLOUD_CONTROLLER__CONNECTION_LOST,        // Connection to cloud just lost
     CLOUD_CONTROLLER__SEND_CREDENTIALS,       // sending credentials to cloud
     OTA__PERFORM,                             // performing OTA based on provided link
-    CALIBRATE_FLOW_METER                      // performing flow meter calibration
+    CALIBRATE_FLOW_METER,                      // performing flow meter calibration
+    CALIBRATE_ADC                      // performing flow meter calibration
 };
 
 /**
@@ -64,6 +65,7 @@ union TEventData
     TCloudControlSendCredentialsEventData cloudControlSendCredentials;
     TOtaPerformEventData                  otaPerform;
     float                                 flowMeterCalibrationValue;
+    float                                 ADCCalibrationValue;
 
     // add here more events ...
 };

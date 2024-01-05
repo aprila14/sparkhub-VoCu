@@ -206,6 +206,9 @@ bool AppController::executeEvent(AppController::TEventControl& eventControl)
         case EEventType::CALIBRATE_FLOW_METER:
             result = executeEvent_calibrateFlowMeter(eventControl.data.flowMeterCalibrationValue);
             break;
+        case EEventType::CALIBRATE_ADC:
+            result = executeEvent_calibrateADC(eventControl.data.ADCCalibrationValue);
+            break;
         default:
             assert(0); // all cases handled above
             break;
@@ -347,6 +350,17 @@ bool AppController::executeEvent_calibrateFlowMeter(const float flowMeterCalibra
     m_pPulseCounterHandler->setFlowMeterCalibrationValue(flowMeterCalibrationValue);
 
     pConfig->setFlowMeterCalibrationValue(flowMeterCalibrationValue);
+
+    return true;
+}
+
+bool AppController::executeEvent_calibrateADC(const float ADCCalibrationValue)
+{
+    LOG_INFO("Perform ADC calibration");
+
+    m_pCloudController->setADCCalibrationValue(ADCCalibrationValue);
+
+    pConfig->setADCCalibrationValue(ADCCalibrationValue);
 
     return true;
 }

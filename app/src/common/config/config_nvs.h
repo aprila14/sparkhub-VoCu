@@ -21,6 +21,7 @@ constexpr const char* DEVICE_PROVISIONING_STATUS     = "dev-prov";
 constexpr const char* UPDATE_WORKFLOW_DATA_NVS_KEY   = "work-id";
 constexpr const char* UPDDATE_ID_NVS_KEY             = "upd-id";
 constexpr const char* FLOW_METER_CALIBRATION_NVS_KEY = "flow-cal";
+constexpr const char* ADC_CALIBRATION_NVS_KEY        = "adc-cal";
 
 } // namespace ConfigKeyName
 
@@ -82,6 +83,9 @@ public:
     virtual float getFlowMeterCalibrationValue() const;
     virtual void  setFlowMeterCalibrationValue(float flowMeterCalibrationValue);
 
+    virtual float getADCCalibrationValue() const;
+    virtual void  setADCCalibrationValue(float ADCCalibrationValue);
+
 #if !TESTING
 private:
 #endif
@@ -114,6 +118,7 @@ private:
     TOtaUpdateLink          m_otaUpdateLink          = {};
 
     float m_flowMeterCalibrationValue = 0;
+    float m_ADCCalibrationValue = 0;
 
     TCertificatePack               m_certificatePack = {};
     ECloudDeviceProvisioningStatus m_deviceProvisioningStatus =

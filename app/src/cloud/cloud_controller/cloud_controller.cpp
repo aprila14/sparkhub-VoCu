@@ -111,6 +111,17 @@ void CloudController::setDeviceStatusTopic(const prot::cloud_set_credentials::TC
     m_deviceStatusTopic = std::string(deviceStatusTopic);
 }
 
+
+float CloudController::getADCCalibrationValue() const
+{
+    return m_ADCCalibrationValue;
+}
+
+void CloudController::setADCCalibrationValue(float ADCCalibration)
+{
+    m_ADCCalibrationValue = ADCCalibration;
+}
+
 void CloudController::_run()
 {
     xSemaphoreTake(m_semaphoreWifiConnectionReady, portMAX_DELAY);
@@ -164,6 +175,8 @@ void CloudController::_run()
 void CloudController::perform()
 {
 
+    float ADCCalibrationValuePerform = CloudController::getADCCalibrationValue();
+    LOG_INFO("ADCCalibrationValuePerform :%.6f ",ADCCalibrationValuePerform);
 
     float SumOfSparklingWatervalue = SumOfSparklingWater();
     float TotalTimeCoolingIsRunning = TimeCoolingIsRunning();
