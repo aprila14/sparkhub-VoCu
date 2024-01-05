@@ -3,6 +3,7 @@ static const char* LOG_TAG = "Main";
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 
 #include "adc_pressure.h"
+#include "adc_VoCu.h"
 #include "app_controller.h"
 #include "ble_controller.h"
 #include "bleuart_esp.h"

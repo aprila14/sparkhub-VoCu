@@ -4,8 +4,8 @@
 #include "defines.h"
 
 
-void adcInit(void);
+void adcInitLevelSense(void);
+//LevelSensor
 float getAvgPressureSensorValue(void);
-
 
 #endif // ADC_PRESSURE_H

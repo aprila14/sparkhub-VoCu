@@ -4,8 +4,9 @@ static const char* LOG_TAG = "adcPressure";
 
 #include "adc_pressure.h"
 #include "sleep.h"
-
+#include "commons.h"
 #include "esp_adc_cal.h"
+#include "math.h"
 
 namespace
 {
@@ -14,9 +15,27 @@ esp_adc_cal_characteristics_t adcChars                = {};
 
 // Pressure sensor
 const float pressureMeasurementOffset = 0.2;
+
+
+
+// Current sensor
+uint32_t resolution = 68.027211; // für den 20A Sensor //125.8503401; für den 5A Sensor // mV/A
+uint64_t IEndMeasure;
+uint64_t IStartMeasure;
+
+float gIOffset = 0;
+float gVOffset = 0;
+
+float TimeSparklingWater = 0;
+float SumSparklingWater = 0;
+    float TimeCooling = 0;
+
+
+
+
 } // namespace
 
-void adcInit(void)
+void adcInitLevelSense(void)
 {
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(PRESSURE_SENSOR_CHANNEL, ADC_ATTEN_DB_11);
@@ -85,3 +104,5 @@ float getAvgPressureSensorValue(void)
 
     return avgPressureValue;
 }
+
+

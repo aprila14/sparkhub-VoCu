@@ -11,6 +11,7 @@ static const char* LOG_TAG = "CloudController";
 #include "ntp_client.h"
 #include "protocol_types.h"
 #include "sleep.h"
+#include "adc_VoCu.h"
 
 #include <memory>
 
@@ -155,11 +156,17 @@ void CloudController::_run()
     while (true)
     {
         perform();
+
     }
 }
 
 void CloudController::perform()
 {
+
+
+
+
+
     CheckPressureValueBelowThreshold();
     SLEEP_MS(SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD_MS);
 
@@ -179,6 +186,11 @@ void CloudController::perform()
 
 void CloudController::CheckPressureValueBelowThreshold()
 {
+
+    float SumOfSparklingWatervalue = SumOfSparklingWater();
+    float TotalTimeCoolingIsRunning = TimeCoolingIsRunning();
+
+
     float avgPressureSensorValue = getAvgPressureSensorValue();
     if (avgPressureSensorValue < PRESSUREALARMTHRESHOLD)
     {

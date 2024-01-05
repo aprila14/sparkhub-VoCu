@@ -66,6 +66,8 @@ set(TESTABLE_APPLICATION_FILES
 
     ${SRC_DIR}/hardware/adc_pressure/adc_pressure.cpp
     ${SRC_DIR}/hardware/adc_pressure/adc_pressure.h
+    ${SRC_DIR}/hardware/adc_pressure/adc_VoCu.cpp
+    ${SRC_DIR}/hardware/adc_pressure/adc_VoCu.h
 
     ${SRC_DIR}/hardware/pulse_counter/pulse_counter.cpp
     ${SRC_DIR}/hardware/pulse_counter/pulse_counter.h
