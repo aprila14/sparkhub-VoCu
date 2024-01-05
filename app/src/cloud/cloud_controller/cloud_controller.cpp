@@ -21,7 +21,7 @@ namespace
 constexpr uint32_t SLEEP_TIME_BEFORE_STARTING_DEVICE_TWINS_CONTROLLER_MS = 1000;
 constexpr uint8_t  DEVICE_STATUS_MAX_TOPIC_SIZE                       = 200;
 constexpr uint32_t SLEEP_TIME_BETWEEN_SENDING_MESSAGES_MS             = 8 * 60 * 60 * 1000; // every 8 hour
-constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD_MS  = 60 * 1000;    // every 1 minute
+constexpr uint32_t SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD_MS  = 1 * 1000;    // every 1 minute
 constexpr uint16_t LOCAL_TIME_OFFSET                                  = UtcOffset::OFFSET_UTC_2;
 constexpr int8_t   MQTT_CONNECTION_WAIT_TIME_INFINITE                 = -1;
 constexpr uint16_t HEARTBEAT_CHECK_TIMER_PERIOD_MS                    = 1000;
@@ -155,6 +155,7 @@ void CloudController::_run()
 
     while (true)
     {
+
         perform();
 
     }
@@ -164,9 +165,10 @@ void CloudController::perform()
 {
 
 
+    float SumOfSparklingWatervalue = SumOfSparklingWater();
+    float TotalTimeCoolingIsRunning = TimeCoolingIsRunning();
 
-
-
+    //Check Pressure Value and wait predefined SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD_MS time
     CheckPressureValueBelowThreshold();
     SLEEP_MS(SLEEP_TIME_BETWEEN_CHECKING_PRESSURE_THRESHOLD_MS);
 
@@ -186,10 +188,6 @@ void CloudController::perform()
 
 void CloudController::CheckPressureValueBelowThreshold()
 {
-
-    float SumOfSparklingWatervalue = SumOfSparklingWater();
-    float TotalTimeCoolingIsRunning = TimeCoolingIsRunning();
-
 
     float avgPressureSensorValue = getAvgPressureSensorValue();
     if (avgPressureSensorValue < PRESSUREALARMTHRESHOLD)

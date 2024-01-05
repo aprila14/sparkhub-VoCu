@@ -281,7 +281,7 @@ void PulseCounterHandler::_run()
         {
             pcnt_get_counter_value(pcnt_unit, &count);
             m_counterPulses = m_multPulses * PCNT_H_LIM_VAL + count;
-            LOG_INFO("Current counter value :%lu", m_counterPulses);
+            //LOG_INFO("Current counter value :%lu", m_counterPulses);
 
 
             if (m_counterPulses >= m_counterPulsesPrevious)
@@ -315,10 +315,10 @@ void PulseCounterHandler::_run()
 
             m_totalLitres = m_totalLitres + flowLitres; // litres
 
-            LOG_INFO("FlowMeterCalibrationValue :%.6f", FlowMeterCalibrationValue);
+            //LOG_INFO("FlowMeterCalibrationValue :%.6f", FlowMeterCalibrationValue);
 
-            LOG_INFO("flowLitres :%.6f", flowLitres);
-            LOG_INFO("totalLitres :%.6f", m_totalLitres);
+            //LOG_INFO("flowLitres :%.6f", flowLitres);
+            //LOG_INFO("totalLitres :%.6f", m_totalLitres);
 
             flowLitres = 0;
         }

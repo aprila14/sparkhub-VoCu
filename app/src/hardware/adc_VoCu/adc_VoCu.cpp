@@ -27,7 +27,7 @@ namespace
     float TimeCooling = 0;
 }
 
-void adcInit(void)
+void adcInitVoCu(void)
 {
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(SENSOR_CHANNEL, ADC_ATTEN_DB_11);
@@ -112,6 +112,7 @@ float getRMSCurrent(void)
 
     gVOffset = (gVOffset+VOffset);
 
+    LOG_INFO("getRMSCurrent: %.6f mA \n",(Current));
     return Current;
 }
 
@@ -152,7 +153,7 @@ float SumOfSparklingWater(void)
     //currentDataPointsAndTimestamp = get3RMSCurrentDataPoints();
 
 
-    static float *currentDataPointsAndTimestamp = get3RMSCurrentDataPoints();
+    float *currentDataPointsAndTimestamp = get3RMSCurrentDataPoints();
     float timeBetween3DataPoints = 0;
 
     //average current over 3 datapoints
@@ -178,8 +179,6 @@ float SumOfSparklingWater(void)
     SumSparklingWater = TimeSparklingWater * 0.24/4;
     LOG_INFO("SumSparklingWater: %.6f Liter \n",(SumSparklingWater));
 
-    free(currentDataPointsAndTimestamp);
-
     return SumSparklingWater;
 
 }
@@ -192,7 +191,7 @@ float TimeCoolingIsRunning(void)
     //currentDataPointsAndTimestamp = get3RMSCurrentDataPoints();
 
 
-    static float *currentDataPointsAndTimestamp = get3RMSCurrentDataPoints();
+    float *currentDataPointsAndTimestamp = get3RMSCurrentDataPoints();
     float timeBetween3DataPoints = 0;
 
     //average current over 3 datapoints
@@ -215,7 +214,7 @@ float TimeCoolingIsRunning(void)
 
     LOG_INFO("TimeCooling: %.6f hours %.6f minutes %.6f seconds \n",(TimeCooling)/3600, (TimeCooling)/60, (TimeCooling));
 
-    free(currentDataPointsAndTimestamp);
+    //free(currentDataPointsAndTimestamp);
 
     return TimeCooling;
 

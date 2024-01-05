@@ -49,8 +49,8 @@ static void configureConnectionToLteModem()
 {
     LOG_INFO("ssid: %s", pConfig->getWifiCredentials().ssid);
     TWiFiCredentials newWifiCredentials;
-    newWifiCredentials.setSsid("eauvation2023");
-    newWifiCredentials.setPassword("1234567890");
+    newWifiCredentials.setSsid("Marty Router King");
+    newWifiCredentials.setPassword("mk1441bl");
     pConfig->setWifiCredentials(newWifiCredentials);
 }
 
@@ -127,8 +127,8 @@ void initCommonGlobalModules()
         &wifiController, &bleController, &cloudController, &ntpClient, &pulseCounterHandler);
     app::pAppController = &appController;
 
-    // ADC for pressure sensor
-    adcInit();
+    // ADC for VoCu sensor
+    adcInitVoCu();
 
     configureCloudDeviceIdIfNotSet(wifiController);
 

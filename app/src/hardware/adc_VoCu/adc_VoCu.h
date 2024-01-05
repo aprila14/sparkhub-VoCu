@@ -3,7 +3,7 @@
 
 #include "defines.h"
 
-void adcInit(void);
+void adcInitVoCu(void);
 float getRMSCurrent(void);
 float* get3RMSCurrentDataPoints(void);
 float SumOfSparklingWater(void);
